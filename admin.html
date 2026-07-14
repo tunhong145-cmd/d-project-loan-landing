@@ -1,0 +1,1000 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>客戶名單後台 | 長原資產管理有限公司</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    if (!window.supabase) {
+      document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\\/script>');
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Noto Sans TC","Microsoft JhengHei",Arial,sans-serif; background: #eef1f5; color: #142033; }
+    header { height: 68px; background: #121d31; color: #fff; padding: 0 36px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+    header h1 { margin: 0; font-size: 19px; letter-spacing: 0; }
+    .header-sub { color: #8290a8; font-size: 13px; font-weight: 400; margin-left: 10px; }
+    #user-bar { display: flex; align-items: center; gap: 16px; color: #aeb9cb; font-size: 13px; }
+    .header-nav { display:flex; align-items:center; gap:6px; }
+    .header-nav button { background:transparent; color:#aeb9cb; border-color:transparent; }
+    .header-nav button.active { background:#24324a; color:#fff; }
+    main { max-width: 1320px; margin: 0 auto; padding: 30px 22px; }
+    .panel { background: #fff; border: 1px solid #dce2ea; border-radius: 8px; box-shadow: 0 1px 3px rgba(22,35,55,.04); margin-bottom: 18px; }
+    .login-box { max-width: 420px; margin: 48px auto; padding: 22px; }
+    label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: #46546a; }
+    input, select, textarea { width: 100%; border: 1px solid #d4dce6; border-radius: 6px; padding: 9px 10px; font: inherit; background: #fff; color: #172236; }
+    textarea { min-height: 96px; resize: vertical; }
+    button { border: 1px solid transparent; border-radius: 6px; background: #1368b7; color: #fff; padding: 8px 13px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    button.secondary { background: #fff; color: #536278; border-color: #d9e0e8; }
+    button.danger { background: #fff; color: #c73535; border-color: #efcaca; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    .hidden { display: none !important; }
+    .notice { color: #7c899d; font-size: 13px; line-height: 1.6; }
+    .error { color: #b42318; }
+    .stats { display: grid; grid-template-columns: repeat(7, 1fr); gap: 14px; margin-bottom: 24px; }
+    .stat { --accent:#4f6cff; position: relative; background: #fff; border: 1px solid #dce2ea; border-radius: 8px; padding: 20px 18px 18px 24px; min-height: 116px; overflow: hidden; }
+    .stat::before { content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background:var(--accent); }
+    .stat b { display: block; font-size: 34px; line-height: 1; color: #101a2d; margin-bottom: 10px; }
+    .stat span { color: #748299; font-size: 13px; }
+    .filters { padding: 18px 22px; }
+    .filter-row { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; }
+    .quick-dates { display: flex; border: 1px solid #d9e0e8; border-radius: 7px; overflow: hidden; }
+    .quick-dates button { border: 0; border-right: 1px solid #d9e0e8; border-radius: 0; background: #fff; color: #607088; padding: 10px 18px; font-weight: 500; }
+    .quick-dates button:last-child { border-right: 0; }
+    .quick-dates button.active { background: #eaf3fc; color: #1368b7; font-weight: 800; }
+    .date-field { width: 160px; }
+    .status-field { width: 150px; }
+    .filter-spacer { flex: 1; }
+    .search-wrap { display: flex; gap: 8px; min-width: 330px; }
+    .list-panel { overflow: hidden; }
+    .list-head { height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; border-bottom: 1px solid #dce2ea; }
+    .list-head h2 { margin: 0; font-size: 18px; }
+    .list-head-right { display: flex; align-items: center; gap: 12px; color: #8794a8; font-size: 13px; }
+    .select-all-wrap { display: flex; align-items: center; gap: 7px; color: #68778e; font-size: 13px; }
+    .select-all-wrap input, .lead-check { width: auto; }
+    .lead-list { min-height: 140px; }
+    .lead-row { display: grid; grid-template-columns: 32px minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 14px 24px; border-bottom: 1px solid #e7ebf0; }
+    .lead-row:last-child { border-bottom: 0; }
+    .lead-row:hover { background: #f8fafc; }
+    .lead-summary { min-width: 0; }
+    .lead-title-line { display: flex; align-items: center; gap: 9px; min-width: 0; margin-bottom: 7px; }
+    .lead-index { color: #9aa7ba; font-size: 13px; width: 28px; flex: 0 0 auto; }
+    .lead-name { font-size: 16px; font-weight: 800; color: #111c30; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tag { display:inline-flex; align-items:center; padding:3px 7px; border-radius:4px; font-size:11px; font-weight:700; white-space:nowrap; }
+    .tag-new { background:#dff7e9; color:#087b42; }
+    .tag-contacted { background:#e8f2ff; color:#2168ae; }
+    .tag-line_added { background:#e5f8ea; color:#078532; }
+    .tag-approved { background:#eee8ff; color:#6741c7; }
+    .tag-rejected { background:#fff2d7; color:#9b6100; }
+    .tag-invalid { background:#fde9e9; color:#b42e2e; }
+    .tag-line { background:#f3e4ff; color:#9637b4; }
+    .tag-fresh { background:#dcf8eb; color:#087b42; }
+    .tag-duplicate { background:#f9e1ff; color:#a02cb4; border:1px solid #ecaaf5; }
+    .tag-base-duplicate { background:#fff0cc; color:#9b5b00; border:1px solid #efc568; }
+    .tag-fb { background:#e8f1ff; color:#1769c2; border:1px solid #a9c9ef; }
+    .tag-tiktok { background:#f3e9ff; color:#7228a8; border:1px solid #d2adeb; }
+    .lead-meta { display:flex; align-items:center; gap:20px; white-space:nowrap; overflow:hidden; color:#526178; font-size:13px; }
+    .lead-meta span { overflow:hidden; text-overflow:ellipsis; }
+    .lead-meta strong { color:#19263a; }
+    .lead-time { color:#9aa7ba; font-size:12px; margin-top:7px; }
+    .lead-actions { display:flex; align-items:center; justify-content:flex-end; gap:6px; flex-wrap:wrap; max-width:450px; }
+    .status-btn { background:#fff; color:#65738a; border-color:#dce2ea; padding:6px 9px; font-weight:500; }
+    .status-btn.active { background:#eaf3fc; color:#1368b7; border-color:#bcd6ed; font-weight:800; }
+    .empty { padding: 36px; text-align: center; }
+    .drawer-backdrop { position:fixed; inset:0; background:rgba(13,24,42,.34); z-index:1990; }
+    .detail-drawer { position:fixed; top:0; right:0; bottom:0; width:min(520px,100%); background:#fff; z-index:2000; box-shadow:-8px 0 26px rgba(16,29,49,.18); display:flex; flex-direction:column; }
+    .drawer-head { padding:20px 22px; border-bottom:1px solid #e2e7ed; display:flex; align-items:center; justify-content:space-between; }
+    .drawer-head h2 { margin:0; font-size:19px; }
+    .drawer-body { padding:20px 22px; overflow:auto; }
+    .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px; }
+    .detail-item { border:1px solid #e2e7ed; border-radius:7px; padding:10px 12px; min-width:0; }
+    .detail-item label { color:#8a97a9; font-size:11px; margin-bottom:4px; }
+    .detail-item div { overflow-wrap:anywhere; }
+    .detail-section { border-top:1px solid #e5eaf0; padding-top:18px; margin-top:18px; }
+    .detail-section h3 { margin:0 0 12px; font-size:15px; }
+    .drawer-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .client-copy-box { width:100%; min-height:250px; background:#f7f9fc; color:#172236; font-size:14px; line-height:1.75; resize:vertical; }
+    .export-note { margin: 10px 0 0; }
+    .settings-wrap { max-width:820px; margin:0 auto; }
+    .settings-panel { padding:22px; }
+    .settings-panel h2 { margin:0 0 6px; font-size:19px; }
+    .settings-panel h3 { margin:0 0 14px; font-size:16px; }
+    .settings-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+    .pixel-list { display:grid; gap:10px; margin-top:12px; }
+    .pixel-row { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:8px; align-items:center; border:1px solid #e0e6ed; border-radius:7px; padding:10px; }
+    .pixel-row input[type="text"] { font-family:Consolas,monospace; }
+    .pixel-toggle { display:flex; align-items:center; gap:6px; margin:0; white-space:nowrap; }
+    .pixel-toggle input { width:auto; }
+    .setting-status { min-height:22px; margin-top:12px; }
+    @media (max-width: 1050px) {
+      .stats { grid-template-columns: repeat(3,1fr); }
+      .lead-row { grid-template-columns:28px minmax(0,1fr); }
+      .lead-actions { grid-column:2; justify-content:flex-start; max-width:none; }
+    }
+    @media (max-width: 720px) {
+      header { height:auto; padding:14px 16px; flex-wrap:wrap; }
+      header h1 { font-size:17px; }
+      .header-sub, #user-email { display:none; }
+      main { padding:14px 10px; }
+      .stats { grid-template-columns:repeat(2,1fr); gap:8px; }
+      .stat { min-height:90px; padding:14px 12px 12px 18px; }
+      .stat b { font-size:27px; margin-bottom:7px; }
+      .filters { padding:12px; }
+      .quick-dates { width:100%; overflow-x:auto; }
+      .quick-dates button { flex:1; padding:9px 12px; }
+      .date-field, .status-field, .search-wrap { width:100%; min-width:0; }
+      .filter-spacer { display:none; }
+      .list-head { height:auto; padding:14px; gap:10px; flex-wrap:wrap; }
+      .lead-row { display:block; padding:14px; }
+      .lead-check { margin-bottom:9px; }
+      .lead-meta { gap:8px 14px; flex-wrap:wrap; white-space:normal; }
+      .lead-actions { margin-top:12px; justify-content:flex-start; max-width:none; }
+      .status-btn { padding:7px 9px; }
+      .detail-grid { grid-template-columns:1fr; }
+      .header-nav { width:100%; order:3; }
+      .header-nav button { flex:1; }
+      .pixel-row { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>長原資產管理有限公司交單系統 <span class="header-sub">客戶申請管理</span></h1>
+    <div id="user-bar" class="hidden">
+      <div class="header-nav">
+        <button id="nav-leads" class="active" onclick="showAdminView('leads')">申請列表</button>
+        <button id="nav-settings" onclick="showAdminView('settings')">系統設定</button>
+      </div>
+      <span id="user-email"></span>
+      <button class="secondary" onclick="signOut()">登出</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="login-panel" class="panel login-box">
+      <h2>管理員登入</h2>
+      <p class="notice">請輸入管理員帳號與密碼。</p>
+      <label for="admin-username">帳號</label>
+      <input id="admin-username" type="text" value="admin" autocomplete="username" />
+      <div style="height:12px"></div>
+      <label for="admin-password">密碼</label>
+      <input id="admin-password" type="password" autocomplete="current-password" />
+      <div style="height:12px"></div>
+      <button id="login-btn" onclick="loginWithPassword()">登入</button>
+      <p id="login-msg" class="notice"></p>
+    </section>
+
+    <section id="app-panel" class="hidden">
+      <div class="stats leads-view-section">
+        <div class="stat" style="--accent:#5865f2"><b id="stat-filtered">0</b><span>篩選結果</span></div>
+        <div class="stat" style="--accent:#3185ff"><b id="stat-today">0</b><span>當日新增</span></div>
+        <div class="stat" style="--accent:#dd8700"><b id="stat-new">0</b><span>新客戶</span></div>
+        <div class="stat" style="--accent:#8a55ed"><b id="stat-contacted">0</b><span>已聯繫</span></div>
+        <div class="stat" style="--accent:#08a56a"><b id="stat-line-added">0</b><span>已添加 LINE</span></div>
+        <div class="stat" style="--accent:#6741c7"><b id="stat-approved">0</b><span>已成交</span></div>
+        <div class="stat" style="--accent:#dc3030"><b id="stat-invalid">0</b><span>無效</span></div>
+      </div>
+
+      <div class="panel filters leads-view-section">
+        <div class="filter-row">
+          <div class="quick-dates">
+            <button type="button" data-days="0" onclick="setQuickDate(0,this)">當日</button>
+            <button type="button" data-days="1" onclick="setQuickDate(1,this)">昨日</button>
+            <button type="button" data-days="3" onclick="setQuickDate(3,this)">近3日</button>
+            <button type="button" data-days="7" onclick="setQuickDate(7,this)">近7日</button>
+            <button type="button" data-days="30" onclick="setQuickDate(30,this)">近30日</button>
+          </div>
+          <div class="date-field">
+            <input id="date-from" type="date" aria-label="開始日期" onchange="clearQuickDate();renderLeads()" />
+          </div>
+          <span class="notice">—</span>
+          <div class="date-field">
+            <input id="date-to" type="date" aria-label="結束日期" onchange="clearQuickDate();renderLeads()" />
+          </div>
+          <div class="status-field">
+            <select id="status-filter" onchange="renderLeads()">
+              <option value="">全部</option>
+              <option value="new">新客戶</option>
+              <option value="contacted">已聯繫</option>
+              <option value="line_added">已加 LINE</option>
+              <option value="approved">已成交</option>
+              <option value="rejected">未成交</option>
+              <option value="invalid">無效</option>
+            </select>
+          </div>
+          <div class="status-field">
+            <select id="base-duplicate-filter" onchange="renderLeads()">
+              <option value="">底粉：全部</option>
+              <option value="yes">底粉重複</option>
+              <option value="no">非底粉重複</option>
+            </select>
+          </div>
+          <div class="status-field">
+            <select id="traffic-source-filter" onchange="renderLeads()">
+              <option value="">來源：全部</option>
+              <option value="FB">FB</option>
+              <option value="TikTok">TikTok</option>
+              <option value="unknown">未識別</option>
+            </select>
+          </div>
+          <button id="refresh-btn" onclick="loadLeads()">刷新訂單</button>
+          <div class="filter-spacer"></div>
+          <div class="search-wrap">
+            <input id="search" placeholder="搜尋姓名 / 手機 / LINE / 身分證" oninput="renderLeads()" />
+            <button type="button" onclick="renderLeads()">搜尋</button>
+          </div>
+        </div>
+        <p id="export-note" class="notice export-note">未勾選時，會匯出目前篩選結果。</p>
+      </div>
+
+      <div class="panel list-panel leads-view-section">
+        <div class="list-head">
+          <h2>申請列表</h2>
+          <div class="list-head-right">
+            <label class="select-all-wrap"><input id="select-all" type="checkbox" onchange="toggleAllVisible(this.checked)" /> 全選目前結果</label>
+            <span id="result-count">0 筆</span>
+            <button id="export-btn" class="secondary" onclick="exportCSV()">匯出 CSV</button>
+          </div>
+        </div>
+        <div id="lead-list" class="lead-list"></div>
+        <p id="empty-msg" class="notice empty hidden">目前沒有符合條件的名單。</p>
+      </div>
+
+      <div id="settings-view" class="settings-wrap hidden">
+        <div class="panel settings-panel">
+          <h2>系統設定</h2>
+          <p class="notice">儲存後，客戶重新整理落地頁即可套用最新設定。前端仍保留現有設定作為讀取失敗時的備用。</p>
+        </div>
+
+        <div class="panel settings-panel">
+          <h3>官方 LINE 設定</h3>
+          <label for="setting-line-url">LINE 完整連結</label>
+          <input id="setting-line-url" type="url" placeholder="https://line.me/R/ti/p/@xxxxxxxx" oninput="siteSettings.line_url=this.value;updateLinePreview()" />
+          <p id="setting-line-id-preview" class="notice"></p>
+          <div class="settings-actions">
+            <button class="secondary" onclick="testLineUrl()">測試開啟 LINE</button>
+          </div>
+        </div>
+
+        <div class="panel settings-panel">
+          <h3>Facebook Pixel 管理</h3>
+          <p class="notice">所有啟用中的 Pixel 都會收到落地頁目前的相同事件。建議保留正在投放使用的 Pixel。</p>
+          <div id="pixel-list" class="pixel-list"></div>
+          <div class="settings-actions">
+            <button class="secondary" onclick="addPixelRow()">新增 Pixel</button>
+          </div>
+        </div>
+
+        <div class="panel settings-panel">
+          <h3>TikTok Pixel 管理</h3>
+          <p class="notice">啟用後，客戶資料成功送入系統時會回傳 SubmitApplication 事件。</p>
+          <div id="tiktok-pixel-list" class="pixel-list"></div>
+          <div class="settings-actions">
+            <button class="secondary" onclick="addTikTokPixelRow()">新增 TikTok Pixel</button>
+          </div>
+        </div>
+
+        <div class="panel settings-panel">
+          <button id="save-settings-btn" onclick="saveSiteSettings()">儲存並同步到網站</button>
+          <p id="settings-status" class="notice setting-status"></p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="drawer-backdrop" class="drawer-backdrop hidden" onclick="closeDetails()"></div>
+  <aside id="detail-drawer" class="detail-drawer hidden" aria-label="客戶詳細資料">
+    <div class="drawer-head">
+      <h2 id="detail-title">客戶詳細資料</h2>
+      <button class="secondary" onclick="closeDetails()">關閉</button>
+    </div>
+    <div id="detail-body" class="drawer-body"></div>
+  </aside>
+
+  <script>
+    const SUPABASE_URL = 'https://sfiflidnsrdotoidvcmh.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_F9QbR2X9iJp62lf3aJnh8w_NXlYl3aD';
+    const ADMIN_LOGIN_USERNAME = 'admin';
+    const ADMIN_LOGIN_EMAIL = 'admin@d-project.local';
+    const client = window.supabase ? supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY) : null;
+    const statusLabels = {
+      new: '新客戶',
+      contacted: '已聯繫',
+      line_added: '已加 LINE',
+      approved: '已成交',
+      rejected: '未成交',
+      invalid: '無效'
+    };
+    let leads = [];
+    let selectedLeadIds = new Set();
+    let activeDetailId = null;
+    let siteSettings = {
+      line_url: 'https://line.me/R/ti/p/@111tfmeq',
+      line_id: '@111tfmeq',
+      pixel_ids: [
+        { id: '975921495153095', enabled: true },
+        { id: '1033980915864419', enabled: true }
+      ],
+      tiktok_pixel_ids: []
+    };
+
+    function escapeHTML(value) {
+      return String(value || '').replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+      }[ch]));
+    }
+
+    function formatDate(value) {
+      return value ? new Date(value).toLocaleString('zh-TW', { hour12: false }) : '';
+    }
+
+    function isSameDay(value, date) {
+      if (!value) return false;
+      const d = new Date(value);
+      return d.getFullYear() === date.getFullYear() &&
+        d.getMonth() === date.getMonth() &&
+        d.getDate() === date.getDate();
+    }
+
+    function dateInputValue(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    async function loginWithPassword() {
+      const username = document.getElementById('admin-username').value.trim();
+      const password = document.getElementById('admin-password').value;
+      const msg = document.getElementById('login-msg');
+      const btn = document.getElementById('login-btn');
+      msg.textContent = '';
+      msg.className = 'notice';
+      if (!client) {
+        msg.textContent = '登入元件載入失敗，請重新整理後再試。';
+        msg.className = 'notice error';
+        return;
+      }
+      if (username !== ADMIN_LOGIN_USERNAME || !password) {
+        msg.textContent = '帳號或密碼錯誤。';
+        msg.className = 'notice error';
+        return;
+      }
+      btn.disabled = true;
+      const { error } = await client.auth.signInWithPassword({
+        email: ADMIN_LOGIN_EMAIL,
+        password
+      });
+      btn.disabled = false;
+      msg.textContent = error ? '帳號或密碼錯誤。' : '登入成功，正在載入名單...';
+      msg.className = error ? 'notice error' : 'notice';
+      if (!error) await checkSession();
+    }
+
+    async function signOut() {
+      if (!client) return;
+      await client.auth.signOut();
+      location.reload();
+    }
+
+    async function checkSession() {
+      if (!client) {
+        const msg = document.getElementById('login-msg');
+        if (msg) {
+          msg.textContent = '登入元件載入失敗，請重新整理後再試。';
+          msg.className = 'notice error';
+        }
+        return;
+      }
+      await client.auth.getSession();
+      const { data } = await client.auth.getUser();
+      if (!data.user) return;
+      document.getElementById('login-panel').classList.add('hidden');
+      document.getElementById('app-panel').classList.remove('hidden');
+      document.getElementById('user-bar').classList.remove('hidden');
+      document.getElementById('user-email').textContent = data.user.email || '';
+      await Promise.all([loadLeads(), loadSiteSettings()]);
+    }
+
+    function showAdminView(view) {
+      const isSettings = view === 'settings';
+      document.querySelectorAll('.leads-view-section').forEach(el => el.classList.toggle('hidden', isSettings));
+      document.getElementById('settings-view').classList.toggle('hidden', !isSettings);
+      document.getElementById('nav-leads').classList.toggle('active', !isSettings);
+      document.getElementById('nav-settings').classList.toggle('active', isSettings);
+      if (isSettings) renderSiteSettings();
+    }
+
+    async function loadSiteSettings() {
+      const { data, error } = await client
+        .from('site_settings')
+        .select('line_url,line_id,pixel_ids,updated_at')
+        .eq('id', 1)
+        .single();
+      if (!error && data) {
+        siteSettings = {
+          line_url: data.line_url || siteSettings.line_url,
+          line_id: data.line_id || siteSettings.line_id,
+          pixel_ids: Array.isArray(data.pixel_ids) ? data.pixel_ids.filter(pixel => pixel.platform !== 'tiktok') : siteSettings.pixel_ids,
+          tiktok_pixel_ids: Array.isArray(data.pixel_ids) ? data.pixel_ids.filter(pixel => pixel.platform === 'tiktok') : siteSettings.tiktok_pixel_ids,
+          updated_at: data.updated_at
+        };
+      }
+      renderSiteSettings();
+    }
+
+    function extractLineId(value) {
+      const match = String(value || '').trim().match(/(@[A-Za-z0-9._-]+)(?:[/?#].*)?$/);
+      return match ? match[1] : '';
+    }
+
+    function renderSiteSettings() {
+      const lineInput = document.getElementById('setting-line-url');
+      if (!lineInput) return;
+      lineInput.value = siteSettings.line_url || '';
+      updateLinePreview();
+      const list = document.getElementById('pixel-list');
+      const pixels = Array.isArray(siteSettings.pixel_ids) ? siteSettings.pixel_ids : [];
+      list.innerHTML = pixels.map((pixel, index) => `
+        <div class="pixel-row">
+          <input type="text" value="${escapeHTML(pixel.id)}" inputmode="numeric" onchange="updatePixelId(${index},this.value)" aria-label="Pixel ID" />
+          <label class="pixel-toggle"><input type="checkbox" ${pixel.enabled !== false ? 'checked' : ''} onchange="togglePixel(${index},this.checked)" /> 啟用</label>
+          <button class="danger" onclick="removePixel(${index})">刪除</button>
+        </div>
+      `).join('') || '<p class="notice">目前沒有 Pixel。新增後儲存即可同步到網站。</p>';
+      const tiktokList = document.getElementById('tiktok-pixel-list');
+      const tiktokPixels = Array.isArray(siteSettings.tiktok_pixel_ids) ? siteSettings.tiktok_pixel_ids : [];
+      tiktokList.innerHTML = tiktokPixels.map((pixel, index) => `
+        <div class="pixel-row">
+          <input type="text" value="${escapeHTML(pixel.id)}" onchange="updateTikTokPixelId(${index},this.value)" aria-label="TikTok Pixel ID" />
+          <label class="pixel-toggle"><input type="checkbox" ${pixel.enabled !== false ? 'checked' : ''} onchange="toggleTikTokPixel(${index},this.checked)" /> 啟用</label>
+          <button class="danger" onclick="removeTikTokPixel(${index})">刪除</button>
+        </div>
+      `).join('') || '<p class="notice">目前沒有 TikTok Pixel。新增後儲存即可同步到網站。</p>';
+    }
+
+    function updateLinePreview() {
+      const input = document.getElementById('setting-line-url');
+      const preview = document.getElementById('setting-line-id-preview');
+      const lineId = extractLineId(input ? input.value : '');
+      preview.textContent = lineId ? `辨識到的 LINE ID：${lineId}` : '請輸入包含 @LINE_ID 的完整 LINE 連結。';
+      return lineId;
+    }
+
+    function testLineUrl() {
+      const url = document.getElementById('setting-line-url').value.trim();
+      if (!/^https:\/\/line\.me\//i.test(url) || !extractLineId(url)) {
+        alert('請輸入正確的 LINE 完整連結。');
+        return;
+      }
+      window.open(url, '_blank', 'noopener');
+    }
+
+    function addPixelRow() {
+      if (siteSettings.pixel_ids.length >= 5) {
+        alert('最多可設定 5 個 Pixel。');
+        return;
+      }
+      siteSettings.pixel_ids.push({ id: '', enabled: true });
+      renderSiteSettings();
+    }
+
+    function updatePixelId(index, value) {
+      siteSettings.pixel_ids[index].id = String(value || '').trim();
+    }
+
+    function togglePixel(index, enabled) {
+      siteSettings.pixel_ids[index].enabled = enabled;
+    }
+
+    function removePixel(index) {
+      const pixel = siteSettings.pixel_ids[index];
+      if (!confirm(`確定刪除 Pixel ${pixel.id || '此空白項目'}？`)) return;
+      siteSettings.pixel_ids.splice(index, 1);
+      renderSiteSettings();
+    }
+
+    function addTikTokPixelRow() {
+      if (siteSettings.tiktok_pixel_ids.length >= 5) {
+        alert('最多可設定 5 個 TikTok Pixel。');
+        return;
+      }
+      siteSettings.tiktok_pixel_ids.push({ id: '', enabled: true, platform: 'tiktok' });
+      renderSiteSettings();
+    }
+
+    function updateTikTokPixelId(index, value) {
+      siteSettings.tiktok_pixel_ids[index].id = String(value || '').trim().toUpperCase();
+    }
+
+    function toggleTikTokPixel(index, enabled) {
+      siteSettings.tiktok_pixel_ids[index].enabled = enabled;
+    }
+
+    function removeTikTokPixel(index) {
+      const pixel = siteSettings.tiktok_pixel_ids[index];
+      if (!confirm(`確定刪除 TikTok Pixel ${pixel.id || '此空白項目'}？`)) return;
+      siteSettings.tiktok_pixel_ids.splice(index, 1);
+      renderSiteSettings();
+    }
+
+    async function saveSiteSettings() {
+      const status = document.getElementById('settings-status');
+      const button = document.getElementById('save-settings-btn');
+      const lineUrl = document.getElementById('setting-line-url').value.trim();
+      const lineId = updateLinePreview();
+      const pixels = siteSettings.pixel_ids
+        .map(pixel => ({ id: String(pixel.id || '').trim(), enabled: pixel.enabled !== false }))
+        .filter(pixel => pixel.id);
+      const ids = pixels.map(pixel => pixel.id);
+      const tiktokPixels = siteSettings.tiktok_pixel_ids
+        .map(pixel => ({ id: String(pixel.id || '').trim().toUpperCase(), enabled: pixel.enabled !== false, platform: 'tiktok' }))
+        .filter(pixel => pixel.id);
+      const tiktokIds = tiktokPixels.map(pixel => pixel.id);
+
+      if (!/^https:\/\/line\.me\//i.test(lineUrl) || !lineId) {
+        status.textContent = 'LINE 連結格式不正確。';
+        status.className = 'notice error setting-status';
+        return;
+      }
+      if (pixels.some(pixel => !/^\d{8,20}$/.test(pixel.id))) {
+        status.textContent = 'Pixel ID 必須為 8 至 20 位數字。';
+        status.className = 'notice error setting-status';
+        return;
+      }
+      if (new Set(ids).size !== ids.length) {
+        status.textContent = 'Pixel ID 不可重複。';
+        status.className = 'notice error setting-status';
+        return;
+      }
+      if (tiktokPixels.some(pixel => !/^[A-Z0-9]{10,30}$/.test(pixel.id))) {
+        status.textContent = 'TikTok Pixel ID 必須為 10 至 30 位英文字母或數字。';
+        status.className = 'notice error setting-status';
+        return;
+      }
+      if (new Set(tiktokIds).size !== tiktokIds.length) {
+        status.textContent = 'TikTok Pixel ID 不可重複。';
+        status.className = 'notice error setting-status';
+        return;
+      }
+      if (!confirm('確定儲存並同步 LINE 與 Pixel 設定到客戶網站？')) return;
+
+      button.disabled = true;
+      status.textContent = '儲存中...';
+      status.className = 'notice setting-status';
+      const payload = {
+        line_url: lineUrl,
+        line_id: lineId,
+        pixel_ids: pixels.map(pixel => ({ ...pixel, platform: 'facebook' })).concat(tiktokPixels),
+        updated_at: new Date().toISOString()
+      };
+      const { error } = await client.from('site_settings').update(payload).eq('id', 1);
+      button.disabled = false;
+      if (error) {
+        status.textContent = '儲存失敗：' + error.message;
+        status.className = 'notice error setting-status';
+        return;
+      }
+      siteSettings = { ...siteSettings, line_url: lineUrl, line_id: lineId, pixel_ids: pixels, tiktok_pixel_ids: tiktokPixels, updated_at: payload.updated_at };
+      status.textContent = '已儲存。客戶重新整理落地頁後會套用最新設定。';
+      status.className = 'notice setting-status';
+      renderSiteSettings();
+    }
+
+    function normalizeLeadName(value) {
+      return String(value || '').trim().replace(/\s+/g, '').toLowerCase();
+    }
+
+    function normalizeLeadPhone(value) {
+      let phone = String(value || '').replace(/\D/g, '');
+      if (phone.startsWith('8869')) phone = '0' + phone.slice(3);
+      return phone;
+    }
+
+    function markDuplicateLeads() {
+      const seenNames = new Set();
+      const seenPhones = new Set();
+      [...leads]
+        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+        .forEach(lead => {
+          const name = normalizeLeadName(lead.name);
+          const phone = normalizeLeadPhone(lead.phone);
+          lead.__isDuplicate = Boolean(
+            (name && seenNames.has(name)) ||
+            (phone && seenPhones.has(phone))
+          );
+          if (name) seenNames.add(name);
+          if (phone) seenPhones.add(phone);
+        });
+    }
+
+    function leadCustomerType(lead) {
+      if (lead.base_duplicate) return '底粉重複';
+      return lead.__isDuplicate ? '重粉' : '新客戶';
+    }
+
+    async function loadLeads() {
+      const refreshBtn = document.getElementById('refresh-btn');
+      if (refreshBtn) {
+        refreshBtn.disabled = true;
+        refreshBtn.textContent = '刷新中...';
+      }
+      const { data, error } = await client
+        .from('leads')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) {
+        alert('讀取名單失敗：' + error.message);
+        if (refreshBtn) {
+          refreshBtn.disabled = false;
+          refreshBtn.textContent = '刷新訂單';
+        }
+        return;
+      }
+      leads = data || [];
+      markDuplicateLeads();
+      selectedLeadIds = new Set([...selectedLeadIds].filter(id => leads.some(lead => lead.id === id)));
+      renderStats();
+      renderLeads();
+      if (activeDetailId && leads.some(lead => lead.id === activeDetailId)) openDetails(activeDetailId);
+      if (refreshBtn) {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = '刷新訂單';
+      }
+    }
+
+    function renderStats() {
+      const today = new Date();
+      const createdData = filteredLeads('created_at');
+      const statusData = filteredLeads('updated_at');
+      document.getElementById('stat-filtered').textContent = createdData.length;
+      document.getElementById('stat-today').textContent = createdData.filter(x => isSameDay(x.created_at, today)).length;
+      document.getElementById('stat-new').textContent = createdData.filter(x => x.status === 'new').length;
+      document.getElementById('stat-contacted').textContent = statusData.filter(x => x.status === 'contacted').length;
+      document.getElementById('stat-line-added').textContent = statusData.filter(x => x.status === 'line_added').length;
+      document.getElementById('stat-approved').textContent = statusData.filter(x => x.status === 'approved').length;
+      document.getElementById('stat-invalid').textContent = statusData.filter(x => x.status === 'invalid').length;
+    }
+
+    function filteredLeads(dateField = 'created_at') {
+      const q = document.getElementById('search').value.trim().toLowerCase();
+      const status = document.getElementById('status-filter').value;
+      const baseDuplicate = document.getElementById('base-duplicate-filter').value;
+      const trafficSourceFilter = document.getElementById('traffic-source-filter').value;
+      const from = document.getElementById('date-from').value;
+      const to = document.getElementById('date-to').value;
+      return leads.filter(lead => {
+        if (status && lead.status !== status) return false;
+        if (baseDuplicate === 'yes' && !lead.base_duplicate) return false;
+        if (baseDuplicate === 'no' && lead.base_duplicate) return false;
+        const source = trafficSource(lead);
+        if (trafficSourceFilter === 'unknown' && source) return false;
+        if (trafficSourceFilter && trafficSourceFilter !== 'unknown' && source !== trafficSourceFilter) return false;
+        const dateValue = lead[dateField] || lead.created_at;
+        if (from && new Date(dateValue) < new Date(from + 'T00:00:00')) return false;
+        if (to && new Date(dateValue) > new Date(to + 'T23:59:59')) return false;
+        if (!q) return true;
+        return [lead.name, lead.phone, lead.line_id, lead.city, lead.id_number]
+          .some(value => String(value || '').toLowerCase().includes(q));
+      });
+    }
+
+    function setQuickDate(days, button) {
+      const today = new Date();
+      let from = new Date(today);
+      let to = new Date(today);
+      if (days === 1) {
+        from.setDate(today.getDate() - 1);
+        to = new Date(from);
+      } else if (days > 1) {
+        from.setDate(today.getDate() - (days - 1));
+      }
+      document.getElementById('date-from').value = dateInputValue(from);
+      document.getElementById('date-to').value = dateInputValue(to);
+      document.querySelectorAll('.quick-dates button').forEach(btn => btn.classList.remove('active'));
+      if (button) button.classList.add('active');
+      renderLeads();
+    }
+
+    function clearQuickDate() {
+      document.querySelectorAll('.quick-dates button').forEach(btn => btn.classList.remove('active'));
+    }
+
+    function trafficSource(lead) {
+      const saved = String(lead.traffic_source || '');
+      if (saved === 'FB' || saved === 'TikTok') return saved;
+      const url = String(lead.source_url || '').toLowerCase();
+      if (url.includes('fbclid=') || /utm_source=(facebook|fb|meta)/.test(url)) return 'FB';
+      if (url.includes('ttclid=') || /utm_source=(tiktok|tk)/.test(url)) return 'TikTok';
+      return '';
+    }
+
+    function trafficSourceTag(lead) {
+      const source = trafficSource(lead);
+      return source ? `<span class="tag ${source === 'FB' ? 'tag-fb' : 'tag-tiktok'}">${source}</span>` : '';
+    }
+
+    function renderLeads() {
+      const list = document.getElementById('lead-list');
+      const data = filteredLeads();
+      document.getElementById('empty-msg').classList.toggle('hidden', data.length > 0);
+      document.getElementById('result-count').textContent = `${data.length} 筆・篩選中`;
+      list.innerHTML = data.map((lead, index) => `
+        <article class="lead-row">
+          <input class="lead-check" type="checkbox" ${selectedLeadIds.has(lead.id) ? 'checked' : ''} onchange="toggleLeadSelection('${lead.id}', this.checked)" />
+          <div class="lead-summary">
+            <div class="lead-title-line">
+              <span class="lead-index">${data.length - index}</span>
+              <span class="lead-name">${escapeHTML(lead.name || '未填姓名')}</span>
+              ${lead.base_duplicate
+                ? '<span class="tag tag-base-duplicate">底粉重複</span>'
+                : lead.__isDuplicate
+                ? '<span class="tag tag-duplicate">重粉</span>'
+                : '<span class="tag tag-fresh">新客戶</span>'}
+              ${lead.status === 'new' ? '' : `<span class="tag tag-${escapeHTML(lead.status)}">${escapeHTML(statusLabels[lead.status] || lead.status)}</span>`}
+              ${lead.line_clicked ? '<span class="tag tag-line">已點 LINE</span>' : ''}
+              ${trafficSourceTag(lead)}
+            </div>
+            <div class="lead-meta">
+              <span>手機 <strong>${escapeHTML(lead.phone)}</strong></span>
+              <span>LINE <strong>${escapeHTML(lead.line_id)}</strong></span>
+              <span>金額 <strong>${escapeHTML(lead.q3_amount_needed || '未填')}</strong></span>
+              <span>居住 <strong>${escapeHTML(lead.city || '未填')}</strong></span>
+            </div>
+            <div class="lead-time">${escapeHTML(formatDate(lead.created_at))}</div>
+          </div>
+          <div class="lead-actions">
+            <button class="status-btn ${lead.status === 'contacted' ? 'active' : ''}" onclick="updateLead('${lead.id}',{status:'contacted'})">已聯繫</button>
+            <button class="status-btn ${lead.status === 'line_added' ? 'active' : ''}" onclick="updateLead('${lead.id}',{status:'line_added'})">已添加</button>
+            <button class="status-btn ${lead.status === 'approved' ? 'active' : ''}" onclick="updateLead('${lead.id}',{status:'approved'})">已成交</button>
+            <button class="status-btn ${lead.status === 'invalid' ? 'active' : ''}" onclick="updateLead('${lead.id}',{status:'invalid'})">無效</button>
+            <button onclick="copyLead('${lead.id}')">一鍵複製</button>
+            <button class="secondary" onclick="openDetails('${lead.id}')">詳情</button>
+          </div>
+        </article>
+      `).join('');
+      renderStats();
+      updateSelectionUI(data);
+    }
+
+    function detailItem(label, value) {
+      return `<div class="detail-item"><label>${escapeHTML(label)}</label><div>${escapeHTML(value || '未填')}</div></div>`;
+    }
+
+    function openDetails(id) {
+      const lead = leads.find(item => item.id === id);
+      if (!lead) return;
+      activeDetailId = id;
+      document.getElementById('detail-title').textContent = `${lead.name || '客戶'}｜詳細資料`;
+      document.getElementById('detail-body').innerHTML = `
+        <div class="detail-grid">
+          ${detailItem('提交時間', formatDate(lead.created_at))}
+          ${detailItem('目前狀態', statusLabels[lead.status] || lead.status)}
+          ${detailItem('客戶類型', leadCustomerType(lead))}
+          ${detailItem('底粉來源', lead.base_duplicate ? lead.base_duplicate_source : '')}
+          ${detailItem('姓名', lead.name)}
+          ${detailItem('年齡', lead.age ? lead.age + ' 歲' : '')}
+          ${detailItem('手機', lead.phone)}
+          ${detailItem('LINE ID', lead.line_id)}
+          ${detailItem('居住縣市', lead.city)}
+          ${detailItem('身分證字號', lead.id_number)}
+          ${detailItem('需求金額', lead.q3_amount_needed)}
+          ${detailItem('既有貸款', lead.q1_existing_loan)}
+          ${detailItem('帳戶狀態', lead.q2_bank_status)}
+          ${detailItem('外幣帳戶', lead.q4_foreign_currency_account)}
+          ${detailItem('LINE 點擊', lead.line_clicked ? '已點擊加入 LINE' : '尚未點擊')}
+          ${detailItem('廣告來源', trafficSource(lead) || '未識別')}
+        </div>
+        <div class="detail-section">
+          <h3>提供甲方的客戶資料</h3>
+          <textarea id="client-copy-text" class="client-copy-box" readonly>${escapeHTML(clientCopyText(lead))}</textarea>
+          <div style="height:10px"></div>
+          <button id="client-copy-btn" onclick="copyLead('${lead.id}')">一鍵複製客戶資料</button>
+        </div>
+        <div class="detail-section">
+          <h3>快速操作</h3>
+          <div class="drawer-actions">
+            ${Object.entries(statusLabels).map(([value, label]) =>
+              `<button class="${lead.status === value ? '' : 'secondary'}" onclick="updateLead('${lead.id}',{status:'${value}'})">${escapeHTML(label)}</button>`
+            ).join('')}
+            <button onclick="copyLeadField('${lead.id}','phone')">複製電話</button>
+            <button onclick="copyLeadField('${lead.id}','line_id')">複製 LINE</button>
+          </div>
+        </div>
+        <div class="detail-section">
+          <h3>處理備註</h3>
+          <textarea id="detail-notes">${escapeHTML(lead.notes || '')}</textarea>
+          <div style="height:10px"></div>
+          <button onclick="saveDetailNotes('${lead.id}')">儲存備註</button>
+        </div>
+      `;
+      document.getElementById('drawer-backdrop').classList.remove('hidden');
+      document.getElementById('detail-drawer').classList.remove('hidden');
+    }
+
+    function closeDetails() {
+      activeDetailId = null;
+      document.getElementById('drawer-backdrop').classList.add('hidden');
+      document.getElementById('detail-drawer').classList.add('hidden');
+    }
+
+    function binaryAnswer(value) {
+      const text = String(value || '').trim();
+      if (!text) return null;
+      if (/^(否|無|没有|沒有|不是|非|正常)/.test(text)) return false;
+      if (/^(是|有|異常|异常|屬於|属于)/.test(text)) return true;
+      return null;
+    }
+
+    function answerAfterColon(value) {
+      const match = String(value || '').match(/[：:]\s*([^；;,，\s]+)/);
+      return match ? match[1] : '';
+    }
+
+    function bankWarningValue(value) {
+      const text = String(value || '').trim();
+      const explicit = text.match(/警示戶\s*[：:]\s*([^；;,，\s]+)/);
+      const parsed = binaryAnswer(explicit ? explicit[1] : text);
+      if (parsed !== null) return parsed ? '是' : '否';
+      if (/非警示|帳戶正常|正常/.test(text)) return '否';
+      return /異常|警示/.test(text) ? '是' : '否';
+    }
+
+    function foreignAccountValue(value) {
+      const text = String(value || '').trim();
+      const explicit = text.match(/外幣帳戶\s*[：:]\s*([^；;,，\s]+)/);
+      const parsed = binaryAnswer(explicit ? explicit[1] : text);
+      if (parsed !== null) return parsed ? '是' : '否';
+      if (/無外幣|沒有外幣/.test(text)) return '否';
+      return /有外幣/.test(text) ? '是' : '否';
+    }
+
+    function existingLoanValue(value) {
+      const text = String(value || '').trim();
+      const loanSegment = text.split(/[；;]/)[0];
+      const parsed = binaryAnswer(answerAfterColon(loanSegment) || loanSegment);
+      if (parsed !== null) return parsed ? '有' : '無';
+      return !text || /無貸款|無任何貸款|沒有貸款/.test(text) ? '無' : '有';
+    }
+
+    function debtNegotiationValue(value) {
+      const text = String(value || '');
+      const match = text.match(/(?:銀行)?協商或呆帳\s*[：:]\s*([^；;,，\s]+)/);
+      if (!match) return '';
+      const parsed = binaryAnswer(match[1]);
+      return parsed === null ? match[1] : (parsed ? '是' : '否');
+    }
+
+    function clientCopyText(lead) {
+      const rows = [
+        `姓名：${lead.name || ''}`,
+        `年齡：${lead.age || ''}`,
+        `居住地：${lead.city || ''}`,
+        `LINE ID：${lead.line_id || ''}`,
+        `手機號碼：${lead.phone || ''}`,
+        `需求金額：${lead.q3_amount_needed || ''}`,
+        `身分證字號：${lead.id_number || ''}`,
+        `銀行警示戶：${bankWarningValue(lead.q2_bank_status)}`,
+        `個人外幣帳戶：${foreignAccountValue(lead.q4_foreign_currency_account)}`,
+        `信貸/房貸/汽貸/機車：${existingLoanValue(lead.q1_existing_loan)}`
+      ];
+      const debtNegotiation = debtNegotiationValue(lead.q1_existing_loan);
+      if (debtNegotiation) rows.push(`銀行協商或呆帳：${debtNegotiation}`);
+      rows.push(
+        `客戶類型：${leadCustomerType(lead)}`,
+        `底粉來源：${lead.base_duplicate ? (lead.base_duplicate_source || '') : ''}`
+      );
+      return rows.join('\n');
+    }
+
+    async function copyLead(id) {
+      const lead = leads.find(item => item.id === id);
+      if (!lead) return;
+      await copyText(clientCopyText(lead));
+      const button = document.getElementById('client-copy-btn');
+      if (button) {
+        button.textContent = '已複製，可以直接貼給甲方';
+        setTimeout(() => { button.textContent = '一鍵複製客戶資料'; }, 1800);
+      }
+    }
+
+    function toggleLeadSelection(id, checked) {
+      if (checked) selectedLeadIds.add(id);
+      else selectedLeadIds.delete(id);
+      updateSelectionUI(filteredLeads());
+    }
+
+    function toggleAllVisible(checked) {
+      filteredLeads().forEach(lead => {
+        if (checked) selectedLeadIds.add(lead.id);
+        else selectedLeadIds.delete(lead.id);
+      });
+      renderLeads();
+    }
+
+    function updateSelectionUI(data) {
+      const selectedCount = selectedLeadIds.size;
+      const selectAll = document.getElementById('select-all');
+      const exportBtn = document.getElementById('export-btn');
+      const exportNote = document.getElementById('export-note');
+      const visibleIds = data.map(lead => lead.id);
+      const visibleSelected = visibleIds.filter(id => selectedLeadIds.has(id)).length;
+      if (selectAll) {
+        selectAll.checked = data.length > 0 && visibleSelected === data.length;
+        selectAll.indeterminate = visibleSelected > 0 && visibleSelected < data.length;
+      }
+      if (exportBtn) {
+        exportBtn.textContent = selectedCount > 0 ? `匯出已勾選 ${selectedCount} 筆` : '匯出 CSV';
+      }
+      if (exportNote) {
+        exportNote.textContent = selectedCount > 0
+          ? '會匯出已勾選的訂單。'
+          : '未勾選時，會匯出目前篩選結果。';
+      }
+    }
+
+    async function updateLead(id, patch) {
+      const update = patch.status
+        ? { ...patch, updated_at: new Date().toISOString() }
+        : patch;
+      const { error } = await client.from('leads').update(update).eq('id', id);
+      if (error) {
+        alert('更新失敗：' + error.message);
+        return;
+      }
+      await loadLeads();
+    }
+
+    function saveDetailNotes(id) {
+      const notes = document.getElementById('detail-notes').value;
+      updateLead(id, { notes });
+    }
+
+    function copyLeadField(id, field) {
+      const lead = leads.find(item => item.id === id);
+      if (!lead) return;
+      copyText(lead[field] || '');
+    }
+
+    async function copyText(value) {
+      const text = value || '';
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (error) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        textarea.remove();
+      }
+    }
+
+    function exportCSV() {
+      const cols = ['created_at','name','age','city','id_number','phone','line_id','q1_existing_loan','q2_bank_status','q3_amount_needed','q4_foreign_currency_account','status','base_duplicate','base_duplicate_source','traffic_source','notes'];
+      const selectedRows = leads.filter(row => selectedLeadIds.has(row.id));
+      const exportRows = selectedRows.length > 0 ? selectedRows : filteredLeads();
+      if (exportRows.length === 0) {
+        alert('目前沒有可匯出的名單。');
+        return;
+      }
+      const csv = [cols.join(',')].concat(exportRows.map(row =>
+        cols.map(col => '"' + String(row[col] || '').replace(/"/g, '""') + '"').join(',')
+      )).join('\n');
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'leads-' + new Date().toISOString().slice(0,10) + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    checkSession();
+  </script>
+</body>
+</html>
