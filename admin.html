@@ -222,7 +222,7 @@
           <button id="refresh-btn" onclick="loadLeads()">刷新訂單</button>
           <div class="filter-spacer"></div>
           <div class="search-wrap">
-            <input id="search" placeholder="搜尋姓名 / 手機 / LINE / 身分證" oninput="renderLeads()" />
+            <input id="search" placeholder="搜尋姓名 / 電話 / LINE" oninput="renderLeads()" />
             <button type="button" onclick="renderLeads()">搜尋</button>
           </div>
         </div>
@@ -738,10 +738,11 @@
               ${trafficSourceTag(lead)}
             </div>
             <div class="lead-meta">
-              <span>手機 <strong>${escapeHTML(lead.phone)}</strong></span>
+              <span>電話 <strong>${escapeHTML(lead.phone)}</strong></span>
+              <span>出生年月日 <strong>${escapeHTML(lead.age || '未填')}</strong></span>
               <span>LINE <strong>${escapeHTML(lead.line_id)}</strong></span>
-              <span>金額 <strong>${escapeHTML(lead.q3_amount_needed || '未填')}</strong></span>
-              <span>居住 <strong>${escapeHTML(lead.city || '未填')}</strong></span>
+              <span>貸款金額 <strong>${escapeHTML(lead.q3_amount_needed || '未填')}</strong></span>
+              <span>警示戶 <strong>${escapeHTML(bankWarningValue(lead.q2_bank_status))}</strong></span>
             </div>
             <div class="lead-time">${escapeHTML(formatDate(lead.created_at))}</div>
           </div>
@@ -775,15 +776,11 @@
           ${detailItem('客戶類型', leadCustomerType(lead))}
           ${detailItem('底粉來源', lead.base_duplicate ? lead.base_duplicate_source : '')}
           ${detailItem('姓名', lead.name)}
-          ${detailItem('年齡', lead.age ? lead.age + ' 歲' : '')}
-          ${detailItem('手機', lead.phone)}
-          ${detailItem('LINE ID', lead.line_id)}
-          ${detailItem('居住縣市', lead.city)}
-          ${detailItem('身分證字號', lead.id_number)}
-          ${detailItem('需求金額', lead.q3_amount_needed)}
-          ${detailItem('既有貸款', lead.q1_existing_loan)}
-          ${detailItem('帳戶狀態', lead.q2_bank_status)}
-          ${detailItem('外幣帳戶', lead.q4_foreign_currency_account)}
+          ${detailItem('電話', lead.phone)}
+          ${detailItem('出生年月日', lead.age)}
+          ${detailItem('LINE 帳號', lead.line_id)}
+          ${detailItem('貸款金額', lead.q3_amount_needed)}
+          ${detailItem('是否是警示戶', bankWarningValue(lead.q2_bank_status))}
           ${detailItem('LINE 點擊', lead.line_clicked ? '已點擊加入 LINE' : '尚未點擊')}
           ${detailItem('廣告來源', trafficSource(lead) || '未識別')}
         </div>
@@ -870,18 +867,12 @@
     function clientCopyText(lead) {
       const rows = [
         `姓名：${lead.name || ''}`,
-        `年齡：${lead.age || ''}`,
-        `居住地：${lead.city || ''}`,
-        `LINE ID：${lead.line_id || ''}`,
-        `手機號碼：${lead.phone || ''}`,
-        `需求金額：${lead.q3_amount_needed || ''}`,
-        `身分證字號：${lead.id_number || ''}`,
-        `銀行警示戶：${bankWarningValue(lead.q2_bank_status)}`,
-        `個人外幣帳戶：${foreignAccountValue(lead.q4_foreign_currency_account)}`,
-        `信貸/房貸/汽貸/機車：${existingLoanValue(lead.q1_existing_loan)}`
+        `電話：${lead.phone || ''}`,
+        `出生年月日：${lead.age || ''}`,
+        `LINE 帳號：${lead.line_id || ''}`,
+        `貸款金額：${lead.q3_amount_needed || ''}`,
+        `是否是警示戶：${bankWarningValue(lead.q2_bank_status)}`
       ];
-      const debtNegotiation = debtNegotiationValue(lead.q1_existing_loan);
-      if (debtNegotiation) rows.push(`銀行協商或呆帳：${debtNegotiation}`);
       rows.push(
         `客戶類型：${leadCustomerType(lead)}`,
         `底粉來源：${lead.base_duplicate ? (lead.base_duplicate_source || '') : ''}`
@@ -975,7 +966,7 @@
     }
 
     function exportCSV() {
-      const cols = ['created_at','name','age','city','id_number','phone','line_id','q1_existing_loan','q2_bank_status','q3_amount_needed','q4_foreign_currency_account','status','base_duplicate','base_duplicate_source','traffic_source','notes'];
+      const cols = ['created_at','name','phone','age','line_id','q3_amount_needed','q2_bank_status','status','base_duplicate','base_duplicate_source','traffic_source','notes'];
       const selectedRows = leads.filter(row => selectedLeadIds.has(row.id));
       const exportRows = selectedRows.length > 0 ? selectedRows : filteredLeads();
       if (exportRows.length === 0) {
