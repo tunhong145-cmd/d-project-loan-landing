@@ -1405,7 +1405,7 @@
       <div class="article-body">
 
         <h2>記者實測：選完金額不到1分鐘，專員就來確認了</h2>
-        <p>近期不少民眾反映，名下已有貸款卻仍有周轉需求。記者實際測試長原資產管理有限公司的線上額度申請流程後發現：<strong>整個過程不到60秒</strong>——只要選好需求金額、回答3題基本條件、填完聯絡資料送出，LINE 專員就會主動聯繫確認可談額度方向。</p>
+        <p>近期不少民眾反映，名下已有貸款卻仍有周轉需求。記者實際測試長原資產管理有限公司的線上額度申請流程後發現：<strong>整個過程不到60秒</strong>——只要選好需求金額、確認是否為警示戶、填完聯絡資料送出，LINE 專員就會主動聯繫確認可談額度方向。</p>
 
         <div class="e-amount-wall">
           <div class="e-amount-card"><b>想借 10萬–20萬</b><span>小額周轉最快當日有人回覆，不用跑銀行排隊。</span></div>
@@ -1417,7 +1417,7 @@
         <div class="e-section-grid">
           <div>
             <h2>有車貸、信貸、房貸，為什麼這裡還能送？</h2>
-            <p>銀行看的是負債比和聯徵紀錄，一旦名下貸款多就容易被拒。但長原資產管理有限公司的流程不同——<strong>先收需求、再由專員人工確認</strong>，不是機器直接刷掉你。即使你目前有信貸、車貸或房貸，只要帳戶正常、非警示戶，就可以先把需求送出來。</p>
+            <p>銀行看的是負債比和聯徵紀錄，一旦名下貸款多就容易被拒。但長原資產管理有限公司的流程不同——<strong>先收需求、再由專員人工確認</strong>，不是機器直接刷掉你。即使你目前有信貸、車貸、房貸或為警示戶，也可以先把需求送出來，由專員個別確認。</p>
             <p>送出後，專員會透過 LINE 一對一確認你的條件，告訴你有沒有方向、能談多少。<strong>不用跑銀行、不用等電話、不用怕被拒絕後不知道下一步怎麼辦。</strong></p>
           </div>
           <div class="e-feature-photo">
@@ -1467,7 +1467,7 @@
 
         <div class="e-process">
           <div class="e-process-card"><b>① 選金額</b><span>10萬–100萬，點一下就好。不用填一堆資料才能開始。</span></div>
-          <div class="e-process-card"><b>② 答3題</b><span>有沒有貸款、帳戶正不正常、有沒有外幣帳戶。30秒搞定。</span></div>
+          <div class="e-process-card"><b>② 確認1項</b><span>只需確認是否為警示戶；警示戶也能繼續送出。</span></div>
           <div class="e-process-card"><b>③ 專員來找你</b><span>送出後 LINE 專員主動聯繫，告訴你能不能談、能談多少。</span></div>
         </div>
 
@@ -1479,7 +1479,7 @@
 
         <div class="e-form-lead">
           <strong>別再猜自己能不能借到——60秒送出，讓專員告訴你答案。</strong>
-          <span>選完金額、答完3題、填好聯絡方式，專員當日透過 LINE 回覆你。</span>
+          <span>選完金額、確認警示戶狀態、填好聯絡方式，專員將透過 LINE 回覆你。</span>
         </div>
 
       </div>
@@ -1489,7 +1489,7 @@
       <div class="quiz-section" id="quiz-section">
         <div class="quiz-attention">
           最高100萬｜有貸款也能送｜60秒搞定
-          <small>選金額 → 答3題 → 專員主動LINE你確認</small>
+          <small>選金額 → 確認警示戶狀態 → 專員主動LINE你確認</small>
         </div>
         <div class="quiz-header">
           <h3>第一步：你這次想借多少？</h3>
@@ -1537,53 +1537,29 @@
         <!-- STEP 2 -->
         <div class="quiz-step" id="step-2">
           <div class="step-title">
-            <span class="step-badge">2</span> 快速確認3個基本條件
+            <span class="step-badge">2</span> 確認是否為警示戶
           </div>
 
           <div class="condition-progress">
             <span>正在申請：<strong id="condition-amount">待確認</strong></span>
-            <strong id="condition-progress-text">再回答 3 題即可完成申請</strong>
+            <strong id="condition-progress-text">警示戶也可以送出申請</strong>
           </div>
 
           <div class="guided-question-stage">
             <div class="question-block guided-question active-question" data-condition-index="1">
-              <p class="question-text">Q2. 你目前名下有其他貸款嗎？</p>
+              <p class="question-text">你目前是否為銀行警示戶？</p>
               <div class="options-grid">
-                <button class="option-btn" data-q="q1" data-v="無貸款" onclick="selectConditionAndContinue(this, 1)">
-                  <span class="option-icon"></span> 沒有貸款
+                <button class="option-btn" data-q="q2" data-v="非警示戶" onclick="selectConditionAndContinue(this)">
+                  <span class="option-icon"></span> 否，不是警示戶
                 </button>
-                <button class="option-btn" data-q="q1" data-v="有既有貸款" onclick="selectConditionAndContinue(this, 1)">
-                  <span class="option-icon"></span> 有（信貸/房貸/車貸都算）
-                </button>
-              </div>
-            </div>
-
-            <div class="question-block guided-question" data-condition-index="2">
-              <p class="question-text">Q3. 你的銀行帳戶目前正常嗎？</p>
-              <div class="options-grid">
-                <button class="option-btn" data-q="q2" data-v="帳戶正常" onclick="selectConditionAndContinue(this, 2)">
-                  <span class="option-icon"></span> 正常，沒問題
-                </button>
-                <button class="option-btn" data-q="q2" data-v="警示戶" onclick="selectConditionAndContinue(this, 2, true)">
-                  <span class="option-icon"></span> 不正常（警示戶）
-                </button>
-              </div>
-            </div>
-
-            <div class="question-block guided-question" data-condition-index="3">
-              <p class="question-text">Q4. 你有個人外幣帳戶嗎？</p>
-              <div class="options-grid">
-                <button class="option-btn" data-q="q4" data-v="有外幣帳戶" onclick="selectConditionAndContinue(this, 3)">
-                  <span class="option-icon"></span> 有
-                </button>
-                <button class="option-btn" data-q="q4" data-v="無外幣帳戶" onclick="selectConditionAndContinue(this, 3)">
-                  <span class="option-icon"></span> 沒有
+                <button class="option-btn" data-q="q2" data-v="警示戶" onclick="selectConditionAndContinue(this)">
+                  <span class="option-icon"></span> 是，目前為警示戶
                 </button>
               </div>
             </div>
           </div>
 
-          <div class="ssl-badge">答完自動進入下一步｜有貸款也能繼續</div>
+          <div class="ssl-badge">選完自動進入下一步｜警示戶也能繼續申請</div>
         </div>
 
         <!-- STEP 3 -->
@@ -1612,13 +1588,13 @@
             </div>
           </div>
           <div class="form-intro">
-            <strong id="application-form-title">你的額度申請已建立</strong><br />填完以下6項資料送出，長原資產管理有限公司專員將透過 LINE 主動聯繫你，確認可申請方案。
+            <strong id="application-form-title">你的額度申請已建立</strong><br />填完以下4項聯絡資料即可送出。包含貸款金額與警示戶狀態，全程只需提供6項資料。
           </div>
 
           <div class="form-completion">
             <div class="form-completion-head">
               <span>資料填寫進度</span>
-              <strong id="form-progress-text">已填寫 0/6 項</strong>
+              <strong id="form-progress-text">已填寫 0/4 項</strong>
             </div>
             <div class="form-completion-track"><div class="form-completion-bar" id="form-completion-bar"></div></div>
           </div>
@@ -1626,39 +1602,20 @@
           <form id="apply-form" onsubmit="submitForm(event)">
             <div class="form-grid">
               <div class="form-group">
-                <label>真實姓名 *</label>
-                <input type="text" id="f-name" placeholder="例：張志豪" required autocomplete="name" enterkeyhint="next" />
+                <label>姓名 *</label>
+                <input type="text" id="f-name" placeholder="請輸入真實姓名" required autocomplete="name" enterkeyhint="next" />
               </div>
               <div class="form-group">
-                <label>目前年齡 *</label>
-                <input type="number" id="f-age" placeholder="限 18–60 歲" min="18" max="60" required inputmode="numeric" enterkeyhint="next" />
-              </div>
-              <div class="form-group">
-                <label>現居縣市 *</label>
-                <select id="f-city" required>
-                  <option value="">請選擇</option>
-                  <option>台北市</option><option>新北市</option><option>桃園市</option>
-                  <option>台中市</option><option>台南市</option><option>高雄市</option>
-                  <option>基隆市</option><option>新竹市</option><option>新竹縣</option>
-                  <option>苗栗縣</option><option>彰化縣</option><option>南投縣</option>
-                  <option>雲林縣</option><option>嘉義市</option><option>嘉義縣</option>
-                  <option>屏東縣</option><option>宜蘭縣</option><option>花蓮縣</option>
-                  <option>台東縣</option><option>澎湖縣</option><option>金門縣</option>
-                  <option>連江縣</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>身分證字號 *</label>
-                <input type="text" id="f-id" placeholder="例：A123456789" maxlength="10" required autocomplete="off" enterkeyhint="next" />
-                <span class="id-hint">🔒 加密比對資格用，絕不外洩</span>
-              </div>
-              <div class="form-group">
-                <label>手機號碼 *</label>
+                <label>電話 *</label>
                 <input type="tel" id="f-phone" placeholder="例：0912345678" required inputmode="tel" autocomplete="tel" enterkeyhint="next" />
               </div>
               <div class="form-group">
-                <label>你的 LINE ID *</label>
-                <input type="text" id="f-line" placeholder="專員會用LINE聯繫你" required enterkeyhint="done" />
+                <label>出生年月日 *</label>
+                <input type="date" id="f-birth-date" required autocomplete="bday" enterkeyhint="next" />
+              </div>
+              <div class="form-group">
+                <label>LINE 帳號 *</label>
+                <input type="text" id="f-line" placeholder="請輸入 LINE ID" required enterkeyhint="done" />
                 <span class="id-hint">重要：專員優先透過 LINE 確認額度方向</span>
               </div>
             </div>
@@ -1963,7 +1920,7 @@ var currentStep = 1;
 var totalSteps = 3;
 var progressLabels = {
   1: '第 1 步：選擇需求金額',
-  2: '第 2 步：確認基本條件',
+  2: '第 2 步：確認警示戶狀態',
   3: '第 3 步：完成額度申請'
 };
 var autoTransitionLocked = false;
@@ -1978,28 +1935,12 @@ var editChoiceGroups = {
       { value: '50萬以上', label: '50萬以上' }
     ]
   },
-  q1: {
-    title: '修改既有貸款',
-    label: '既有貸款',
-    options: [
-      { value: '無貸款', label: '無貸款' },
-      { value: '有既有貸款', label: '有（信貸/房貸/汽貸/機車貸）' }
-    ]
-  },
   q2: {
-    title: '修改銀行帳戶狀態',
-    label: '銀行帳戶',
+    title: '修改警示戶狀態',
+    label: '是否警示戶',
     options: [
-      { value: '帳戶正常', label: '是，皆正常' },
-      { value: '警示戶', label: '否，屬於銀行警示戶', disqualify: true }
-    ]
-  },
-  q4: {
-    title: '修改外幣帳戶',
-    label: '外幣帳戶',
-    options: [
-      { value: '有外幣帳戶', label: '是' },
-      { value: '無外幣帳戶', label: '否' }
+      { value: '非警示戶', label: '否，不是警示戶' },
+      { value: '警示戶', label: '是，目前為警示戶' }
     ]
   }
 };
@@ -2011,7 +1952,7 @@ function updateProgress(step) {
 }
 updateProgress(1);
 
-function selectOption(btn, isDisqualify) {
+function selectOption(btn) {
   var q = btn.getAttribute('data-q');
   var v = btn.getAttribute('data-v');
   var siblings = btn.closest('.options-grid').querySelectorAll('.option-btn');
@@ -2019,14 +1960,6 @@ function selectOption(btn, isDisqualify) {
   btn.classList.add('selected');
   answers[q] = v;
 
-  if (isDisqualify) {
-    setTimeout(function() {
-      showModal('⚠️ 很抱歉', '目前銀行警示戶暫不符合申辦資格。建議先解除警示戶狀態後再行申辦。');
-      btn.classList.remove('selected');
-      delete answers[q];
-    }, 300);
-    return false;
-  }
   return true;
 }
 
@@ -2050,28 +1983,23 @@ function showConditionQuestion(index) {
     block.classList.toggle('active-question', Number(block.getAttribute('data-condition-index')) === index);
   });
   var progress = document.getElementById('condition-progress-text');
-  var remaining = 4 - index;
-  if (progress) progress.textContent = '再回答 ' + remaining + ' 題即可完成申請';
+  if (progress) progress.textContent = '警示戶也可以送出申請';
 }
 
-function selectConditionAndContinue(btn, index, isDisqualify) {
+function selectConditionAndContinue(btn) {
   if (autoTransitionLocked) return;
-  if (!selectOption(btn, isDisqualify)) return;
+  if (!selectOption(btn)) return;
   autoTransitionLocked = true;
   var progress = document.getElementById('condition-progress-text');
-  if (progress) progress.textContent = '已完成 ' + index + '/3 題';
+  if (progress) progress.textContent = answers.q2 === '警示戶' ? '警示戶也可申請，正在進入資料填寫' : '已確認，正在進入資料填寫';
   setTimeout(function() {
-    if (index < 3) {
-      showConditionQuestion(index + 1);
-    } else {
-      nextStep(2);
-    }
+    nextStep(2);
     autoTransitionLocked = false;
   }, 420);
 }
 
 function nextStep(from) {
-  var requiredQ = from === 1 ? ['q3'] : ['q1','q2','q4'];
+  var requiredQ = from === 1 ? ['q3'] : ['q2'];
   for (var i = 0; i < requiredQ.length; i++) {
     if (!answers[requiredQ[i]]) {
       showModal('⚠️ 提示', '請先完成所有選項再繼續。');
@@ -2113,7 +2041,7 @@ function updateEstimateCard() {
 function renderApplicationSummary() {
   var summary = document.getElementById('application-summary');
   if (!summary) return;
-  var keys = ['q3', 'q1', 'q2', 'q4'];
+  var keys = ['q3', 'q2'];
   summary.innerHTML = keys.map(function(key) {
     var group = editChoiceGroups[key];
     return '<div class="summary-row">' +
@@ -2133,7 +2061,7 @@ function openEditOption(key) {
   title.textContent = group.title;
   grid.innerHTML = group.options.map(function(option) {
     var selected = answers[key] === option.value ? ' selected' : '';
-    return '<button type="button" class="edit-choice' + selected + '" onclick="applyEditedAnswer(\'' + key + '\',\'' + option.value + '\',' + (option.disqualify ? 'true' : 'false') + ')">' + option.label + '</button>';
+    return '<button type="button" class="edit-choice' + selected + '" onclick="applyEditedAnswer(\'' + key + '\',\'' + option.value + '\')">' + option.label + '</button>';
   }).join('');
   panel.hidden = false;
 }
@@ -2143,11 +2071,7 @@ function closeEditOption() {
   if (panel) panel.hidden = true;
 }
 
-function applyEditedAnswer(key, value, isDisqualify) {
-  if (isDisqualify) {
-    showModal('⚠️ 很抱歉', '目前銀行警示戶暫不符合申辦資格。建議先解除警示戶狀態後再行申辦。');
-    return;
-  }
+function applyEditedAnswer(key, value) {
   answers[key] = value;
   if (key === 'q3') {
     var conditionAmount = document.getElementById('condition-amount');
@@ -2238,18 +2162,12 @@ async function submitForm(e) {
   }
 
   var name   = document.getElementById('f-name').value.trim();
-  var age    = document.getElementById('f-age').value.trim();
-  var city   = document.getElementById('f-city').value;
-  var idNum  = document.getElementById('f-id').value.trim();
+  var birthDate = document.getElementById('f-birth-date').value;
   var phone  = document.getElementById('f-phone').value.trim();
   var lineId = document.getElementById('f-line').value.trim();
 
-  if (!name || !age || !city || !idNum || !phone || !lineId) {
+  if (!name || !birthDate || !phone || !lineId || !answers.q3 || !answers.q2) {
     showModal('⚠️ 提示', '請填寫所有必填欄位。');
-    return;
-  }
-  if (parseInt(age) > 60 || parseInt(age) < 18) {
-    showModal('⚠️ 提示', '申辦年齡限制為 18–60 歲。');
     return;
   }
 
@@ -2264,15 +2182,15 @@ async function submitForm(e) {
   var leadPayload = {
     id: leadId,
     name: name,
-    age: parseInt(age, 10),
-    city: city,
-    id_number: idNum,
+    age: birthDate,
+    city: '',
+    id_number: '',
     phone: phone,
     line_id: lineId,
-    q1_existing_loan: answers['q1'] || '',
+    q1_existing_loan: '',
     q2_bank_status: answers['q2'] || '',
     q3_amount_needed: answers['q3'] || '',
-    q4_foreign_currency_account: answers['q4'] || '',
+    q4_foreign_currency_account: '',
     source_url: window.location.href,
     traffic_source: TRAFFIC_SOURCE || null,
     user_agent: navigator.userAgent
