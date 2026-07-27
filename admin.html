@@ -452,7 +452,7 @@
         <div class="panel settings-panel">
           <h3>官方 LINE 設定</h3>
           <label for="setting-line-url">LINE 完整連結</label>
-          <input id="setting-line-url" type="url" placeholder="https://line.me/R/ti/p/@xxxxxxxx" oninput="siteSettings.line_url=this.value;updateLinePreview()" />
+          <input id="setting-line-url" type="url" placeholder="https://lin.ee/xxxxxxx 或 https://line.me/R/ti/p/@xxxxxxxx" oninput="siteSettings.line_url=this.value;updateLinePreview()" />
           <p id="setting-line-id-preview" class="notice"></p>
           <div class="settings-actions">
             <button class="secondary" onclick="testLineUrl()">測試開啟 LINE</button>
@@ -512,8 +512,8 @@
     let selectedLeadIds = new Set();
     let activeDetailId = null;
     let siteSettings = {
-      line_url: 'https://line.me/R/ti/p/@111tfmeq',
-      line_id: '@111tfmeq',
+      line_url: 'https://lin.ee/591VM3X',
+      line_id: '',
       pixel_ids: [
         { id: '975921495153095', enabled: true },
         { id: '1033980915864419', enabled: true }
@@ -631,6 +631,24 @@
       return match ? match[1] : '';
     }
 
+    function isValidLineUrl(value) {
+      try {
+        const url = new URL(String(value || '').trim());
+        const host = url.hostname.toLowerCase();
+        return url.protocol === 'https:' && (host === 'lin.ee' || host === 'line.me');
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function isLineShortUrl(value) {
+      try {
+        return new URL(String(value || '').trim()).hostname.toLowerCase() === 'lin.ee';
+      } catch (error) {
+        return false;
+      }
+    }
+
     function renderSiteSettings() {
       const lineInput = document.getElementById('setting-line-url');
       if (!lineInput) return;
@@ -659,15 +677,22 @@
     function updateLinePreview() {
       const input = document.getElementById('setting-line-url');
       const preview = document.getElementById('setting-line-id-preview');
-      const lineId = extractLineId(input ? input.value : '');
-      preview.textContent = lineId ? `辨識到的 LINE ID：${lineId}` : '請輸入包含 @LINE_ID 的完整 LINE 連結。';
+      const value = input ? input.value.trim() : '';
+      const lineId = extractLineId(value);
+      if (isLineShortUrl(value)) {
+        preview.textContent = '已辨識為 LINE 輪換短連結，儲存後前端會直接使用此網址。';
+      } else if (lineId && isValidLineUrl(value)) {
+        preview.textContent = `辨識到的 LINE ID：${lineId}`;
+      } else {
+        preview.textContent = '請輸入 lin.ee 輪換短連結，或包含 @LINE_ID 的 line.me 完整連結。';
+      }
       return lineId;
     }
 
     function testLineUrl() {
       const url = document.getElementById('setting-line-url').value.trim();
-      if (!/^https:\/\/line\.me\//i.test(url) || !extractLineId(url)) {
-        alert('請輸入正確的 LINE 完整連結。');
+      if (!isValidLineUrl(url)) {
+        alert('請輸入正確的 lin.ee 或 line.me 連結。');
         return;
       }
       window.open(url, '_blank', 'noopener');
@@ -735,8 +760,8 @@
         .filter(pixel => pixel.id);
       const tiktokIds = tiktokPixels.map(pixel => pixel.id);
 
-      if (!/^https:\/\/line\.me\//i.test(lineUrl) || !lineId) {
-        status.textContent = 'LINE 連結格式不正確。';
+      if (!isValidLineUrl(lineUrl)) {
+        status.textContent = 'LINE 連結格式不正確，請使用 lin.ee 或 line.me。';
         status.className = 'notice error setting-status';
         return;
       }
