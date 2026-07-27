@@ -1653,12 +1653,12 @@
                 <span>專員當日透過 LINE 告訴你：能不能談、能談多少</span>
               </li>
             </ul>
-            <a href="https://line.me/R/ti/p/@111tfmeq" target="_blank" class="line-add-btn" id="line-add-btn" onclick="trackLineClick()">
+            <a href="https://lin.ee/591VM3X" target="_blank" class="line-add-btn" id="line-add-btn" onclick="trackLineClick()">
               <span class="line-logo">L</span>
               立即加入 LINE，讓專員確認額度
             </a>
-            <div class="line-id-display">
-              LINE ID：<strong id="line-official-id">@111tfmeq</strong>（可複製搜尋加入）
+            <div class="line-id-display" id="line-id-display" hidden>
+              LINE ID：<strong id="line-official-id"></strong>（可複製搜尋加入）
             </div>
           </div>
         </div>
@@ -1790,8 +1790,8 @@
 // ============================================================
 // CONFIG — 企業 LINE ID（準備好後替換此處）
 // ============================================================
-var ENTERPRISE_LINE_ID = '@111tfmeq';
-var ENTERPRISE_LINE_URL = 'https://line.me/R/ti/p/' + ENTERPRISE_LINE_ID;
+var ENTERPRISE_LINE_ID = '';
+var ENTERPRISE_LINE_URL = 'https://lin.ee/591VM3X';
 
 // ============================================================
 // CONFIG — Supabase Leads Backend
@@ -1816,13 +1816,15 @@ async function loadSiteConfig() {
     var rows = await response.json();
     var settings = rows && rows[0];
     if (settings) {
-      if (settings.line_url && settings.line_id) {
+      if (settings.line_url) {
         ENTERPRISE_LINE_URL = settings.line_url;
-        ENTERPRISE_LINE_ID = settings.line_id;
+        ENTERPRISE_LINE_ID = /^https:\/\/lin\.ee\//i.test(settings.line_url) ? '' : (settings.line_id || '');
         var lineButton = document.getElementById('line-add-btn');
         var lineIdText = document.getElementById('line-official-id');
+        var lineIdDisplay = document.getElementById('line-id-display');
         if (lineButton) lineButton.href = ENTERPRISE_LINE_URL;
         if (lineIdText) lineIdText.textContent = ENTERPRISE_LINE_ID;
+        if (lineIdDisplay) lineIdDisplay.hidden = !ENTERPRISE_LINE_ID;
       }
       if (Array.isArray(settings.pixel_ids)) {
         enabledPixelIds = settings.pixel_ids
@@ -2235,6 +2237,7 @@ async function submitForm(e) {
   // --- 更新 LINE 引導區塊 ---
   document.getElementById('line-add-btn').href = ENTERPRISE_LINE_URL;
   document.getElementById('line-official-id').textContent = ENTERPRISE_LINE_ID;
+  document.getElementById('line-id-display').hidden = !ENTERPRISE_LINE_ID;
   var successTitle = document.getElementById('success-application-title');
   if (successTitle) successTitle.textContent = (answers.q3 || '額度') + ' 申請資料已送出';
 
