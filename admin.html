@@ -1009,6 +1009,14 @@
           ${detailItem('廣告來源', trafficSource(lead) || '未識別')}
         </div>
         <div class="detail-section">
+          <h3>提交裝置信息</h3>
+          <div class="detail-grid">
+            ${detailItem('IP 位址', lead.ip_address)}
+            ${detailItem('設備', lead.device_type)}
+            ${detailItem('瀏覽器', lead.browser_name)}
+          </div>
+        </div>
+        <div class="detail-section">
           <h3>提供甲方的客戶資料</h3>
           <textarea id="client-copy-text" class="client-copy-box" readonly>${escapeHTML(clientCopyText(lead))}</textarea>
           <div style="height:10px"></div>
