@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="填寫姓名、年齡和警示戶狀態，送出資金需求。">
+  <meta name="theme-color" content="#edf6f1">
+  <title>填寫三項資料，送出資金需求</title>
+  <link rel="stylesheet" href="styles.css?v=2026072801">
+  <script src="app.js?v=2026072802" defer></script>
+</head>
+<body data-page="apply">
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="wordmark" href="index.html" aria-label="返回金額選擇頁">
+        <span class="wordmark-mark" aria-hidden="true">額</span>
+        <span>線上額度評估</span>
+      </a>
+      <span class="header-note">只填 3 項資料</span>
+    </div>
+  </header>
+
+  <main class="apply-main">
+    <div class="apply-shell">
+      <div class="flow-nav" aria-label="申請流程">
+        <a class="flow-item done" id="edit-amount-link" href="index.html">選擇金額</a>
+        <span class="flow-line active" aria-hidden="true"></span>
+        <span class="flow-item current">填寫資料</span>
+      </div>
+
+      <div class="apply-layout" id="application-layout">
+        <aside class="amount-summary" aria-label="已選擇的需求金額">
+          <span>你的需求金額</span>
+          <strong id="selected-amount">尚未選擇</strong>
+          <a id="change-amount-link" href="index.html">重新選擇</a>
+          <div class="summary-note">
+            <b>資料更精簡</b>
+            <p>只需姓名、年齡和警示戶狀態。</p>
+          </div>
+        </aside>
+
+        <section class="form-panel" aria-labelledby="form-title">
+          <div class="form-heading">
+            <p class="form-kicker">最後一步</p>
+            <h1 id="form-title">填 3 項就能送出</h1>
+            <p>完成後加入 LINE，直接與審核專員確認後續流程。</p>
+          </div>
+
+          <form id="lead-form" novalidate>
+            <div class="field-grid compact-fields">
+              <div class="field">
+                <label for="name">姓名</label>
+                <input id="name" name="name" type="text" autocomplete="name" placeholder="請輸入姓名" required>
+                <p class="field-error" data-error-for="name"></p>
+              </div>
+
+              <div class="field">
+                <label for="age">年齡</label>
+                <input id="age" name="age" type="text" inputmode="numeric" maxlength="3" placeholder="例：35" required>
+                <p class="field-error" data-error-for="age"></p>
+              </div>
+            </div>
+
+            <fieldset class="warning-fieldset">
+              <legend>是否為警示戶</legend>
+              <div class="warning-options">
+                <label class="warning-option">
+                  <input type="radio" name="warning_account" value="非警示戶" required>
+                  <span><b>否</b><small>目前不是警示戶</small></span>
+                </label>
+                <label class="warning-option">
+                  <input type="radio" name="warning_account" value="警示戶" required>
+                  <span><b>是</b><small>目前無法辦理</small></span>
+                </label>
+              </div>
+              <p class="warning-help" id="warning-help">本服務僅受理非警示戶申請。</p>
+              <p class="field-error" data-error-for="warning_account"></p>
+            </fieldset>
+
+            <div class="privacy-note">
+              送出即表示同意將資料用於需求評估及聯絡。請勿提供網銀密碼、簡訊驗證碼或先行匯款。
+            </div>
+
+            <div class="form-status" id="form-status" role="status" aria-live="polite"></div>
+            <button class="primary-button submit-button" id="submit-button" type="submit">立即送出需求</button>
+          </form>
+        </section>
+      </div>
+
+      <section class="success-panel" id="success-panel" hidden tabindex="-1" aria-labelledby="success-title">
+        <div class="success-mark" aria-hidden="true">✓</div>
+        <p class="success-kicker">資料已收到，還差最後一步</p>
+        <h1 id="success-title">加入 LINE 並發送姓名</h1>
+        <p class="success-intro">專員需要用姓名配對你的申請資料，完成配對後才會開始審核。</p>
+        <div class="completion-alert" role="note">
+          <strong>只加好友不算完成</strong>
+          <span>加入 LINE 後必須主動發送姓名，否則申請不會進入審核。</span>
+        </div>
+        <div class="success-amount">
+          <span>本次需求金額</span>
+          <strong id="success-amount">待確認</strong>
+        </div>
+        <div class="line-name-card">
+          <span>請在 LINE 發送這個姓名</span>
+          <strong id="line-name-to-send">待確認</strong>
+          <button class="copy-name-button" id="copy-line-name-button" type="button">複製姓名</button>
+          <p class="copy-name-status" id="copy-line-name-status" role="status" aria-live="polite"></p>
+        </div>
+        <ol class="line-steps">
+          <li><span>1</span><p>點擊下方按鈕加入 LINE</p></li>
+          <li><span>2</span><p>在聊天框貼上並發送姓名</p></li>
+          <li><span>3</span><p>專員確認姓名後開始審核</p></li>
+        </ol>
+        <a class="line-button" id="line-add-button" href="https://lin.ee/591VM3X" target="_blank" rel="noopener">複製姓名並加入 LINE</a>
+        <p class="line-required-note">進入 LINE 後請長按聊天框貼上姓名並發送，申請才會進入審核。</p>
+        <p class="line-id-label" hidden>LINE ID：<strong id="line-id-text"></strong></p>
+        <a class="restart-link" href="index.html">重新填寫</a>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>本服務為需求登記與諮詢聯繫，不是銀行或放款機構。實際結果依個別條件確認。</p>
+  </footer>
+
+  <noscript>請開啟 JavaScript 後使用線上申請功能。</noscript>
+</body>
+</html>
