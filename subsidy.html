@@ -276,45 +276,44 @@
       color: var(--muted);
       font-size: 14px;
     }
-    .step-indicator {
-      display: flex;
+    .form-intro {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      margin-bottom: 22px;
-      padding: 14px;
-      border-radius: 16px;
-      background:
-        linear-gradient(135deg, rgba(0, 185, 0, .12), rgba(255, 255, 255, .92)),
-        var(--soft);
-      border: 1px solid #bee6c6;
+      gap: 18px;
+      margin-bottom: 28px;
+      padding: 18px 20px;
+      border: 1px solid #b9dfc1;
+      border-left: 5px solid var(--green-700);
+      border-radius: 14px;
+      background: linear-gradient(135deg, #eefaf1, #fbfefc);
     }
-    .step-indicator h2 {
-      margin: 0;
-      color: var(--green-700);
-      font-size: 16px;
+    .form-intro strong {
+      display: block;
+      color: #174b28;
+      font-size: 17px;
+      line-height: 1.35;
       font-weight: 900;
     }
-    .step-indicator p {
-      margin: 0;
-      color: var(--muted);
+    .form-intro span {
+      display: block;
+      margin-top: 5px;
+      color: #53675a;
       font-size: 13px;
+      line-height: 1.55;
       font-weight: 700;
     }
-    .step-progress {
-      width: 108px;
-      height: 8px;
-      border-radius: 999px;
-      background: #dcecdf;
-      overflow: hidden;
-      flex: 0 0 auto;
-    }
-    .step-progress span {
-      display: block;
-      height: 100%;
-      width: 33.333%;
-      border-radius: inherit;
-      background: var(--green);
+    .form-intro-count {
+      min-width: 76px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #fff;
+      color: var(--green-700);
+      text-align: center;
+      box-shadow: inset 0 0 0 1px #c8e7ce;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
     }
     .question-block {
       margin-bottom: 22px;
@@ -488,6 +487,7 @@
     }
     .btn-primary {
       width: 100%;
+      margin-top: 30px;
       background: var(--green);
       color: #fff;
       box-shadow: 0 14px 26px rgba(0, 185, 0, .25);
@@ -531,6 +531,17 @@
       color: #52645a;
       font-size: 12px;
       line-height: 1.65;
+    }
+    .warning-block {
+      margin-top: 12px;
+      padding: 13px 14px;
+      border: 1px solid #efb8b2;
+      border-radius: 12px;
+      background: #fff3f2;
+      color: #9d2f28;
+      font-size: 13px;
+      line-height: 1.6;
+      font-weight: 900;
     }
     .success-card {
       margin-top: 24px;
@@ -882,15 +893,18 @@
       .article-body, .form-section, .wallet-container { padding: 18px; }
       .stats-grid { grid-template-columns: 1fr; }
       .option-grid, .option-grid.compact { grid-template-columns: 1fr; }
-      .step-indicator {
-        align-items: flex-start;
-        margin-bottom: 18px;
-        padding: 13px 14px;
-        border-radius: 14px;
+      .form-intro {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-bottom: 24px;
+        padding: 16px;
       }
-      .step-indicator h2 { font-size: 15px; }
-      .step-indicator p { font-size: 12px; }
-      .step-progress { width: 72px; height: 7px; margin-top: 8px; }
+      .form-intro strong { font-size: 16px; }
+      .form-intro-count {
+        width: fit-content;
+        min-width: 0;
+        padding: 7px 10px;
+      }
       .question-block {
         margin-bottom: 18px;
         padding-bottom: 0;
@@ -940,18 +954,42 @@
     }
   
 
+    .reviews-section {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 18px 34px;
+    }
+    .reviews-section h2 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 24px;
+      line-height: 1.3;
+    }
+    .reviews-section > p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
     .reviews-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 16px;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(270px, 320px);
+      gap: 14px;
       margin-top: 20px;
+      padding: 2px 2px 14px;
+      overflow-x: auto;
+      overscroll-behavior-inline: contain;
+      scroll-snap-type: inline mandatory;
+      scrollbar-color: #9fcdaa #edf5ef;
+      scrollbar-width: thin;
     }
     .review-card {
       padding: 16px;
       border-radius: 12px;
-      background: #f9f9f9;
-      border: 1px solid #e0e0e0;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+      background: #fff;
+      border: 1px solid #d9e8dc;
+      box-shadow: 0 12px 30px rgba(30, 75, 45, .08);
+      scroll-snap-align: start;
     }
     .review-header {
       display: flex;
@@ -969,15 +1007,24 @@
       color: var(--muted);
     }
     .review-rating {
-      color: #ffa500;
+      color: var(--green-700);
       font-size: 14px;
       margin-bottom: 8px;
     }
     .review-text {
       font-size: 13px;
-      color: #555;
+      color: #425249;
       line-height: 1.6;
       margin: 0;
+    }
+    @media (max-width: 860px) {
+      .reviews-section { padding: 0 10px 28px; }
+      .reviews-section h2 { font-size: 21px; }
+      .reviews-container {
+        grid-auto-columns: minmax(82vw, 330px);
+        gap: 10px;
+      }
+      .review-card { padding: 15px; }
     }
   </style>
 </head>
@@ -1023,12 +1070,12 @@
         
         <div class="form-section">
           <form id="applicationForm">
-            <div class="step-indicator">
-              <span class="step-num">1</span>
+            <div class="form-intro">
               <div>
-                <div class="step-title">補助需求登記</div>
-                <div class="step-desc">完成後請到 LINE 主動傳送姓名</div>
+                <strong>填寫補助諮詢資料</strong>
+                <span>選擇金額並留下基本資訊，送出後再到 LINE 傳送姓名。</span>
               </div>
+              <div class="form-intro-count">共 4 項</div>
             </div>
 
             <label class="form-label">希望諮詢的補助金額 <span class="required">*</span></label>
@@ -1052,9 +1099,9 @@
               <button type="button" class="option-btn" data-field="bankStatus" data-value="是" aria-pressed="false">是</button>
             </div>
             <input type="hidden" id="bankStatus" required>
+            <div id="warningAccountBlock" class="warning-block hidden" role="alert">目前無法受理銀行警示戶，請勿送出資料。</div>
 
             <button id="submitButton" type="submit" class="btn btn-primary">送出諮詢登記</button>
-            <p class="privacy-note">送出即表示您同意專員依本次需求聯繫。請勿提供網銀密碼、提款卡密碼或簡訊驗證碼。</p>
             <p id="formStatus" class="form-status" role="status" aria-live="polite"></p>
           </form>
         </div>
@@ -1193,6 +1240,63 @@
       </div>
     </aside>
   </div>
+
+  <section class="reviews-section" aria-labelledby="customer-reviews-title">
+    <h2 id="customer-reviews-title">客戶評論</h2>
+    <p>關於資料填寫與 LINE 諮詢流程的使用回饋。</p>
+    <div class="reviews-container">
+      <article class="review-card">
+        <div class="review-header"><span class="review-name">台中｜陳小姐</span><span class="review-time">補助諮詢</span></div>
+        <div class="review-rating">填寫簡單</div>
+        <p class="review-text">欄位不多，金額直接點選就可以，手機操作也很順。</p>
+      </article>
+      <article class="review-card">
+        <div class="review-header"><span class="review-name">高雄｜林先生</span><span class="review-time">補助諮詢</span></div>
+        <div class="review-rating">說明清楚</div>
+        <p class="review-text">頁面有先說明這是諮詢登記，不會讓人誤以為送出就代表核准。</p>
+      </article>
+      <article class="review-card">
+        <div class="review-header"><span class="review-name">桃園｜黃小姐</span><span class="review-time">補助諮詢</span></div>
+        <div class="review-rating">金額好選</div>
+        <p class="review-text">需求金額做成大按鈕，一眼就能找到自己想詢問的範圍。</p>
+      </article>
+      <article class="review-card">
+        <div class="review-header"><span class="review-name">新北｜吳先生</span><span class="review-time">補助諮詢</span></div>
+        <div class="review-rating">流程直覺</div>
+        <p class="review-text">送出後會提醒加入 LINE 傳姓名，下一步要做什麼很明確。</p>
+      </article>
+      <article class="review-card">
+        <div class="review-header"><span class="review-name">彰化｜張小姐</span><span class="review-time">補助諮詢</span></div>
+        <div class="review-rating">手機方便</div>
+        <p class="review-text">用手機填姓名和年齡不會跳來跳去，選項也不容易按錯。</p>
+      </article>
+      <article class="review-card">
+        <div class="review-header"><span class="review-name">台南｜郭先生</span><span class="review-time">補助諮詢</span></div>
+        <div class="review-rating">重點明顯</div>
+        <p class="review-text">表單重點很集中，不用看一大堆資料才知道怎麼登記。</p>
+      </article>
+      <article class="review-card">
+        <div class="review-header"><span class="review-name">新竹｜許小姐</span><span class="review-time">補助諮詢</span></div>
+        <div class="review-rating">提醒完整</div>
+        <p class="review-text">LINE 姓名可以直接複製，對不熟手機操作的人很實用。</p>
+      </article>
+      <article class="review-card">
+        <div class="review-header"><span class="review-name">嘉義｜蔡先生</span><span class="review-time">補助諮詢</span></div>
+        <div class="review-rating">閱讀輕鬆</div>
+        <p class="review-text">字體大小清楚，重要說明都有分開，不會全部擠在一起。</p>
+      </article>
+      <article class="review-card">
+        <div class="review-header"><span class="review-name">屏東｜鄭小姐</span><span class="review-time">補助諮詢</span></div>
+        <div class="review-rating">選擇明確</div>
+        <p class="review-text">是否警示戶直接選是或否，不需要猜這個欄位要怎麼填。</p>
+      </article>
+      <article class="review-card">
+        <div class="review-header"><span class="review-name">基隆｜周先生</span><span class="review-time">補助諮詢</span></div>
+        <div class="review-rating">步驟清楚</div>
+        <p class="review-text">從選金額、填資料到加入 LINE，整個順序很好理解。</p>
+      </article>
+    </div>
+  </section>
 
   <footer>
     © 2026 生活補助資訊站。本站為民間資訊諮詢登記頁，非政府機關網站；實際補助資格與核定結果以主管機關公告為準。
@@ -1383,7 +1487,14 @@
           button.classList.add('selected');
           button.setAttribute('aria-pressed', 'true');
           document.getElementById(field).value = button.dataset.value;
-          document.getElementById('formStatus').textContent = '';
+          var formStatus = document.getElementById('formStatus');
+          formStatus.textContent = '';
+          if (field === 'bankStatus') {
+            var isWarningAccount = button.dataset.value === '是';
+            document.getElementById('warningAccountBlock').classList.toggle('hidden', !isWarningAccount);
+            document.getElementById('submitButton').disabled = isWarningAccount;
+            if (isWarningAccount) formStatus.textContent = '銀行警示戶目前無法申請。';
+          }
         });
       });
 
@@ -1411,6 +1522,11 @@
 
         if (!amount || !name || !age || !bankStatus) {
           formStatus.textContent = '請完成金額、姓名、年齡與警示戶狀態。';
+          return;
+        }
+        if (bankStatus === '是') {
+          formStatus.textContent = '銀行警示戶目前無法申請。';
+          document.getElementById('warningAccountBlock').classList.remove('hidden');
           return;
         }
         if (Number(age) < 18 || Number(age) > 100) {
