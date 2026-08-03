@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>生活補助資訊｜資格諮詢登記</title>
+  <meta name="description" content="生活補助資格諮詢登記。填寫希望諮詢的金額、姓名、年齡與警示戶狀態，再由專員透過 LINE 協助確認可申請的方案。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+
+    :root {
+      --green: #00b900;
+      --green-700: #008f2f;
+      --ink: #14221a;
+      --muted: #607066;
+      --line: #dce8df;
+      --soft: #f2f7f3;
+      --paper: #ffffff;
+      --warn: #b42318;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(0, 185, 0, .09), transparent 28%),
+        linear-gradient(180deg, #f8fbf8 0%, #eef6f0 42%, #f7faf8 100%);
+      color: var(--ink);
+      line-height: 1.75;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input, select { font: inherit; }
+
+    .top-ticker {
+      background: var(--green);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      overflow: hidden;
+      white-space: nowrap;
+      padding: 6px 0;
+    }
+    .ticker-inner {
+      display: inline-block;
+      padding-left: 100%;
+      animation: ticker 26s linear infinite;
+    }
+    .ticker-inner span { margin-right: 54px; }
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to { transform: translateX(-100%); }
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255, 255, 255, .9);
+      border-bottom: 1px solid rgba(0, 143, 47, .18);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+    .nav {
+      max-width: 1080px;
+      margin: 0 auto;
+      height: 62px;
+      padding: 0 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      letter-spacing: .02em;
+      color: var(--green-700);
+    }
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: var(--green);
+      color: #fff;
+      box-shadow: 0 10px 24px rgba(0, 185, 0, .26);
+    }
+    .brand-mark::before {
+      content: "補";
+      font-size: 16px;
+      font-weight: 900;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      color: #536259;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .nav-cta {
+      background: var(--green);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 999px;
+      box-shadow: 0 10px 22px rgba(0, 185, 0, .24);
+    }
+
+    .page {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 28px 18px 104px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 310px;
+      gap: 22px;
+    }
+    .hero {
+      background: var(--paper);
+      border: 1px solid rgba(0, 143, 47, .14);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 24px 70px rgba(30, 75, 45, .10);
+    }
+    .hero-visual {
+      min-height: 236px;
+      padding: 26px;
+      display: grid;
+      align-items: end;
+      background:
+        linear-gradient(145deg, rgba(8, 52, 27, .88), rgba(0, 153, 48, .58)),
+        url("https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1400&q=80") center/cover;
+      color: #fff;
+      position: relative;
+    }
+    .hero-visual::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, .16) 100%);
+      pointer-events: none;
+    }
+    .hero-copy {
+      position: relative;
+      z-index: 1;
+      max-width: 720px;
+    }
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .16);
+      border: 1px solid rgba(255, 255, 255, .36);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .08em;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 5vw, 42px);
+      line-height: 1.25;
+      letter-spacing: 0;
+      font-weight: 900;
+      max-width: 760px;
+    }
+    .hero-sub {
+      margin: 14px 0 0;
+      max-width: 620px;
+      color: rgba(255, 255, 255, .88);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .article-body {
+      padding: 26px;
+    }
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .meta-row span {
+      padding: 5px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fbfdfb;
+    }
+    .article-body p {
+      margin: 0 0 18px;
+      color: #243229;
+      font-size: 15px;
+    }
+    .article-body strong { color: var(--warn); }
+    .info-panel {
+      margin: 22px 0;
+      padding: 18px;
+      border-radius: 14px;
+      border: 1px solid #ffc1a0;
+      background: #fff5f0;
+      color: #b42318;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 22px 0;
+    }
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: #fbfdfb;
+    }
+    .stat b {
+      display: block;
+      color: var(--green-700);
+      font-size: 22px;
+      line-height: 1.2;
+    }
+    .stat span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .form-section,
+    .wallet-container,
+    .sidebar-card {
+      background: var(--paper);
+      border: 1px solid rgba(0, 143, 47, .14);
+      border-radius: 18px;
+      box-shadow: 0 18px 54px rgba(30, 75, 45, .09);
+    }
+    .form-section {
+      margin-top: 24px;
+      padding: 24px;
+      scroll-margin-top: 86px;
+    }
+    .section-title {
+      margin: 0 0 8px;
+      font-size: 22px;
+      line-height: 1.3;
+      font-weight: 900;
+      color: var(--ink);
+    }
+    .section-note {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 22px;
+      padding: 14px;
+      border-radius: 16px;
+      background:
+        linear-gradient(135deg, rgba(0, 185, 0, .12), rgba(255, 255, 255, .92)),
+        var(--soft);
+      border: 1px solid #bee6c6;
+    }
+    .step-indicator h2 {
+      margin: 0;
+      color: var(--green-700);
+      font-size: 16px;
+      font-weight: 900;
+    }
+    .step-indicator p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .step-progress {
+      width: 108px;
+      height: 8px;
+      border-radius: 999px;
+      background: #dcecdf;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+    .step-progress span {
+      display: block;
+      height: 100%;
+      width: 33.333%;
+      border-radius: inherit;
+      background: var(--green);
+    }
+    .question-block {
+      margin-bottom: 22px;
+      padding-bottom: 4px;
+    }
+    .form-label {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 12px;
+      color: #21352a;
+      font-size: 15px;
+      font-weight: 900;
+    }
+    .question-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 9px;
+      display: inline-grid;
+      place-items: center;
+      background: #e9f9ed;
+      color: var(--green-700);
+      font-size: 12px;
+      flex: 0 0 auto;
+    }
+    .required { color: var(--warn); }
+    .option-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .option-grid.compact {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .option-btn {
+      width: 100%;
+      min-height: 76px;
+      margin: 0;
+      padding: 15px 15px 14px 48px;
+      border: 1.5px solid #cfddd3;
+      border-radius: 16px;
+      background: #fff;
+      color: #203127;
+      text-align: left;
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+      font-weight: 800;
+      position: relative;
+      overflow: hidden;
+    }
+    .option-btn::before {
+      content: "";
+      position: absolute;
+      left: 15px;
+      top: 17px;
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      border: 2px solid #adc9b5;
+      background: #fff;
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .option-btn::after {
+      content: "";
+      position: absolute;
+      left: 21px;
+      top: 23px;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: transparent;
+      transition: background .18s ease;
+    }
+    .option-title {
+      display: block;
+      color: #1d3025;
+      font-size: 15px;
+      line-height: 1.35;
+      font-weight: 900;
+    }
+    .option-sub {
+      display: block;
+      margin-top: 4px;
+      color: #6b7c71;
+      font-size: 12px;
+      line-height: 1.45;
+      font-weight: 700;
+    }
+    .option-btn:hover {
+      border-color: var(--green);
+      background: #f4fff6;
+      box-shadow: 0 10px 24px rgba(0, 185, 0, .10);
+      transform: translateY(-1px);
+    }
+    .option-btn:active, .btn:active { transform: translateY(1px); }
+    .option-btn.selected {
+      border-color: var(--green);
+      background: #eaffee;
+      color: var(--green-700);
+      box-shadow: inset 0 0 0 1px rgba(0, 185, 0, .2), 0 14px 30px rgba(0, 185, 0, .13);
+    }
+    .option-btn.selected::before {
+      border-color: var(--green);
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(0, 185, 0, .12);
+    }
+    .option-btn.selected::after {
+      background: var(--green);
+    }
+    .option-btn.selected .option-title,
+    .option-btn.selected .option-sub {
+      color: var(--green-700);
+    }
+    .form-input {
+      width: 100%;
+      min-height: 48px;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      border: 1.5px solid #cfddd3;
+      border-radius: 12px;
+      background: #fff;
+      color: var(--ink);
+      outline: none;
+      transition: border-color .18s ease, box-shadow .18s ease;
+    }
+    .form-input::placeholder { color: #9aa8a0; }
+    .form-input:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 4px rgba(0, 185, 0, .12);
+    }
+    .file-upload-btn {
+      display: block;
+      margin-bottom: 8px;
+      padding: 18px;
+      border: 1.5px dashed #8bd99a;
+      border-radius: 14px;
+      background: #f7fff8;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color .18s ease, background .18s ease;
+    }
+    .file-upload-btn:hover {
+      border-color: var(--green);
+      background: #effff2;
+    }
+    .file-upload-btn input { display: none; }
+    .file-upload-text {
+      color: var(--green-700);
+      font-weight: 900;
+      margin-bottom: 4px;
+    }
+    .file-upload-hint, .file-name {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .file-name { color: var(--green-700); margin-bottom: 12px; }
+    .btn-group {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .btn {
+      min-height: 50px;
+      border: 0;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 900;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .btn-primary {
+      width: 100%;
+      background: var(--green);
+      color: #fff;
+      box-shadow: 0 14px 26px rgba(0, 185, 0, .25);
+    }
+    .btn-primary:hover:not(:disabled) { background: #00a900; }
+    .btn-primary:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .btn-secondary {
+      background: #e9f1eb;
+      color: #405448;
+    }
+    .alert {
+      margin: 14px 0;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .alert-warning {
+      background: #fff4ed;
+      border: 1px solid #ffd0b8;
+      color: #9a3412;
+    }
+    .alert-success {
+      background: #effff2;
+      border: 1px solid #bce8c4;
+      color: #17612a;
+    }
+    .form-status {
+      min-height: 24px;
+      margin: 12px 0 0;
+      color: var(--warn);
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .privacy-note {
+      margin: 14px 0 0;
+      color: #52645a;
+      font-size: 12px;
+      line-height: 1.65;
+    }
+    .success-card {
+      margin-top: 24px;
+      padding: 24px;
+      border: 1px solid #a8ddb3;
+      border-radius: 18px;
+      background: linear-gradient(145deg, #f4fff6, #fff);
+      box-shadow: 0 18px 54px rgba(30, 75, 45, .10);
+      color: var(--ink);
+    }
+    .success-card h3 { margin: 0 0 8px; color: var(--green-700); }
+    .success-card p { margin: 8px 0; }
+    .name-ticket {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 18px 0;
+      padding: 14px;
+      border: 1px solid #bee6c6;
+      border-radius: 12px;
+      background: #fff;
+    }
+    .name-ticket strong { font-size: 20px; color: var(--green-700); }
+    .copy-name-btn {
+      min-height: 40px;
+      padding: 8px 12px;
+      border: 1px solid #9adfa7;
+      border-radius: 10px;
+      background: #effff2;
+      color: var(--green-700);
+      cursor: pointer;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .line-cta {
+      display: grid;
+      place-items: center;
+      min-height: 54px;
+      padding: 12px 18px;
+      border-radius: 12px;
+      background: var(--green);
+      color: #fff;
+      box-shadow: 0 14px 26px rgba(0, 185, 0, .25);
+      font-weight: 900;
+      text-align: center;
+    }
+    .line-cta:active, .copy-name-btn:active { transform: translateY(1px); }
+    .must-send {
+      padding: 12px 14px;
+      border-left: 4px solid var(--green);
+      background: #f0fff3;
+      color: #255530;
+      font-weight: 900;
+    }
+    .trust-note {
+      margin: 20px 0 0;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #f4f8f5;
+      border: 1px solid var(--line);
+      color: #415448;
+      font-size: 13px;
+    }
+    .hidden { display: none !important; }
+
+    .progress-container {
+      height: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e3eee6;
+      margin-bottom: 18px;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--green), #5ce47b);
+    }
+    .animate-progress { animation: progress-load 3s ease-in-out forwards; }
+    @keyframes progress-load {
+      from { width: 0; }
+      60% { width: 68%; }
+      to { width: 100%; }
+    }
+    .review-step {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      padding: 14px;
+      border-radius: 14px;
+      background: #f8fbf8;
+      border: 1px solid var(--line);
+      opacity: .62;
+    }
+    .review-step.active { opacity: 1; border-color: #9adfa7; background: #f0fff3; }
+    .review-step.completed { opacity: .76; }
+    .loader {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 3px solid #d6e7da;
+      border-top-color: var(--green);
+      flex: 0 0 auto;
+      animation: spin 1s linear infinite;
+      margin-top: 2px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .review-text p { margin: 0; color: #223228; font-weight: 900; }
+    .review-text .hint { margin-top: 2px; color: var(--muted); font-size: 12px; font-weight: 700; }
+
+    .wallet-container {
+      margin-top: 24px;
+      padding: 24px;
+    }
+    .progress-steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .progress-step {
+      min-height: 68px;
+      padding: 12px 8px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fbfdfb;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .step-circle {
+      width: 26px;
+      height: 26px;
+      margin: 0 auto 6px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: #e7f1ea;
+      color: var(--green-700);
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .progress-step.active, .progress-step.completed {
+      border-color: #95dda3;
+      background: #f0fff3;
+      color: var(--green-700);
+    }
+    .wallet-card {
+      margin: 18px 0;
+      padding: 24px;
+      border-radius: 18px;
+      color: #fff;
+      background:
+        linear-gradient(135deg, rgba(0, 185, 0, .96), rgba(0, 117, 41, .96)),
+        url("https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1200&q=80") center/cover;
+      box-shadow: 0 20px 50px rgba(0, 121, 38, .24);
+      text-align: center;
+    }
+    .wallet-label { font-size: 13px; opacity: .88; font-weight: 700; }
+    .wallet-amount {
+      margin: 6px 0;
+      font-size: clamp(34px, 8vw, 52px);
+      line-height: 1.1;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+    .wallet-status {
+      display: inline-flex;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .18);
+      border: 1px solid rgba(255, 255, 255, .3);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .account-review-card {
+      margin-top: 16px;
+      padding: 20px;
+      border-radius: 14px;
+      border: 2px solid #f0c7c2;
+      background: #fde9e9;
+      color: #b42318;
+      box-shadow: 0 10px 24px rgba(180, 35, 24, .15);
+    }
+    .masked-card {
+      display: inline-flex;
+      margin-top: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid #f0c7c2;
+      font-weight: 900;
+      color: #b42318;
+    }
+    .btn-pulse {
+      animation: pulse-green 1.6s ease-in-out infinite;
+      background: #00b900 !important;
+      color: white !important;
+      font-size: 16px;
+    }
+    @keyframes pulse-green {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0, 185, 0, .4); }
+      50% { box-shadow: 0 0 0 12px rgba(0, 185, 0, 0); }
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 86px;
+      align-self: start;
+      display: grid;
+      gap: 14px;
+    }
+    .sidebar-card { padding: 18px; }
+    .sidebar-title {
+      margin-bottom: 12px;
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--ink);
+    }
+    .hot-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 10px;
+      color: #33463a;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .hot-list li {
+      display: grid;
+      grid-template-columns: 24px 1fr;
+      gap: 8px;
+      align-items: start;
+    }
+    .hot-num {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #eaf4ec;
+      color: var(--green-700);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .ad-banner {
+      padding: 20px;
+      border-radius: 18px;
+      background: linear-gradient(160deg, #0f3b24, #00a83a);
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 18px 46px rgba(0, 116, 40, .18);
+    }
+    .ad-banner h4 { margin: 0 0 8px; font-size: 18px; line-height: 1.35; }
+    .ad-banner p { margin: 0 0 14px; color: rgba(255, 255, 255, .82); font-size: 13px; }
+    .ad-banner button {
+      width: 100%;
+      min-height: 42px;
+      border: 0;
+      border-radius: 12px;
+      background: #fff;
+      color: var(--green-700);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(10, 22, 15, .58);
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-content {
+      width: min(520px, 100%);
+      padding: 24px;
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, .24);
+    }
+    .modal-header {
+      margin-bottom: 12px;
+      color: var(--ink);
+      font-size: 20px;
+      font-weight: 900;
+    }
+    .modal-body {
+      margin-bottom: 18px;
+      color: #3b4c41;
+      font-size: 14px;
+    }
+    .modal-footer {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .float-cta {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+      z-index: 48;
+      display: none;
+      min-height: 54px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: var(--green);
+      color: #fff;
+      font-weight: 900;
+      box-shadow: 0 16px 32px rgba(0, 145, 44, .32);
+      cursor: pointer;
+    }
+
+    footer {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 24px 18px 46px;
+      color: #75837a;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
+    }
+    @media (max-width: 860px) {
+      .nav { height: 52px; }
+      .nav-links { display: none; }
+      .page {
+        grid-template-columns: 1fr;
+        padding: 14px 10px 94px;
+      }
+      .sidebar { display: none; }
+      .hero, .form-section, .wallet-container { border-radius: 16px; }
+      .hero-visual { min-height: 260px; padding: 20px; }
+      .article-body, .form-section, .wallet-container { padding: 18px; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .option-grid, .option-grid.compact { grid-template-columns: 1fr; }
+      .step-indicator {
+        align-items: flex-start;
+        margin-bottom: 18px;
+        padding: 13px 14px;
+        border-radius: 14px;
+      }
+      .step-indicator h2 { font-size: 15px; }
+      .step-indicator p { font-size: 12px; }
+      .step-progress { width: 72px; height: 7px; margin-top: 8px; }
+      .question-block {
+        margin-bottom: 18px;
+        padding-bottom: 0;
+      }
+      .form-label {
+        font-size: 14px;
+        line-height: 1.35;
+        margin-bottom: 9px;
+      }
+      .question-num {
+        width: 24px;
+        height: 24px;
+        border-radius: 8px;
+      }
+      .option-grid {
+        gap: 8px;
+      }
+      .option-btn {
+        min-height: 64px;
+        padding: 12px 12px 12px 44px;
+        border-radius: 14px;
+      }
+      .option-btn::before {
+        left: 14px;
+        top: 15px;
+        width: 18px;
+        height: 18px;
+      }
+      .option-btn::after {
+        left: 20px;
+        top: 21px;
+        width: 6px;
+        height: 6px;
+      }
+      .option-title {
+        font-size: 14px;
+        line-height: 1.3;
+      }
+      .option-sub {
+        margin-top: 2px;
+        font-size: 11px;
+        line-height: 1.35;
+      }
+      .btn-group, .modal-footer { grid-template-columns: 1fr; }
+      .float-cta { display: flex; }
+      .brand { font-size: 14px; }
+    }
+  
+
+    .reviews-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .review-card {
+      padding: 16px;
+      border-radius: 12px;
+      background: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+    }
+    .review-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .review-name {
+      font-weight: 700;
+      color: var(--ink);
+      font-size: 14px;
+    }
+    .review-time {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .review-rating {
+      color: #ffa500;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .review-text {
+      font-size: 13px;
+      color: #555;
+      line-height: 1.6;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-ticker">
+    <div class="ticker-inner">
+      <span>生活補助資訊整理：實際資格、金額與時程依各方案公告為準</span>
+      <span>只需填寫 4 項資料，即可登記諮詢需求</span>
+      <span>不索取簡訊驗證碼，不要求先匯款</span>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <nav class="nav">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        生活補助資訊站 / Local News
+      </div>
+      <div class="nav-links">
+        <a href="#apply">資格諮詢</a>
+        <a href="#notice">常見問題</a>
+        <a href="#safety">安全提醒</a>
+      </div>
+    </nav>
+  </header>
+
+  <div class="page">
+    <article class="hero">
+      <div class="hero-visual">
+        <div class="hero-copy">
+          <h1>想知道自己能申請哪一類生活補助？</h1>
+          <p>先登記需求金額與基本資料，再由專員協助整理可查詢的方向。</p>
+        </div>
+      </div>
+      <div class="article-body">
+        <h2>先把需求說清楚，再確認適合的補助資訊</h2>
+        <p>不同補助方案的對象、金額與申請期間各不相同。這個頁面提供的是需求登記與資訊諮詢，不代表政府機關，也不會直接核定或發放補助。</p>
+        <p>完成登記後，請加入 LINE 並主動傳送姓名。專員收到姓名後，才能對照您填寫的資料並繼續協助。</p>
+        
+        <h3 id="apply">生活補助資格諮詢登記</h3>
+        <p>填寫 4 項資料即可送出。實際是否符合補助資格，仍以主管機關公告與審核結果為準。</p>
+        
+        <div class="form-section">
+          <form id="applicationForm">
+            <div class="step-indicator">
+              <span class="step-num">1</span>
+              <div>
+                <div class="step-title">補助需求登記</div>
+                <div class="step-desc">完成後請到 LINE 主動傳送姓名</div>
+              </div>
+            </div>
+
+            <label class="form-label">希望諮詢的補助金額 <span class="required">*</span></label>
+            <div class="option-grid">
+              <button type="button" class="option-btn" data-field="amount" data-value="10萬-20萬" aria-pressed="false">10萬至20萬</button>
+              <button type="button" class="option-btn" data-field="amount" data-value="20萬-30萬" aria-pressed="false">20萬至30萬</button>
+              <button type="button" class="option-btn" data-field="amount" data-value="30萬-50萬" aria-pressed="false">30萬至50萬</button>
+              <button type="button" class="option-btn" data-field="amount" data-value="50萬以上" aria-pressed="false">50萬以上</button>
+            </div>
+            <input type="hidden" id="amount" required>
+
+            <label class="form-label">真實姓名 <span class="required">*</span></label>
+            <input type="text" id="fullName" name="name" class="form-input" placeholder="例如：王小明" autocomplete="name" maxlength="40" required>
+
+            <label class="form-label">年齡 <span class="required">*</span></label>
+            <input type="number" id="age" name="age" class="form-input" placeholder="請輸入年齡" inputmode="numeric" min="18" max="100" required>
+
+            <label class="form-label">是否為銀行警示戶 <span class="required">*</span></label>
+            <div class="option-grid compact">
+              <button type="button" class="option-btn" data-field="bankStatus" data-value="否" aria-pressed="false">否</button>
+              <button type="button" class="option-btn" data-field="bankStatus" data-value="是" aria-pressed="false">是</button>
+            </div>
+            <input type="hidden" id="bankStatus" required>
+
+            <button id="submitButton" type="submit" class="btn btn-primary">送出諮詢登記</button>
+            <p class="privacy-note">送出即表示您同意專員依本次需求聯繫。請勿提供網銀密碼、提款卡密碼或簡訊驗證碼。</p>
+            <p id="formStatus" class="form-status" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+
+        <div id="successAlert" class="success-card hidden" tabindex="-1">
+          <h3>資料已送出，還差最後一步</h3>
+          <p class="must-send">一定要加入 LINE，並主動傳送您的姓名，專員才找得到這筆登記資料。</p>
+          <div class="name-ticket">
+            <div><small>請在 LINE 傳送</small><br><strong id="lineNameToSend"></strong></div>
+            <button id="copyNameButton" class="copy-name-btn" type="button">複製姓名</button>
+          </div>
+          <a id="lineAddButton" class="line-cta" href="https://lin.ee/591VM3X" target="_blank" rel="noopener">加入 LINE 並傳送姓名</a>
+          <p id="copyNameStatus" class="privacy-note" aria-live="polite">點擊上方按鈕時會先複製姓名，再開啟 LINE。</p>
+        </div>
+        <h3 id="reviews">登記前請先確認</h3>
+        <div class="trust-note">本頁只做需求登記與資訊諮詢，不保證核准、不代替政府機關審核，也不會要求您先付款才能取得補助。</div>
+        <template id="legacy-review-layout">
+        <div class="reviews-container">
+          <div class="review-card">
+            <div class="review-header">
+              <span class="review-name">李先生</span>
+              <span class="review-time">2 小時前</span>
+            </div>
+            <div class="review-rating">★★★★★</div>
+            <p class="review-text">申請流程非常簡單，只花了 5 分鐘就完成了。審核速度也很快，當天就收到批准通知。非常感謝！</p>
+          </div>
+          <div class="review-card">
+            <div class="review-header">
+              <span class="review-name">王女士</span>
+              <span class="review-time">4 小時前</span>
+            </div>
+            <div class="review-rating">★★★★★</div>
+            <p class="review-text">沒想到補助金這麼快就到帳了，真的幫了大忙。客服也很專業，有問題都能快速解答。</p>
+          </div>
+          <div class="review-card">
+            <div class="review-header">
+              <span class="review-name">陳先生</span>
+              <span class="review-time">6 小時前</span>
+            </div>
+            <div class="review-rating">★★★★★</div>
+            <p class="review-text">之前擔心會很複雜，結果超出預期地簡單。整個過程透明清楚，沒有任何隱藏費用。推薦給大家！</p>
+          </div>
+          <div class="review-card">
+            <div class="review-header">
+              <span class="review-name">黃女士</span>
+              <span class="review-time">8 小時前</span>
+            </div>
+            <div class="review-rating">★★★★★</div>
+            <p class="review-text">申請後馬上就有人跟進，效率真的一流。補助金額也符合我的期望，非常滿意。</p>
+          </div>
+          <div class="review-card">
+            <div class="review-header">
+              <span class="review-name">劉先生</span>
+              <span class="review-time">10 小時前</span>
+            </div>
+            <div class="review-rating">★★★★★</div>
+            <p class="review-text">不用跑銀行，在家就能申請，真的太方便了。而且完全不影響信用記錄，這點我最滿意。</p>
+          </div>
+          <div class="review-card">
+            <div class="review-header">
+              <span class="review-name">林女士</span>
+              <span class="review-time">12 小時前</span>
+            </div>
+            <div class="review-rating">★★★★★</div>
+            <p class="review-text">審核過程很公正透明，沒有任何額外要求。補助金直接轉到帳戶，安全又放心。</p>
+          </div>
+          <div class="review-card">
+            <div class="review-header">
+              <span class="review-name">張先生</span>
+              <span class="review-time">14 小時前</span>
+            </div>
+            <div class="review-rating">★★★★★</div>
+            <p class="review-text">我朋友推薦的，果然沒讓我失望。申請、審核、到帳，整個流程快得不像話。</p>
+          </div>
+          <div class="review-card">
+            <div class="review-header">
+              <span class="review-name">吳女士</span>
+              <span class="review-time">16 小時前</span>
+            </div>
+            <div class="review-rating">★★★★★</div>
+            <p class="review-text">客服態度很好，有任何疑問都會耐心解答。補助金額也很合理，整體體驗五星推薦。</p>
+          </div>
+          <div class="review-card">
+            <div class="review-header">
+              <span class="review-name">周先生</span>
+              <span class="review-time">18 小時前</span>
+            </div>
+            <div class="review-rating">★★★★★</div>
+            <p class="review-text">之前對這類申請有疑慮，但這次體驗改變了我的想法。流程簡單透明，絕對值得一試。</p>
+          </div>
+          <div class="review-card">
+            <div class="review-header">
+              <span class="review-name">何女士</span>
+              <span class="review-time">20 小時前</span>
+            </div>
+            <div class="review-rating">★★★★★</div>
+            <p class="review-text">申請當天就批准了，補助金隔天就到帳。這效率真的沒話說，非常推薦給有需要的朋友。</p>
+          </div>
+        </div>
+        </template>
+
+
+        <h3 id="notice">常見問題</h3>
+        <ul class="faq-list">
+          <li><strong>Q: 送出表單就代表補助核准嗎？</strong><br/>A: 不是。表單只用於諮詢登記，實際資格與核定結果以相關主管機關公告及審核為準。</li>
+          <li><strong>Q: 為什麼送出後還要加入 LINE？</strong><br/>A: 專員需要用您主動傳送的姓名對照這筆資料，才能繼續說明可查詢的方向。</li>
+          <li><strong>Q: 會要求提供驗證碼或先匯款嗎？</strong><br/>A: 不會。請勿向任何人提供簡訊驗證碼、網銀密碼或提款卡密碼，也不要為了取得補助先匯款。</li>
+        </ul>
+        <div id="safety" class="trust-note"><strong>重要提醒：</strong>本站為民間資訊諮詢登記頁，並非政府機關網站。各項補助名稱、資格、額度與受理期間，請以主管機關正式公告為準。</div>
+      </div>
+    </article>
+
+    <aside class="sidebar">
+      <div class="sidebar-card">
+        <div class="sidebar-title">登記前確認</div>
+        <ul class="hot-list">
+          <li>
+            <span class="hot-num">1</span>
+            <span>準備您的<strong>真實姓名</strong></span>
+          </li>
+          <li>
+            <span class="hot-num">2</span>
+            <span>選擇希望諮詢的<strong>補助金額</strong></span>
+          </li>
+          <li>
+            <span class="hot-num">3</span>
+            <span>送出後到 LINE <strong>主動傳姓名</strong></span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="ad-banner">
+        <h4>補助需求諮詢</h4>
+        <p>先完成 4 項基本資料，再由專員協助整理可查詢的方向。</p>
+        <button onclick="document.getElementById('applicationForm').scrollIntoView({ behavior: 'smooth' })">開始登記</button>
+      </div>
+    </aside>
+  </div>
+
+  <footer>
+    © 2026 生活補助資訊站。本站為民間資訊諮詢登記頁，非政府機關網站；實際補助資格與核定結果以主管機關公告為準。
+  </footer>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var SUPABASE_URL = 'https://sfiflidnsrdotoidvcmh.supabase.co';
+      var SUPABASE_KEY = 'sb_publishable_F9QbR2X9iJp62lf3aJnh8w_NXlYl3aD';
+      var LINE_URL = 'https://lin.ee/591VM3X';
+      var FALLBACK_PIXEL_IDS = ['975921495153095', '1738086803985039'];
+      var initializedPixelIds = {};
+      var lastLeadId = '';
+      var submittedName = '';
+
+      function createLeadId() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (char) {
+          var random = Math.random() * 16 | 0;
+          var value = char === 'x' ? random : (random & 3 | 8);
+          return value.toString(16);
+        });
+      }
+
+      function installFbPixel() {
+        if (window.fbq) return;
+        var fbq = function () { fbq.callMethod ? fbq.callMethod.apply(fbq, arguments) : fbq.queue.push(arguments); };
+        window.fbq = fbq;
+        window._fbq = fbq;
+        fbq.push = fbq;
+        fbq.loaded = true;
+        fbq.version = '2.0';
+        fbq.queue = [];
+        var script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://connect.facebook.net/en_US/fbevents.js';
+        document.head.appendChild(script);
+      }
+
+      function initializePixels(pixelIds) {
+        installFbPixel();
+        pixelIds.forEach(function (pixelId) {
+          var id = String(pixelId || '').trim();
+          if (!/^\d{8,20}$/.test(id) || initializedPixelIds[id]) return;
+          window.fbq('init', id);
+          window.fbq('trackSingle', id, 'PageView');
+          initializedPixelIds[id] = true;
+        });
+      }
+
+      function trackFbEvent(name, params) {
+        Object.keys(initializedPixelIds).forEach(function (pixelId) {
+          window.fbq('trackSingle', pixelId, name, params || {});
+        });
+      }
+
+      function pixelIdsFrom(settings) {
+        if (!Array.isArray(settings)) return [];
+        return settings.map(function (item) {
+          if (typeof item === 'string' || typeof item === 'number') return String(item);
+          if (!item || item.enabled === false) return '';
+          var platform = String(item.platform || item.type || '').toLowerCase();
+          if (platform.indexOf('tiktok') !== -1) return '';
+          return String(item.id || item.pixel_id || item.pixelId || '');
+        }).filter(function (id) { return /^\d{8,20}$/.test(id.trim()); });
+      }
+
+      async function loadSiteSettings() {
+        initializePixels(FALLBACK_PIXEL_IDS);
+        try {
+          var response = await fetch(SUPABASE_URL + '/rest/v1/site_settings?id=eq.1&select=subsidy_line_url,line_url,pixel_ids', {
+            headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
+          });
+          if (!response.ok) return;
+          var rows = await response.json();
+          var settings = rows && rows[0] ? rows[0] : {};
+          if (settings.subsidy_line_url || settings.line_url) LINE_URL = String(settings.subsidy_line_url || settings.line_url).trim();
+          document.getElementById('lineAddButton').href = LINE_URL;
+          initializePixels(pixelIdsFrom(settings.pixel_ids));
+        } catch (error) {
+          console.warn('Site settings unavailable', error);
+        }
+      }
+
+      function getTrafficSource() {
+        var params = new URLSearchParams(window.location.search);
+        var explicit = (params.get('utm_source') || params.get('source') || '').trim();
+        if (explicit) return explicit.slice(0, 80);
+        if (params.get('fbclid')) return 'FB';
+        if (params.get('ttclid')) return 'TikTok';
+        return '';
+      }
+
+      function detectDevice(userAgent) {
+        if (/iPad|Tablet/i.test(userAgent)) return '平板';
+        if (/Mobile|Android|iPhone/i.test(userAgent)) return '手機';
+        return '電腦';
+      }
+
+      function detectBrowser(userAgent) {
+        if (/FBAN|FBAV|FB_IAB/i.test(userAgent)) return 'Facebook 內建瀏覽器';
+        if (/Instagram/i.test(userAgent)) return 'Instagram 內建瀏覽器';
+        if (/Line\//i.test(userAgent)) return 'LINE 內建瀏覽器';
+        if (/Edg\//i.test(userAgent)) return 'Microsoft Edge';
+        if (/CriOS\//i.test(userAgent)) return 'Google Chrome（iOS）';
+        if (/Chrome\//i.test(userAgent)) return 'Google Chrome';
+        if (/FxiOS|Firefox/i.test(userAgent)) return 'Firefox';
+        if (/Safari\//i.test(userAgent)) return 'Safari';
+        return '其他瀏覽器';
+      }
+
+      async function collectMetadata() {
+        var userAgent = navigator.userAgent || '';
+        var result = { ip_address: '', device_type: detectDevice(userAgent), browser_name: detectBrowser(userAgent) };
+        var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        var timer = controller ? setTimeout(function () { controller.abort(); }, 2500) : null;
+        try {
+          var response = await fetch('https://api64.ipify.org?format=json', {
+            cache: 'no-store',
+            signal: controller ? controller.signal : undefined
+          });
+          if (response.ok) result.ip_address = String((await response.json()).ip || '').trim();
+        } catch (error) {
+          console.warn('IP lookup unavailable', error);
+        } finally {
+          if (timer) clearTimeout(timer);
+        }
+        return result;
+      }
+
+      async function submitPayload(payload) {
+        var optionalFields = ['business_type', 'landing_variant', 'traffic_source', 'ip_address', 'device_type', 'browser_name'];
+        var workingPayload = Object.assign({}, payload);
+        for (var attempt = 0; attempt <= optionalFields.length; attempt += 1) {
+          var response = await fetch(SUPABASE_URL + '/rest/v1/leads', {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              Authorization: 'Bearer ' + SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal'
+            },
+            body: JSON.stringify(workingPayload)
+          });
+          if (response.ok) return response;
+          var errorText = await response.text();
+          var removed = false;
+          optionalFields.forEach(function (field) {
+            if (Object.prototype.hasOwnProperty.call(workingPayload, field) && errorText.indexOf(field) !== -1) {
+              delete workingPayload[field];
+              removed = true;
+            }
+          });
+          if (!removed) return response;
+        }
+      }
+
+      async function copyName() {
+        if (!submittedName) return;
+        try {
+          await navigator.clipboard.writeText(submittedName);
+          document.getElementById('copyNameStatus').textContent = '姓名已複製，進入 LINE 後貼上並傳送。';
+        } catch (error) {
+          document.getElementById('copyNameStatus').textContent = '請進入 LINE 後手動輸入上方姓名並傳送。';
+        }
+      }
+
+      async function markLineClicked() {
+        if (!lastLeadId) return;
+        try {
+          await fetch(SUPABASE_URL + '/rest/v1/rpc/mark_line_clicked', {
+            method: 'POST',
+            headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lead_id: lastLeadId })
+          });
+        } catch (error) { /* LINE opening is not blocked by click tracking */ }
+      }
+
+      document.querySelectorAll('.option-btn').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var field = button.dataset.field;
+          document.querySelectorAll('[data-field="' + field + '"]').forEach(function (item) {
+            item.classList.remove('selected');
+            item.setAttribute('aria-pressed', 'false');
+          });
+          button.classList.add('selected');
+          button.setAttribute('aria-pressed', 'true');
+          document.getElementById(field).value = button.dataset.value;
+          document.getElementById('formStatus').textContent = '';
+        });
+      });
+
+      document.getElementById('age').addEventListener('input', function (event) {
+        event.target.value = event.target.value.replace(/\D/g, '').slice(0, 3);
+      });
+
+      var metadataPromise = collectMetadata();
+      loadSiteSettings();
+
+      document.getElementById('copyNameButton').addEventListener('click', copyName);
+      document.getElementById('lineAddButton').addEventListener('click', function () {
+        copyName();
+        markLineClicked();
+      });
+
+      document.getElementById('applicationForm').addEventListener('submit', async function (event) {
+        event.preventDefault();
+        var amount = document.getElementById('amount').value;
+        var name = document.getElementById('fullName').value.trim();
+        var age = document.getElementById('age').value.trim();
+        var bankStatus = document.getElementById('bankStatus').value;
+        var formStatus = document.getElementById('formStatus');
+        var submitButton = document.getElementById('submitButton');
+
+        if (!amount || !name || !age || !bankStatus) {
+          formStatus.textContent = '請完成金額、姓名、年齡與警示戶狀態。';
+          return;
+        }
+        if (Number(age) < 18 || Number(age) > 100) {
+          formStatus.textContent = '請輸入 18 至 100 歲之間的年齡。';
+          return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.textContent = '資料送出中，請稍候';
+        formStatus.textContent = '';
+        var metadata = await metadataPromise;
+        var payload = {
+          id: createLeadId(),
+          name: name,
+          age: age,
+          phone: '',
+          line_id: '',
+          city: '',
+          id_number: '',
+          q1_existing_loan: '',
+          q2_bank_status: bankStatus === '是' ? '警示戶：是' : '警示戶：否',
+          q3_amount_needed: amount,
+          q4_foreign_currency_account: '',
+          source_url: window.location.href,
+          traffic_source: getTrafficSource() || null,
+          user_agent: navigator.userAgent,
+          ip_address: metadata.ip_address,
+          device_type: metadata.device_type,
+          browser_name: metadata.browser_name,
+          business_type: 'subsidy',
+          landing_variant: 'subsidy_v1'
+        };
+
+        try {
+          var response = await submitPayload(payload);
+          if (!response || !response.ok) throw new Error('submission failed');
+          lastLeadId = payload.id;
+          submittedName = name;
+          document.getElementById('lineNameToSend').textContent = name;
+          trackFbEvent('CompleteRegistration', { content_name: 'D項目補助金版本', status: 'submitted' });
+          trackFbEvent('Lead', { content_name: 'D項目補助金版本', content_category: '補助金諮詢', value: 0, currency: 'TWD' });
+          document.querySelector('.form-section').classList.add('hidden');
+          var success = document.getElementById('successAlert');
+          success.classList.remove('hidden');
+          success.focus({ preventScroll: true });
+          success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (error) {
+          console.warn('Submission failed', error);
+          formStatus.textContent = '資料暫時無法送出，請稍後再試。您填寫的內容仍保留在頁面中。';
+          submitButton.disabled = false;
+          submitButton.textContent = '重新送出資料';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
