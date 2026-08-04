@@ -227,6 +227,8 @@
     .tag-tiktok { background: #eef0f3; color: #424d5e; border-color: #d4dae2; }
     .tag-loan { background: #e7f0ff; color: #2458a6; border-color: #c7d9f7; }
     .tag-subsidy { background: #fff1d8; color: #8a5510; border-color: #efd39d; }
+    .tag-variant-c { background: #edf7f3; color: #167455; border-color: #c5e6da; }
+    .tag-variant-e { background: #f3edff; color: #6541a5; border-color: #d8c9f3; }
     .lead-meta { display: flex; align-items: center; gap: 10px 18px; overflow: hidden; color: var(--text-soft); font-size: 12px; white-space: nowrap; }
     .lead-meta span { overflow: hidden; text-overflow: ellipsis; }
     .lead-meta strong { color: #26344a; font-weight: 700; }
@@ -415,6 +417,13 @@
             </select>
           </div>
           <div class="status-field">
+            <select id="variant-filter" onchange="renderLeads()">
+              <option value="">版本：全部</option>
+              <option value="C">C版</option>
+              <option value="E">E版</option>
+            </select>
+          </div>
+          <div class="status-field">
             <select id="base-duplicate-filter" onchange="renderLeads()">
               <option value="">底粉：全部</option>
               <option value="yes">底粉重複</option>
@@ -460,15 +469,20 @@
 
         <div class="panel settings-panel">
           <h3>LINE 連結設定</h3>
-          <label for="setting-line-url">貸款 LINE 連結</label>
+          <label for="setting-line-url">貸款 C版 LINE 連結</label>
           <input id="setting-line-url" type="url" placeholder="https://lin.ee/xxxxxxx 或 https://line.me/R/ti/p/@xxxxxxxx" oninput="siteSettings.line_url=this.value;updateLinePreview()" />
           <p id="setting-line-id-preview" class="notice"></p>
+          <div style="height:14px"></div>
+          <label for="setting-e-line-url">貸款 E版 LINE 連結</label>
+          <input id="setting-e-line-url" type="url" placeholder="https://lin.ee/xxxxxxx" oninput="siteSettings.e_line_url=this.value;updateELinePreview()" />
+          <p id="setting-e-line-preview" class="notice"></p>
           <div style="height:14px"></div>
           <label for="setting-subsidy-line-url">補助金 LINE 連結</label>
           <input id="setting-subsidy-line-url" type="url" placeholder="https://lin.ee/xxxxxxx 或 https://line.me/R/ti/p/@xxxxxxxx" oninput="siteSettings.subsidy_line_url=this.value;updateSubsidyLinePreview()" />
           <p id="setting-subsidy-line-preview" class="notice"></p>
           <div class="settings-actions">
-            <button class="secondary" onclick="testLineUrl()">測試貸款 LINE</button>
+            <button class="secondary" onclick="testLineUrl()">測試 C版 LINE</button>
+            <button class="secondary" onclick="testELineUrl()">測試 E版 LINE</button>
             <button class="secondary" onclick="testSubsidyLineUrl()">測試補助金 LINE</button>
           </div>
         </div>
@@ -527,6 +541,7 @@
     let activeDetailId = null;
     let siteSettings = {
       line_url: 'https://lin.ee/591VM3X',
+      e_line_url: 'https://lin.ee/591VM3X',
       subsidy_line_url: 'https://lin.ee/591VM3X',
       line_id: '',
       pixel_ids: [
@@ -626,12 +641,13 @@
     async function loadSiteSettings() {
       const { data, error } = await client
         .from('site_settings')
-        .select('line_url,subsidy_line_url,line_id,pixel_ids,updated_at')
+        .select('line_url,e_line_url,subsidy_line_url,line_id,pixel_ids,updated_at')
         .eq('id', 1)
         .single();
       if (!error && data) {
         siteSettings = {
           line_url: data.line_url || siteSettings.line_url,
+          e_line_url: data.e_line_url || data.line_url || siteSettings.e_line_url,
           subsidy_line_url: data.subsidy_line_url || data.line_url || siteSettings.subsidy_line_url,
           line_id: data.line_id || siteSettings.line_id,
           pixel_ids: Array.isArray(data.pixel_ids) ? data.pixel_ids.filter(pixel => pixel.platform !== 'tiktok') : siteSettings.pixel_ids,
@@ -670,6 +686,9 @@
       if (!lineInput) return;
       lineInput.value = siteSettings.line_url || '';
       updateLinePreview();
+      const eLineInput = document.getElementById('setting-e-line-url');
+      if (eLineInput) eLineInput.value = siteSettings.e_line_url || siteSettings.line_url || '';
+      updateELinePreview();
       const subsidyLineInput = document.getElementById('setting-subsidy-line-url');
       if (subsidyLineInput) subsidyLineInput.value = siteSettings.subsidy_line_url || siteSettings.line_url || '';
       updateSubsidyLinePreview();
@@ -712,6 +731,31 @@
       const url = document.getElementById('setting-line-url').value.trim();
       if (!isValidLineUrl(url)) {
         alert('請輸入正確的 lin.ee 或 line.me 連結。');
+        return;
+      }
+      window.open(url, '_blank', 'noopener');
+    }
+
+    function updateELinePreview() {
+      const input = document.getElementById('setting-e-line-url');
+      const preview = document.getElementById('setting-e-line-preview');
+      if (!input || !preview) return '';
+      const value = input.value.trim();
+      const lineId = extractLineId(value);
+      if (isLineShortUrl(value)) {
+        preview.textContent = 'E版會獨立使用這個 LINE 輪換短連結，不影響 C版與補助金頁。';
+      } else if (lineId && isValidLineUrl(value)) {
+        preview.textContent = `E版 LINE ID：${lineId}`;
+      } else {
+        preview.textContent = '請輸入 E版專用的 lin.ee 或 line.me 連結。';
+      }
+      return lineId;
+    }
+
+    function testELineUrl() {
+      const url = document.getElementById('setting-e-line-url').value.trim();
+      if (!isValidLineUrl(url)) {
+        alert('請輸入正確的 E版 LINE 連結。');
         return;
       }
       window.open(url, '_blank', 'noopener');
@@ -794,8 +838,10 @@
       const status = document.getElementById('settings-status');
       const button = document.getElementById('save-settings-btn');
       const lineUrl = document.getElementById('setting-line-url').value.trim();
+      const eLineUrl = document.getElementById('setting-e-line-url').value.trim();
       const subsidyLineUrl = document.getElementById('setting-subsidy-line-url').value.trim();
       const lineId = updateLinePreview();
+      updateELinePreview();
       updateSubsidyLinePreview();
       const pixels = siteSettings.pixel_ids
         .map(pixel => ({ id: String(pixel.id || '').trim(), enabled: pixel.enabled !== false }))
@@ -808,6 +854,11 @@
 
       if (!isValidLineUrl(lineUrl)) {
         status.textContent = '貸款 LINE 連結格式不正確，請使用 lin.ee 或 line.me。';
+        status.className = 'notice error setting-status';
+        return;
+      }
+      if (!isValidLineUrl(eLineUrl)) {
+        status.textContent = 'E版 LINE 連結格式不正確，請使用 lin.ee 或 line.me。';
         status.className = 'notice error setting-status';
         return;
       }
@@ -843,6 +894,7 @@
       status.className = 'notice setting-status';
       const payload = {
         line_url: lineUrl,
+        e_line_url: eLineUrl,
         subsidy_line_url: subsidyLineUrl,
         line_id: lineId,
         pixel_ids: pixels.map(pixel => ({ ...pixel, platform: 'facebook' })).concat(tiktokPixels),
@@ -855,7 +907,7 @@
         status.className = 'notice error setting-status';
         return;
       }
-      siteSettings = { ...siteSettings, line_url: lineUrl, subsidy_line_url: subsidyLineUrl, line_id: lineId, pixel_ids: pixels, tiktok_pixel_ids: tiktokPixels, updated_at: payload.updated_at };
+      siteSettings = { ...siteSettings, line_url: lineUrl, e_line_url: eLineUrl, subsidy_line_url: subsidyLineUrl, line_id: lineId, pixel_ids: pixels, tiktok_pixel_ids: tiktokPixels, updated_at: payload.updated_at };
       status.textContent = '已儲存。客戶重新整理落地頁後會套用最新設定。';
       status.className = 'notice setting-status';
       renderSiteSettings();
@@ -905,6 +957,16 @@
       return businessType(lead) === 'subsidy' ? '補助金額' : '貸款金額';
     }
 
+    function landingVariant(lead) {
+      const value = String(lead.landing_variant || '').trim().toUpperCase();
+      return value === 'E' ? 'E' : value === 'C' ? 'C' : '';
+    }
+
+    function landingVariantTag(lead) {
+      const variant = landingVariant(lead);
+      return variant ? `<span class="tag tag-variant-${variant.toLowerCase()}">${variant}版</span>` : '';
+    }
+
     async function loadLeads() {
       const refreshBtn = document.getElementById('refresh-btn');
       if (refreshBtn) {
@@ -952,6 +1014,7 @@
       const q = document.getElementById('search').value.trim().toLowerCase();
       const status = document.getElementById('status-filter').value;
       const businessFilter = document.getElementById('business-filter').value;
+      const variantFilter = document.getElementById('variant-filter').value;
       const baseDuplicate = document.getElementById('base-duplicate-filter').value;
       const trafficSourceFilter = document.getElementById('traffic-source-filter').value;
       const from = document.getElementById('date-from').value;
@@ -959,6 +1022,7 @@
       return leads.filter(lead => {
         if (status && lead.status !== status) return false;
         if (businessFilter && businessType(lead) !== businessFilter) return false;
+        if (variantFilter && landingVariant(lead) !== variantFilter) return false;
         if (baseDuplicate === 'yes' && !lead.base_duplicate) return false;
         if (baseDuplicate === 'no' && lead.base_duplicate) return false;
         const source = trafficSource(lead);
@@ -1021,6 +1085,7 @@
               <span class="lead-index">${data.length - index}</span>
               <span class="lead-name">${escapeHTML(lead.name || '未填姓名')}</span>
               <span class="tag tag-${businessType(lead)}">${businessLabel(lead)}</span>
+              ${landingVariantTag(lead)}
               ${lead.base_duplicate
                 ? '<span class="tag tag-base-duplicate">底粉重複</span>'
                 : lead.__isDuplicate
@@ -1065,6 +1130,7 @@
           ${detailItem('提交時間', formatDate(lead.created_at))}
           ${detailItem('目前狀態', statusLabels[lead.status] || lead.status)}
           ${detailItem('案件類型', businessLabel(lead))}
+          ${detailItem('落地頁版本', landingVariant(lead) ? landingVariant(lead) + '版' : '舊版未標記')}
           ${detailItem('客戶類型', leadCustomerType(lead))}
           ${detailItem('底粉來源', lead.base_duplicate ? lead.base_duplicate_source : '')}
           ${detailItem('姓名', lead.name)}
