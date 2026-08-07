@@ -788,8 +788,8 @@
     }
 
     function addPixelRow() {
-      if (siteSettings.pixel_ids.length >= 5) {
-        alert('最多可設定 5 個 Pixel。');
+      if (siteSettings.pixel_ids.length >= 10) {
+        alert('最多可設定 10 個 Pixel。');
         return;
       }
       siteSettings.pixel_ids.push({ id: '', enabled: true });
@@ -812,8 +812,8 @@
     }
 
     function addTikTokPixelRow() {
-      if (siteSettings.tiktok_pixel_ids.length >= 5) {
-        alert('最多可設定 5 個 TikTok Pixel。');
+      if (siteSettings.tiktok_pixel_ids.length >= 10) {
+        alert('最多可設定 10 個 TikTok Pixel。');
         return;
       }
       siteSettings.tiktok_pixel_ids.push({ id: '', enabled: true, platform: 'tiktok' });
