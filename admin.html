@@ -421,6 +421,7 @@
               <option value="">版本：全部</option>
               <option value="C">C版</option>
               <option value="E">E版</option>
+              <option value="F">F版</option>
             </select>
           </div>
           <div class="status-field">
@@ -959,7 +960,16 @@
 
     function landingVariant(lead) {
       const value = String(lead.landing_variant || '').trim().toUpperCase();
-      return value === 'E' ? 'E' : value === 'C' ? 'C' : '';
+      if (['C', 'E', 'F'].includes(value)) return value;
+      const url = String(lead.source_url || '').toLowerCase();
+      if (/\/f(?:\/|$)/.test(url)) return 'F';
+      if (/\/e(?:\/|$)/.test(url)) return 'E';
+      return url ? 'C' : '';
+    }
+
+    function landingVariantLabel(lead) {
+      const variant = landingVariant(lead);
+      return variant ? `D項目${variant}版本` : '舊版未標記';
     }
 
     function landingVariantTag(lead) {
@@ -1130,7 +1140,7 @@
           ${detailItem('提交時間', formatDate(lead.created_at))}
           ${detailItem('目前狀態', statusLabels[lead.status] || lead.status)}
           ${detailItem('案件類型', businessLabel(lead))}
-          ${detailItem('落地頁版本', landingVariant(lead) ? landingVariant(lead) + '版' : '舊版未標記')}
+          ${detailItem('來源版本', landingVariantLabel(lead))}
           ${detailItem('客戶類型', leadCustomerType(lead))}
           ${detailItem('底粉來源', lead.base_duplicate ? lead.base_duplicate_source : '')}
           ${detailItem('姓名', lead.name)}
@@ -1233,6 +1243,7 @@
     function clientCopyText(lead) {
       return [
         `案件類型：${businessLabel(lead)}`,
+        `來源版本：${landingVariantLabel(lead)}`,
         `姓名：${lead.name || ''}`,
         `年齡：${lead.age || ''}`,
         `${amountLabel(lead)}：${lead.q3_amount_needed || ''}`,
