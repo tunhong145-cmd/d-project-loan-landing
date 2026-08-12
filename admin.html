@@ -188,9 +188,40 @@
     .date-field { width: 142px; }
     .date-separator { align-self: center; color: var(--text-faint); font-size: 12px; }
     .status-field { width: 142px; }
+    .variant-filter-wrap { min-width: 272px; }
+    .variant-filter-label { margin-bottom: 7px; color: #425169; font-size: 12px; font-weight: 750; }
+    .variant-filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .filter-chip {
+      min-height: 34px;
+      padding: 6px 11px;
+      border-color: var(--line-strong);
+      background: #fff;
+      color: #43526a;
+      font-weight: 750;
+    }
+    .filter-chip.active {
+      border-color: #b8cef7;
+      background: var(--accent-soft);
+      color: var(--accent);
+      box-shadow: inset 0 0 0 1px rgba(37,95,209,.08);
+    }
     .filter-spacer { flex: 1; }
     .search-wrap { display: flex; gap: 7px; min-width: 300px; }
     .export-note { margin: 10px 0 0; }
+    .copy-number-panel {
+      margin-top: 12px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      border: 1px solid #d8e2ef;
+      border-radius: 9px;
+      background: #f8fbff;
+    }
+    .copy-number-panel strong { font-size: 13px; }
+    .copy-number-panel input { width: 92px; min-height: 34px; text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .copy-number-panel .notice { margin: 0; flex: 1 1 280px; }
     .list-panel { overflow: hidden; box-shadow: none; }
     .list-head { min-height: 66px; padding: 13px 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px; border-bottom: 1px solid var(--line); }
     .list-head h2 { margin: 0; font-size: 17px; letter-spacing: -.01em; }
@@ -229,6 +260,8 @@
     .tag-subsidy { background: #fff1d8; color: #8a5510; border-color: #efd39d; }
     .tag-variant-c { background: #edf7f3; color: #167455; border-color: #c5e6da; }
     .tag-variant-e { background: #f3edff; color: #6541a5; border-color: #d8c9f3; }
+    .tag-variant-f { background: #fff7e8; color: #9a5b13; border-color: #efd39d; }
+    .tag-copy-number { background: #eef2f7; color: #41516a; border-color: #d4dde9; }
     .lead-meta { display: flex; align-items: center; gap: 10px 18px; overflow: hidden; color: var(--text-soft); font-size: 12px; white-space: nowrap; }
     .lead-meta span { overflow: hidden; text-overflow: ellipsis; }
     .lead-meta strong { color: #26344a; font-weight: 700; }
@@ -416,13 +449,14 @@
               <option value="subsidy">補助金</option>
             </select>
           </div>
-          <div class="status-field">
-            <select id="variant-filter" onchange="renderLeads()">
-              <option value="">版本：全部</option>
-              <option value="C">C版</option>
-              <option value="E">E版</option>
-              <option value="F">F版</option>
-            </select>
+          <div class="variant-filter-wrap">
+            <div class="variant-filter-label">版本：可多選</div>
+            <div class="variant-filter-chips" id="variant-filter-chips">
+              <button class="filter-chip active" type="button" data-variant="ALL" onclick="clearVariantFilters()">全部</button>
+              <button class="filter-chip" type="button" data-variant="C" onclick="toggleVariantFilter('C')">C版</button>
+              <button class="filter-chip" type="button" data-variant="E" onclick="toggleVariantFilter('E')">E版</button>
+              <button class="filter-chip" type="button" data-variant="F" onclick="toggleVariantFilter('F')">F版</button>
+            </div>
           </div>
           <div class="status-field">
             <select id="base-duplicate-filter" onchange="renderLeads()">
@@ -445,6 +479,13 @@
             <input id="search" placeholder="搜尋姓名 / 年齡 / 金額" oninput="renderLeads()" />
             <button type="button" onclick="renderLeads()">搜尋</button>
           </div>
+        </div>
+        <div class="copy-number-panel">
+          <strong>甲方复制编号</strong>
+          <span class="notice">下一编号</span>
+          <input id="copy-next-number" type="number" min="1" max="9999" inputmode="numeric" value="1" />
+          <button type="button" class="secondary" onclick="saveCopyNextNumber()">儲存下一編號</button>
+          <p id="copy-number-status" class="notice">一鍵複製時，未編號訂單會先確認並綁定此編號；已編號訂單會沿用原編號。</p>
         </div>
         <p id="export-note" class="notice export-note">未勾選時，會匯出目前篩選結果。</p>
       </div>
@@ -540,11 +581,13 @@
     let leads = [];
     let selectedLeadIds = new Set();
     let activeDetailId = null;
+    let selectedVariantFilters = new Set();
     let siteSettings = {
       line_url: 'https://lin.ee/591VM3X',
       e_line_url: 'https://lin.ee/591VM3X',
       subsidy_line_url: 'https://lin.ee/591VM3X',
       line_id: '',
+      client_copy_next_number: 1,
       pixel_ids: [
         { id: '975921495153095', enabled: true },
         { id: '1033980915864419', enabled: true }
@@ -640,23 +683,34 @@
     }
 
     async function loadSiteSettings() {
-      const { data, error } = await client
+      let { data, error } = await client
         .from('site_settings')
-        .select('line_url,e_line_url,subsidy_line_url,line_id,pixel_ids,updated_at')
+        .select('line_url,e_line_url,subsidy_line_url,line_id,pixel_ids,client_copy_next_number,updated_at')
         .eq('id', 1)
         .single();
+      if (error && /client_copy_next_number|schema cache|column/i.test(error.message || '')) {
+        const fallback = await client
+          .from('site_settings')
+          .select('line_url,e_line_url,subsidy_line_url,line_id,pixel_ids,updated_at')
+          .eq('id', 1)
+          .single();
+        data = fallback.data;
+        error = fallback.error;
+      }
       if (!error && data) {
         siteSettings = {
           line_url: data.line_url || siteSettings.line_url,
           e_line_url: data.e_line_url || data.line_url || siteSettings.e_line_url,
           subsidy_line_url: data.subsidy_line_url || data.line_url || siteSettings.subsidy_line_url,
           line_id: data.line_id || siteSettings.line_id,
+          client_copy_next_number: Number(data.client_copy_next_number || siteSettings.client_copy_next_number || 1),
           pixel_ids: Array.isArray(data.pixel_ids) ? data.pixel_ids.filter(pixel => pixel.platform !== 'tiktok') : siteSettings.pixel_ids,
           tiktok_pixel_ids: Array.isArray(data.pixel_ids) ? data.pixel_ids.filter(pixel => pixel.platform === 'tiktok') : siteSettings.tiktok_pixel_ids,
           updated_at: data.updated_at
         };
       }
       renderSiteSettings();
+      renderCopyNumberControls();
     }
 
     function extractLineId(value) {
@@ -711,6 +765,80 @@
           <button class="danger" onclick="removeTikTokPixel(${index})">刪除</button>
         </div>
       `).join('') || '<p class="notice">目前沒有 TikTok Pixel。新增後儲存即可同步到網站。</p>';
+    }
+
+    function copyNumberValue(lead) {
+      const raw = lead ? lead.client_copy_number : '';
+      const number = Number(raw);
+      return Number.isFinite(number) && number > 0 ? number : null;
+    }
+
+    function formatCopyNumber(value) {
+      const number = Number(value);
+      if (!Number.isFinite(number) || number <= 0) return '';
+      return String(Math.floor(number)).padStart(2, '0');
+    }
+
+    function renderCopyNumberControls() {
+      const input = document.getElementById('copy-next-number');
+      if (input) input.value = Number(siteSettings.client_copy_next_number || 1);
+      const status = document.getElementById('copy-number-status');
+      if (status) {
+        status.textContent = `下一個未編號訂單會分配：${formatCopyNumber(siteSettings.client_copy_next_number || 1)}。已編號訂單重複複製不會跳號。`;
+        status.className = 'notice';
+      }
+    }
+
+    async function saveCopyNextNumber() {
+      const input = document.getElementById('copy-next-number');
+      const status = document.getElementById('copy-number-status');
+      const value = Math.floor(Number(input ? input.value : 0));
+      if (!Number.isFinite(value) || value < 1 || value > 9999) {
+        alert('下一編號請輸入 1 到 9999。');
+        return;
+      }
+      if (!confirm(`確定把下一個甲方編號設定為 ${formatCopyNumber(value)}？`)) return;
+      if (status) {
+        status.textContent = '儲存下一編號中...';
+        status.className = 'notice';
+      }
+      const { error } = await client
+        .from('site_settings')
+        .update({ client_copy_next_number: value, updated_at: new Date().toISOString() })
+        .eq('id', 1);
+      if (error) {
+        if (status) {
+          status.textContent = '儲存失敗：請先執行甲方編號資料庫更新 SQL。' + (error.message ? `（${error.message}）` : '');
+          status.className = 'notice error';
+        }
+        return;
+      }
+      siteSettings.client_copy_next_number = value;
+      renderCopyNumberControls();
+    }
+
+    async function assignLeadCopyNumber(lead) {
+      const existing = copyNumberValue(lead);
+      if (existing) return { number: existing, lead };
+      const next = Number(siteSettings.client_copy_next_number || 1);
+      if (!confirm(`本訂單將分配甲方編號 ${formatCopyNumber(next)}，是否確認複製？`)) return null;
+      const { data, error } = await client.rpc('assign_lead_client_copy_number', { target_lead_id: lead.id });
+      if (error) {
+        alert('分配編號失敗：請確認已執行甲方編號資料庫更新 SQL。' + (error.message ? `\n${error.message}` : ''));
+        return null;
+      }
+      const row = Array.isArray(data) ? data[0] : data;
+      const number = Number(row && (row.client_copy_number || row.assigned_number));
+      const nextNumber = Number(row && row.next_number);
+      if (!Number.isFinite(number) || number <= 0) {
+        alert('分配編號失敗：資料庫沒有回傳有效編號。');
+        return null;
+      }
+      lead.client_copy_number = number;
+      lead.client_copy_assigned_at = (row && row.client_copy_assigned_at) || new Date().toISOString();
+      if (Number.isFinite(nextNumber) && nextNumber > 0) siteSettings.client_copy_next_number = nextNumber;
+      renderCopyNumberControls();
+      return { number, lead };
     }
 
     function updateLinePreview() {
@@ -977,6 +1105,34 @@
       return variant ? `<span class="tag tag-variant-${variant.toLowerCase()}">${variant}版</span>` : '';
     }
 
+    function copyNumberTag(lead) {
+      const number = copyNumberValue(lead);
+      return number ? `<span class="tag tag-copy-number">甲方${formatCopyNumber(number)}</span>` : '';
+    }
+
+    function clearVariantFilters() {
+      selectedVariantFilters.clear();
+      updateVariantFilterUI();
+      renderLeads();
+    }
+
+    function toggleVariantFilter(variant) {
+      const value = String(variant || '').toUpperCase();
+      if (!value) return;
+      if (selectedVariantFilters.has(value)) selectedVariantFilters.delete(value);
+      else selectedVariantFilters.add(value);
+      updateVariantFilterUI();
+      renderLeads();
+    }
+
+    function updateVariantFilterUI() {
+      document.querySelectorAll('#variant-filter-chips .filter-chip').forEach(button => {
+        const value = button.dataset.variant;
+        const active = value === 'ALL' ? selectedVariantFilters.size === 0 : selectedVariantFilters.has(value);
+        button.classList.toggle('active', active);
+      });
+    }
+
     async function loadLeads() {
       const refreshBtn = document.getElementById('refresh-btn');
       if (refreshBtn) {
@@ -1024,7 +1180,6 @@
       const q = document.getElementById('search').value.trim().toLowerCase();
       const status = document.getElementById('status-filter').value;
       const businessFilter = document.getElementById('business-filter').value;
-      const variantFilter = document.getElementById('variant-filter').value;
       const baseDuplicate = document.getElementById('base-duplicate-filter').value;
       const trafficSourceFilter = document.getElementById('traffic-source-filter').value;
       const from = document.getElementById('date-from').value;
@@ -1032,7 +1187,7 @@
       return leads.filter(lead => {
         if (status && lead.status !== status) return false;
         if (businessFilter && businessType(lead) !== businessFilter) return false;
-        if (variantFilter && landingVariant(lead) !== variantFilter) return false;
+        if (selectedVariantFilters.size > 0 && !selectedVariantFilters.has(landingVariant(lead))) return false;
         if (baseDuplicate === 'yes' && !lead.base_duplicate) return false;
         if (baseDuplicate === 'no' && lead.base_duplicate) return false;
         const source = trafficSource(lead);
@@ -1096,6 +1251,7 @@
               <span class="lead-name">${escapeHTML(lead.name || '未填姓名')}</span>
               <span class="tag tag-${businessType(lead)}">${businessLabel(lead)}</span>
               ${landingVariantTag(lead)}
+              ${copyNumberTag(lead)}
               ${lead.base_duplicate
                 ? '<span class="tag tag-base-duplicate">底粉重複</span>'
                 : lead.__isDuplicate
@@ -1141,6 +1297,7 @@
           ${detailItem('目前狀態', statusLabels[lead.status] || lead.status)}
           ${detailItem('案件類型', businessLabel(lead))}
           ${detailItem('來源版本', landingVariantLabel(lead))}
+          ${detailItem('甲方編號', copyNumberValue(lead) ? formatCopyNumber(copyNumberValue(lead)) : '尚未分配')}
           ${detailItem('客戶類型', leadCustomerType(lead))}
           ${detailItem('底粉來源', lead.base_duplicate ? lead.base_duplicate_source : '')}
           ${detailItem('姓名', lead.name)}
@@ -1240,26 +1397,32 @@
       return parsed === null ? match[1] : (parsed ? '是' : '否');
     }
 
-    function clientCopyText(lead) {
+    function clientCopyText(lead, assignedNumber = null) {
+      const number = assignedNumber || copyNumberValue(lead);
+      const warningText = `${bankWarningValue(lead.q2_bank_status)}${number ? formatCopyNumber(number) : ''}`;
       return [
         `案件類型：${businessLabel(lead)}`,
         `來源版本：${landingVariantLabel(lead)}`,
         `姓名：${lead.name || ''}`,
         `年齡：${lead.age || ''}`,
         `${amountLabel(lead)}：${lead.q3_amount_needed || ''}`,
-        `是否警示戶：${bankWarningValue(lead.q2_bank_status)}`
+        `是否警示戶：${warningText}`
       ].join('\n');
     }
 
     async function copyLead(id) {
       const lead = leads.find(item => item.id === id);
       if (!lead) return;
-      await copyText(clientCopyText(lead));
+      const assigned = await assignLeadCopyNumber(lead);
+      if (!assigned) return;
+      await copyText(clientCopyText(assigned.lead, assigned.number));
       const button = document.getElementById('client-copy-btn');
       if (button) {
-        button.textContent = '已複製，可以直接貼給甲方';
+        button.textContent = `已複製，甲方編號 ${formatCopyNumber(assigned.number)}`;
         setTimeout(() => { button.textContent = '一鍵複製客戶資料'; }, 1800);
       }
+      renderLeads();
+      if (activeDetailId === id) openDetails(id);
     }
 
     function toggleLeadSelection(id, checked) {
@@ -1337,7 +1500,7 @@
     }
 
     function exportCSV() {
-      const cols = ['created_at','business_type','landing_variant','name','phone','age','line_id','q3_amount_needed','q2_bank_status','status','base_duplicate','base_duplicate_source','traffic_source','notes'];
+      const cols = ['created_at','business_type','landing_variant','client_copy_number','name','phone','age','line_id','q3_amount_needed','q2_bank_status','status','base_duplicate','base_duplicate_source','traffic_source','notes'];
       const selectedRows = leads.filter(row => selectedLeadIds.has(row.id));
       const exportRows = selectedRows.length > 0 ? selectedRows : filteredLeads();
       if (exportRows.length === 0) {
