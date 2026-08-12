@@ -269,6 +269,21 @@
     .lead-actions { display: flex; align-items: center; justify-content: flex-end; gap: 5px; flex-wrap: wrap; max-width: 430px; }
     .status-btn { min-height: 31px; padding: 5px 9px; background: #fff; color: #5b6a7f; border-color: var(--line); font-size: 12px; font-weight: 600; }
     .status-btn.active { background: var(--accent-soft); color: var(--accent); border-color: #aec7f5; font-weight: 800; }
+    .copy-confirm-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px;
+      border: 1px solid #bdd0ec;
+      border-radius: 8px;
+      background: #f2f7ff;
+      box-shadow: 0 8px 20px rgba(31,49,76,.08);
+    }
+    .copy-confirm-inline span { padding: 0 4px; color: #2f4770; font-size: 12px; font-weight: 800; }
+    .copy-confirm-inline button { min-height: 29px; padding: 5px 9px; }
+    .copy-confirm-inline .cancel { background: #fff; color: #607087; border-color: #cbd6e5; }
+    .copy-number-actions { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
+    .copy-number-actions button { min-height: 32px; padding: 6px 10px; font-size: 12px; }
     .empty { padding: 48px 20px; text-align: center; }
     .drawer-backdrop { position: fixed; inset: 0; z-index: 1990; background: rgba(10,19,33,.48); backdrop-filter: blur(2px); }
     .detail-drawer { position: fixed; inset: 0 0 0 auto; z-index: 2000; width: min(560px,100%); display: flex; flex-direction: column; background: #fff; box-shadow: -18px 0 50px rgba(17,31,52,.2); }
@@ -581,6 +596,7 @@
     let leads = [];
     let selectedLeadIds = new Set();
     let activeDetailId = null;
+    let pendingCopyLeadId = null;
     let selectedVariantFilters = new Set();
     let siteSettings = {
       line_url: 'https://lin.ee/591VM3X',
@@ -820,8 +836,6 @@
     async function assignLeadCopyNumber(lead) {
       const existing = copyNumberValue(lead);
       if (existing) return { number: existing, lead };
-      const next = Number(siteSettings.client_copy_next_number || 1);
-      if (!confirm(`本訂單將分配甲方編號 ${formatCopyNumber(next)}，是否確認複製？`)) return null;
       const { data, error } = await client.rpc('assign_lead_client_copy_number', { target_lead_id: lead.id });
       if (error) {
         alert('分配編號失敗：請確認已執行甲方編號資料庫更新 SQL。' + (error.message ? `\n${error.message}` : ''));
@@ -1110,6 +1124,17 @@
       return number ? `<span class="tag tag-copy-number">甲方${formatCopyNumber(number)}</span>` : '';
     }
 
+    function copyConfirmInline(lead) {
+      const next = formatCopyNumber(siteSettings.client_copy_next_number || 1);
+      return `
+        <span class="copy-confirm-inline">
+          <span>分配 ${next}？</span>
+          <button type="button" onclick="confirmCopyLead('${lead.id}')">確認並複製</button>
+          <button type="button" class="cancel" onclick="cancelCopyConfirm()">取消</button>
+        </span>
+      `;
+    }
+
     function clearVariantFilters() {
       selectedVariantFilters.clear();
       updateVariantFilterUI();
@@ -1274,6 +1299,7 @@
             <button class="status-btn ${lead.status === 'approved' ? 'active' : ''}" onclick="updateLead('${lead.id}',{status:'approved'})">已成交</button>
             <button class="status-btn ${lead.status === 'invalid' ? 'active' : ''}" onclick="updateLead('${lead.id}',{status:'invalid'})">無效</button>
             <button onclick="copyLead('${lead.id}')">一鍵複製</button>
+            ${pendingCopyLeadId === lead.id ? copyConfirmInline(lead) : ''}
             <button class="secondary" onclick="openDetails('${lead.id}')">詳情</button>
           </div>
         </article>
@@ -1322,6 +1348,11 @@
           <textarea id="client-copy-text" class="client-copy-box" readonly>${escapeHTML(clientCopyText(lead))}</textarea>
           <div style="height:10px"></div>
           <button id="client-copy-btn" onclick="copyLead('${lead.id}')">一鍵複製客戶資料</button>
+          <div id="detail-copy-confirm">${pendingCopyLeadId === lead.id ? copyConfirmInline(lead) : ''}</div>
+          <div class="copy-number-actions">
+            <button class="secondary" onclick="editLeadCopyNumber('${lead.id}')">修改甲方編號</button>
+            <button class="danger" onclick="clearLeadCopyNumber('${lead.id}')">清除甲方編號</button>
+          </div>
         </div>
         <div class="detail-section">
           <h3>快速操作</h3>
@@ -1410,9 +1441,16 @@
       ].join('\n');
     }
 
-    async function copyLead(id) {
+    async function copyLead(id, forceAssign = false) {
       const lead = leads.find(item => item.id === id);
       if (!lead) return;
+      if (!copyNumberValue(lead) && !forceAssign) {
+        pendingCopyLeadId = id;
+        renderLeads();
+        if (activeDetailId === id) openDetails(id);
+        return;
+      }
+      pendingCopyLeadId = null;
       const assigned = await assignLeadCopyNumber(lead);
       if (!assigned) return;
       await copyText(clientCopyText(assigned.lead, assigned.number));
@@ -1423,6 +1461,71 @@
       }
       renderLeads();
       if (activeDetailId === id) openDetails(id);
+    }
+
+    function confirmCopyLead(id) {
+      copyLead(id, true);
+    }
+
+    function cancelCopyConfirm() {
+      pendingCopyLeadId = null;
+      renderLeads();
+      if (activeDetailId) openDetails(activeDetailId);
+    }
+
+    async function editLeadCopyNumber(id) {
+      const lead = leads.find(item => item.id === id);
+      if (!lead) return;
+      const current = copyNumberValue(lead);
+      const input = prompt('請輸入新的甲方編號，例如 1、51。', current ? String(current) : String(siteSettings.client_copy_next_number || 1));
+      if (input === null) return;
+      const value = Math.floor(Number(input));
+      if (!Number.isFinite(value) || value < 1 || value > 9999) {
+        alert('甲方編號請輸入 1 到 9999。');
+        return;
+      }
+      const { error } = await client
+        .from('leads')
+        .update({
+          client_copy_number: value,
+          client_copy_assigned_at: lead.client_copy_assigned_at || new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+      if (error) {
+        alert('修改編號失敗：' + error.message);
+        return;
+      }
+      lead.client_copy_number = value;
+      lead.client_copy_assigned_at = lead.client_copy_assigned_at || new Date().toISOString();
+      pendingCopyLeadId = null;
+      await loadLeads();
+    }
+
+    async function clearLeadCopyNumber(id) {
+      const lead = leads.find(item => item.id === id);
+      if (!lead) return;
+      if (!copyNumberValue(lead)) {
+        alert('這筆訂單目前沒有甲方編號。');
+        return;
+      }
+      if (!confirm(`確定清除這筆訂單的甲方編號 ${formatCopyNumber(copyNumberValue(lead))}？\n\n清除不會自動倒退「下一編號」，需要回退時請在上方手動修改。`)) return;
+      const { error } = await client
+        .from('leads')
+        .update({
+          client_copy_number: null,
+          client_copy_assigned_at: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+      if (error) {
+        alert('清除編號失敗：' + error.message);
+        return;
+      }
+      lead.client_copy_number = null;
+      lead.client_copy_assigned_at = null;
+      pendingCopyLeadId = null;
+      await loadLeads();
     }
 
     function toggleLeadSelection(id, checked) {
