@@ -1170,6 +1170,7 @@
       const { data, error } = await client
         .from('leads')
         .select('*')
+        .or('landing_variant.is.null,landing_variant.neq.H')
         .order('created_at', { ascending: false });
       if (error) {
         alert('讀取名單失敗：' + error.message);
