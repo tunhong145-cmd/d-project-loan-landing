@@ -1,0 +1,972 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="君浩國際有限公司｜選擇貸款金額，填寫姓名、電話、出生年月日與 LINE 帳號，送出需求登記。">
+  <meta name="theme-color" content="#154f40">
+  <title>君浩國際有限公司｜線上需求登記</title>
+  <link rel="stylesheet" href="../styles.css?v=2026072801">
+  <script src="app.js?v=2026081601" defer></script>
+  <style>
+    :root {
+      --e-page: #e9efec;
+      --e-shell: #edf2ef;
+      --e-card: #fbfcfa;
+      --e-soft: #e4ede8;
+      --e-green: #154f40;
+      --e-green-2: #236b58;
+      --e-green-3: #d8e8e0;
+      --e-ink: #17231f;
+      --e-muted: #68766f;
+      --e-line: #d7dfda;
+      --e-danger: #a33b32;
+      --e-danger-soft: #f8e9e6;
+      --e-shadow: 0 28px 80px rgb(29 62 50 / .14);
+      --e-card-shadow: 0 8px 24px rgb(42 72 60 / .065);
+    }
+
+    html { background: var(--e-page); }
+    body[data-page="apply"] {
+      min-width: 320px;
+      min-height: 100dvh;
+      margin: 0;
+      color: var(--e-ink);
+      background:
+        radial-gradient(circle at 12% 14%, rgb(21 79 64 / .10), transparent 30rem),
+        radial-gradient(circle at 90% 82%, rgb(21 79 64 / .07), transparent 34rem),
+        var(--e-page);
+      font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    input { font: inherit; }
+
+    .e-stage {
+      width: min(1060px, calc(100% - 40px));
+      min-height: 100dvh;
+      margin: 0 auto;
+      padding: 42px 0;
+      display: grid;
+      grid-template-columns: minmax(300px, 1fr) 430px;
+      gap: clamp(50px, 8vw, 110px);
+      align-items: start;
+    }
+
+    .e-intro {
+      position: sticky;
+      top: 78px;
+      padding: 52px 0 0 16px;
+    }
+
+    .e-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      color: var(--e-green);
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: .06em;
+    }
+
+    .e-mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 11px;
+      color: #f8faf7;
+      background: var(--e-green);
+      font-size: 13px;
+      letter-spacing: 0;
+      box-shadow: 0 7px 18px rgb(21 79 64 / .18);
+    }
+
+    .e-intro h1 {
+      max-width: 520px;
+      margin: 30px 0 18px;
+      font-size: clamp(39px, 4.8vw, 61px);
+      line-height: 1.08;
+      letter-spacing: -.055em;
+    }
+
+    .e-intro h1 span { color: var(--e-green-2); }
+    .e-intro p {
+      max-width: 460px;
+      margin: 0;
+      color: var(--e-muted);
+      font-size: 16px;
+      line-height: 1.8;
+    }
+
+    .e-points {
+      margin: 37px 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 13px;
+    }
+
+    .e-points li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #46544e;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .e-point-mark {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #b9c9c1;
+      border-radius: 8px;
+      color: var(--e-green-2);
+      background: rgb(251 252 250 / .65);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .e-app {
+      position: relative;
+      overflow: hidden;
+      border: 8px solid #122821;
+      border-radius: 44px;
+      background: #f3f7f4;
+      box-shadow:
+        0 34px 92px rgb(13 38 30 / .24),
+        inset 0 0 0 1px rgb(255 255 255 / .16);
+    }
+
+    .e-app::before {
+      content: "";
+      position: absolute;
+      z-index: 5;
+      top: 11px;
+      left: 50%;
+      width: 74px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgb(255 255 255 / .42);
+      transform: translateX(-50%);
+    }
+
+    .e-app::after {
+      content: "";
+      position: absolute;
+      z-index: 5;
+      left: 50%;
+      bottom: 10px;
+      width: 116px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgb(18 40 33 / .22);
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+
+    .e-app-header {
+      position: relative;
+      overflow: hidden;
+      padding: 36px 21px 26px;
+      color: #f5f8f5;
+      background:
+        linear-gradient(165deg, #1c735c 0%, #154f40 46%, #0d342a 100%);
+    }
+
+    .e-app-header::after {
+      content: "";
+      position: absolute;
+      width: 210px;
+      height: 210px;
+      right: -126px;
+      top: -126px;
+      border: 34px solid rgb(244 248 245 / .08);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .e-header-top,
+    .e-header-bottom {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .e-header-top { align-items: flex-start; }
+    .e-header-bottom {
+      margin-top: 24px;
+      color: #b9d0c6;
+      font-size: 11px;
+    }
+
+    .e-header-bottom strong { color: #f3f7f4; font-weight: 800; }
+    .e-app-name small {
+      display: block;
+      margin-bottom: 7px;
+      color: #a8c8ba;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .13em;
+    }
+
+    .e-app-name strong {
+      display: block;
+      font-size: 21px;
+      line-height: 1.25;
+      letter-spacing: -.025em;
+    }
+
+    .e-secure {
+      padding: 7px 10px;
+      border: 1px solid rgb(245 248 245 / .20);
+      border-radius: 10px;
+      color: #dce9e3;
+      background: rgb(245 248 245 / .055);
+      font-size: 10px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .one-page-flow {
+      padding: 16px 14px 28px;
+      display: grid;
+      gap: 11px;
+      background:
+        linear-gradient(180deg, rgb(255 255 255 / .38), transparent 140px),
+        #f3f7f4;
+    }
+
+    .e-card {
+      padding: 18px;
+      border: 1px solid rgb(215 223 218 / .92);
+      border-radius: 24px;
+      background: var(--e-card);
+      box-shadow:
+        0 10px 26px rgb(42 72 60 / .07),
+        inset 0 1px 0 rgb(255 255 255 / .82);
+    }
+
+    .e-card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .e-label {
+      margin: 0 0 5px;
+      color: var(--e-green-2);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .1em;
+    }
+
+    .e-title {
+      margin: 0;
+      color: var(--e-ink);
+      font-size: 15px;
+      font-weight: 900;
+      line-height: 1.45;
+    }
+
+    .e-note {
+      margin: 5px 0 0;
+      color: var(--e-muted);
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    .e-amount-card {
+      padding: 20px;
+      border-color: #c9d9d1;
+      background:
+        radial-gradient(circle at 92% 8%, rgb(21 79 64 / .08), transparent 8rem),
+        var(--e-card);
+      transform: translateY(-6px);
+    }
+
+    .e-range {
+      padding: 6px 10px;
+      border-radius: 9px;
+      color: var(--e-green-2);
+      background: var(--e-green-3);
+      font-size: 10px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .amount-grid {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .amount-option {
+      position: relative;
+      min-height: 78px;
+      padding: 11px 12px;
+      display: grid;
+      align-content: center;
+      gap: 5px;
+      border: 1px solid transparent;
+      border-radius: 14px;
+      color: #52615a;
+      background: #edf1ef;
+      text-align: left;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgb(255 255 255 / .78);
+      transition: transform .16s ease, color .16s ease, background-color .16s ease, border-color .16s ease, box-shadow .16s ease;
+    }
+
+    .amount-option:hover { border-color: #bdccc4; }
+    .amount-option:active { transform: scale(.98); }
+    .amount-option[aria-pressed="true"] {
+      border-color: var(--e-green);
+      color: #f6f8f6;
+      background: linear-gradient(160deg, #24745f, #154f40);
+      box-shadow:
+        0 13px 26px rgb(21 79 64 / .20),
+        inset 0 1px 0 rgb(255 255 255 / .15);
+    }
+
+    .amount-option[aria-pressed="true"]::after {
+      content: "✓";
+      position: absolute;
+      right: 10px;
+      top: 9px;
+      width: 20px;
+      height: 20px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: var(--e-green);
+      background: #fff;
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .amount-option small,
+    .featured-label {
+      color: inherit;
+      opacity: .82;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .06em;
+    }
+
+    .amount-number {
+      color: inherit;
+      font-size: 20px;
+      font-weight: 950;
+      letter-spacing: -.035em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .amount-number span { font-size: 12px; margin-left: 1px; }
+
+    .selection-message {
+      margin-top: 14px;
+      padding: 12px 13px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      border-radius: 13px;
+      background: #dde9e3;
+      color: #52615a;
+      font-size: 11px;
+    }
+
+    .selection-message strong {
+      color: var(--e-green);
+      font-size: 15px;
+      font-weight: 950;
+    }
+
+    .field-grid.compact-fields {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .field label,
+    .warning-fieldset legend {
+      display: block;
+      margin: 0 0 7px 2px;
+      color: #536159;
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .field input {
+      width: 100%;
+      height: 54px;
+      padding: 0 15px;
+      border: 1px solid #d3ddd8;
+      border-radius: 17px;
+      outline: 0;
+      color: var(--e-ink);
+      background: #f4f7f5;
+      font-size: 16px;
+      transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+    }
+
+    .field input::placeholder { color: #949f9a; }
+    .field input:focus {
+      border-color: var(--e-green-2);
+      background: var(--e-card);
+      box-shadow: 0 0 0 4px rgb(35 107 88 / .11);
+    }
+
+    .field-error {
+      min-height: 16px;
+      margin: 5px 0 0 2px;
+      color: var(--e-danger);
+      font-size: 10px;
+    }
+
+    .warning-fieldset {
+      min-width: 0;
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+
+    .warning-options {
+      margin-top: 15px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .warning-option {
+      min-height: 50px;
+      padding: 0;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .warning-option input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .warning-option span {
+      min-height: 56px;
+      padding: 9px 12px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #ccd6d1;
+      border-radius: 17px;
+      color: #506058;
+      background: #f5f8f6;
+      font-size: 12px;
+      font-weight: 850;
+      text-align: center;
+      transition: transform .16s ease, color .16s ease, background-color .16s ease, border-color .16s ease;
+    }
+
+    .warning-option:active span { transform: scale(.98); }
+    .warning-option input:checked + span {
+      border-color: var(--e-green);
+      color: #f5f8f5;
+      background: var(--e-green);
+    }
+
+    .warning-option b { display: block; font-size: 13px; }
+    .warning-option small { display: block; margin-top: 2px; opacity: .78; font-size: 10px; }
+
+    .warning-help,
+    .privacy-note {
+      margin: 11px 0 0;
+      color: var(--e-muted);
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    .warning-help.is-rejected {
+      padding: 10px 12px;
+      border-radius: 10px;
+      color: var(--e-danger);
+      background: var(--e-danger-soft);
+    }
+
+    .e-review {
+      padding: 20px;
+      border: 1px solid #bfd1c8;
+      border-radius: 24px;
+      background:
+        linear-gradient(135deg, rgb(255 255 255 / .50), transparent),
+        #dde9e3;
+    }
+
+    .e-review-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: end;
+    }
+
+    .e-review-title {
+      margin: 0 0 4px;
+      color: var(--e-green-2);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .1em;
+    }
+
+    .e-review-amount {
+      margin: 0;
+      color: var(--e-green);
+      font-size: 29px;
+      font-weight: 950;
+      letter-spacing: -.04em;
+    }
+
+    .e-review-status { color: var(--e-muted); font-size: 10px; font-weight: 800; white-space: nowrap; }
+
+    .form-status {
+      min-height: 18px;
+      margin-top: 12px;
+      color: var(--e-danger);
+      font-size: 11px;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    .submit-button {
+      width: 100%;
+      min-height: 53px;
+      margin-top: 13px;
+      border: 0;
+      border-radius: 12px;
+      color: #f5f8f5;
+      background: var(--e-green);
+      box-shadow: inset 0 -2px 0 rgb(4 37 28 / .20), 0 9px 20px rgb(21 79 64 / .16);
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform .16s ease, filter .16s ease, opacity .16s ease;
+    }
+
+    .submit-button:hover:not(:disabled) { filter: brightness(1.07); }
+    .submit-button:active:not(:disabled) { transform: translateY(1px); }
+    .submit-button:disabled { opacity: .42; cursor: not-allowed; box-shadow: none; }
+
+    .e-legal {
+      margin: 0 5px 7px;
+      color: #75817b;
+      font-size: 10px;
+      line-height: 1.65;
+      text-align: center;
+    }
+
+    .success-panel {
+      min-height: 660px;
+      padding: 66px 28px;
+      place-content: center;
+      text-align: center;
+    }
+
+    .success-panel[hidden] { display: none !important; }
+    .success-panel:not([hidden]) { display: grid; }
+
+    .success-mark {
+      width: 70px;
+      height: 70px;
+      margin: 0 auto 22px;
+      display: grid;
+      place-items: center;
+      border-radius: 22px;
+      color: #f5f8f5;
+      background: var(--e-green);
+      box-shadow: 0 15px 30px rgb(21 79 64 / .18);
+      font-size: 27px;
+      font-weight: 900;
+    }
+
+    .success-kicker {
+      margin: 0 0 8px;
+      color: var(--e-green-2);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .1em;
+    }
+
+    .success-panel h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.25;
+      letter-spacing: -.035em;
+    }
+
+    .success-intro {
+      margin: 13px auto 18px;
+      color: var(--e-muted);
+      font-size: 13px;
+      line-height: 1.75;
+    }
+
+    .completion-alert,
+    .line-name-card,
+    .success-amount {
+      margin: 12px 0 0;
+      padding: 13px;
+      border-radius: 15px;
+      background: #dde9e3;
+      color: #415149;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .completion-alert strong,
+    .line-name-card strong,
+    .success-amount strong {
+      display: block;
+      color: var(--e-green);
+      font-size: 16px;
+      font-weight: 950;
+    }
+
+    .copy-name-button,
+    .line-button {
+      min-height: 46px;
+      margin-top: 10px;
+      padding: 0 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--e-green);
+      border-radius: 12px;
+      color: var(--e-green);
+      background: transparent;
+      font-size: 13px;
+      font-weight: 850;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .line-cta-hint {
+      margin: 16px 0 0;
+      padding: 11px 13px;
+      border: 1px solid rgb(6 199 85 / .24);
+      border-radius: 15px;
+      color: #0f5130;
+      background: linear-gradient(135deg, rgb(6 199 85 / .14), rgb(6 199 85 / .05));
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.45;
+    }
+
+    .line-button {
+      width: 100%;
+      min-height: 62px;
+      gap: 10px;
+      border: 0;
+      border-radius: 18px;
+      color: #fff;
+      background: linear-gradient(180deg, #10dc67 0%, #06c755 100%);
+      box-shadow:
+        0 18px 36px rgb(6 199 85 / .34),
+        0 0 0 6px rgb(6 199 85 / .12);
+      font-size: 17px;
+      font-weight: 950;
+      letter-spacing: .01em;
+      animation: linePulse 1.8s ease-in-out infinite;
+    }
+
+    .line-button::before {
+      content: "LINE";
+      min-width: 48px;
+      height: 28px;
+      padding: 0 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      color: #06c755;
+      background: #fff;
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .02em;
+    }
+
+    .line-button::after {
+      content: "›";
+      font-size: 28px;
+      line-height: 1;
+      transform: translateY(-1px);
+    }
+
+    .line-button:hover {
+      transform: translateY(-1px);
+      box-shadow:
+        0 22px 42px rgb(6 199 85 / .42),
+        0 0 0 7px rgb(6 199 85 / .14);
+    }
+
+    .line-button:active {
+      transform: translateY(1px);
+    }
+
+    @keyframes linePulse {
+      0%, 100% {
+        box-shadow:
+          0 18px 36px rgb(6 199 85 / .34),
+          0 0 0 6px rgb(6 199 85 / .12);
+      }
+      50% {
+        box-shadow:
+          0 22px 44px rgb(6 199 85 / .44),
+          0 0 0 10px rgb(6 199 85 / .10);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .line-button { animation: none; }
+    }
+
+    .line-steps {
+      margin: 16px 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+      text-align: left;
+    }
+
+    .line-steps li {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      align-items: center;
+      color: #52615a;
+      font-size: 12px;
+    }
+
+    .line-steps span {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 9px;
+      color: var(--e-green);
+      background: var(--e-green-3);
+      font-weight: 900;
+    }
+
+    .line-steps p,
+    .line-required-note,
+    .copy-name-status,
+    .restart-link { margin: 0; }
+
+    .line-required-note,
+    .copy-name-status {
+      color: var(--e-muted);
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    .restart-link {
+      display: inline-block;
+      margin-top: 14px;
+      color: var(--e-green-2);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .e-card,
+      .e-review { animation: e-rise .36s both; }
+      .e-card:nth-child(2) { animation-delay: .04s; }
+      .e-card:nth-child(3) { animation-delay: .08s; }
+      .e-review { animation-delay: .12s; }
+      @keyframes e-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    }
+
+    @media (max-width: 850px) {
+      .e-stage { width: 100%; padding: 0; display: block; }
+      .e-intro { display: none; }
+      .e-app { min-height: 100dvh; border: 0; border-radius: 0; box-shadow: none; }
+    }
+
+    @media (max-width: 390px) {
+      .e-app-header { padding: 21px 18px 26px; }
+      .one-page-flow { padding: 13px; gap: 11px; }
+      .e-card, .e-amount-card, .e-review { padding: 17px; }
+      .amount-grid { gap: 7px; }
+      .amount-option { min-height: 72px; padding: 10px; }
+      .amount-number { font-size: 18px; }
+      .field-grid.compact-fields { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body data-page="apply">
+  <main class="e-stage">
+    <section class="e-intro" aria-labelledby="page-title">
+      <div class="e-brand"><span class="e-mark">JH</span>君浩國際有限公司</div>
+      <h1 id="page-title">10萬到100萬，<span>先送件確認可辦方案。</span></h1>
+      <p>選好金額，留下完整聯繫資料。符合條件後，專員會透過 LINE 與你核對放款方向。</p>
+      <ul class="e-points">
+        <li><span class="e-point-mark">1</span><span>先選你想辦的金額</span></li>
+        <li><span class="e-point-mark">2</span><span>填寫完整聯繫資料</span></li>
+        <li><span class="e-point-mark">3</span><span>送出後加 LINE 核對放款</span></li>
+      </ul>
+    </section>
+
+    <section class="e-app" aria-label="君浩國際有限公司線上需求登記">
+      <header class="e-app-header">
+        <div class="e-header-top">
+          <div class="e-app-name"><small>JUN HAO INTERNATIONAL</small><strong>君浩國際有限公司</strong></div>
+          <span class="e-secure">資料安全傳輸</span>
+        </div>
+        <div class="e-header-bottom"><span>完整資料優先核對</span><strong>10萬－100萬</strong></div>
+      </header>
+
+      <div class="one-page-flow" id="application-layout">
+        <form id="lead-form" novalidate>
+          <section class="e-card e-amount-card" aria-labelledby="amount-title">
+            <div class="e-card-head">
+              <div>
+                <p class="e-label">立即申請</p>
+                <h2 class="e-title" id="amount-title">先選你想申請的金額</h2>
+                <p class="e-note">金額送出後，專員會依你的資料協助確認可行方向。</p>
+              </div>
+              <span class="e-range">10 至 100 萬</span>
+            </div>
+
+            <div class="amount-grid" id="amount-options" aria-label="選擇需求金額">
+              <button class="amount-option" type="button" data-amount="10萬-20萬" aria-pressed="false">
+                <small>靈活週轉</small>
+                <span class="amount-number">10<span>萬</span> - 20<span>萬</span></span>
+              </button>
+              <button class="amount-option" type="button" data-amount="20萬-30萬" aria-pressed="false">
+                <small>資金補足</small>
+                <span class="amount-number">20<span>萬</span> - 30<span>萬</span></span>
+              </button>
+              <button class="amount-option" type="button" data-amount="30萬-50萬" aria-pressed="false">
+                <small>高額需求</small>
+                <span class="amount-number">30<span>萬</span> - 50<span>萬</span></span>
+              </button>
+              <button class="amount-option featured" type="button" data-amount="50萬-100萬" aria-pressed="false">
+                <span class="featured-label">最高可選</span>
+                <span class="amount-number">50<span>萬</span> - 100<span>萬</span></span>
+              </button>
+            </div>
+
+            <div class="selection-message" id="selection-message" aria-live="polite">
+              <span>尚未選擇金額</span>
+              <strong id="selected-amount">尚未選擇</strong>
+            </div>
+          </section>
+
+          <section class="e-card" aria-labelledby="details-title">
+            <p class="e-label">基本資料</p>
+            <h2 class="e-title" id="details-title">請填寫完整申請資料</h2>
+            <p class="e-note">請填寫真實資料，送出後加入 LINE，專員才能快速核對你的需求。</p>
+            <div class="field-grid compact-fields">
+              <div class="field">
+                <label for="name">真實姓名</label>
+                <input id="name" name="name" type="text" autocomplete="name" maxlength="30" placeholder="請輸入真實姓名" required>
+                <p class="field-error" data-error-for="name"></p>
+              </div>
+              <div class="field">
+                <label for="phone">電話</label>
+                <input id="phone" name="phone" type="tel" inputmode="tel" maxlength="20" autocomplete="tel" placeholder="例：0912345678" required>
+                <p class="field-error" data-error-for="phone"></p>
+              </div>
+              <div class="field">
+                <label for="age">出生年月日</label>
+                <input id="age" name="age" type="text" inputmode="numeric" maxlength="10" placeholder="例：1988/05/12" required>
+                <p class="field-error" data-error-for="age"></p>
+              </div>
+              <div class="field">
+                <label for="line_id">LINE 帳號</label>
+                <input id="line_id" name="line_id" type="text" maxlength="50" placeholder="請輸入 LINE 帳號" required>
+                <p class="field-error" data-error-for="line_id"></p>
+              </div>
+            </div>
+          </section>
+
+          <section class="e-card" aria-labelledby="warning-title">
+            <fieldset class="warning-fieldset">
+              <legend>帳戶狀況</legend>
+              <h2 class="e-title" id="warning-title">目前是否為銀行警示戶？</h2>
+              <p class="e-note">請依目前實際狀況選擇。</p>
+              <div class="warning-options">
+                <label class="warning-option">
+                  <input type="radio" name="warning_account" value="非警示戶" required>
+                  <span><b>不是警示戶</b><small>目前帳戶正常</small></span>
+                </label>
+                <label class="warning-option">
+                  <input type="radio" name="warning_account" value="警示戶" required>
+                  <span><b>是警示戶</b><small>目前無法辦理</small></span>
+                </label>
+              </div>
+              <p class="warning-help" id="warning-help">本服務僅受理非警示戶申請。</p>
+              <p class="field-error" data-error-for="warning_account"></p>
+            </fieldset>
+          </section>
+
+          <section class="e-review" aria-label="資料預覽">
+            <div class="e-review-top">
+              <div>
+                <p class="e-review-title">送出後進入專員核對</p>
+                <p class="e-review-amount">確認可辦方向</p>
+              </div>
+              <span class="e-review-status" id="qualification-title">最後確認</span>
+            </div>
+            <p class="e-note" id="qualification-text">資料送出後，請依提示加入 LINE 並主動發送姓名，專員才能核對你的需求並協助後續放款確認。</p>
+            <div class="privacy-note">
+              本頁僅供需求登記，不構成核准、利率或額度承諾。請勿提供網銀密碼、簡訊驗證碼或先行匯款。
+            </div>
+            <div class="form-status" id="form-status" role="status" aria-live="polite"></div>
+            <button class="submit-button" id="submit-button" type="submit" disabled>立即送出申請</button>
+          </section>
+        </form>
+      </div>
+
+      <section class="success-panel" id="success-panel" hidden tabindex="-1" aria-labelledby="success-title">
+        <div class="success-mark" aria-hidden="true">✓</div>
+        <p class="success-kicker">資料已收到，還差最後一步</p>
+        <h1 id="success-title">加入 LINE 並發送姓名</h1>
+        <p class="success-intro">專員需要用姓名配對你的申請資料，完成配對後才會開始審核。</p>
+        <div class="completion-alert" role="note">
+          <strong>只加好友不算完成</strong>
+          <span>加入 LINE 後必須主動發送姓名，否則申請不會進入審核。</span>
+        </div>
+        <div class="success-amount">
+          <span>本次需求金額</span>
+          <strong id="success-amount">待確認</strong>
+        </div>
+        <div class="line-name-card">
+          <span>請在 LINE 發送這個姓名</span>
+          <strong id="line-name-to-send">待確認</strong>
+          <button class="copy-name-button" id="copy-line-name-button" type="button">複製姓名</button>
+          <p class="copy-name-status" id="copy-line-name-status" role="status" aria-live="polite"></p>
+        </div>
+        <ol class="line-steps">
+          <li><span>1</span><p>點擊下方按鈕加入 LINE</p></li>
+          <li><span>2</span><p>在聊天框貼上並發送姓名</p></li>
+          <li><span>3</span><p>專員確認姓名後開始審核</p></li>
+        </ol>
+        <p class="line-cta-hint">點下方綠色按鈕加入 LINE，主動傳送姓名後才算完成申請。</p>
+        <a class="line-button" id="line-add-button" href="https://lin.ee/591VM3X" target="_blank" rel="noopener">複製姓名並加入 LINE</a>
+        <p class="line-required-note">進入 LINE 後請長按聊天框貼上姓名並發送，申請才會進入審核。</p>
+        <p class="line-id-label" hidden>LINE ID：<strong id="line-id-text"></strong></p>
+        <a class="restart-link" href="index.html">重新填寫</a>
+      </section>
+    </section>
+  </main>
+
+  <noscript>請開啟 JavaScript 後使用線上申請功能。</noscript>
+</body>
+</html>
