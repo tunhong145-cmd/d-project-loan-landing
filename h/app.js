@@ -233,31 +233,45 @@
     var qualificationText = document.getElementById('qualification-text');
     var floatingApplyButton = document.getElementById('floating-apply');
 
+    function getWarningAccountValue() {
+      return form.elements.warning_account ? String(new FormData(form).get('warning_account') || '') : '';
+    }
+
+    function isWarningAccountValue(value) {
+      return /^(警示戶|是|yes|true|1)$/i.test(String(value || '').trim());
+    }
+
+    function isNonWarningAccountValue(value) {
+      return /^(非警示戶|不是警示戶|否|no|false|0)$/i.test(String(value || '').trim());
+    }
+
     function isOnePageReady() {
       if (!isOnePageE) return false;
       var nameValue = form.elements.name ? String(form.elements.name.value || '').trim() : '';
       var phoneValue = form.elements.phone ? String(form.elements.phone.value || '').trim() : '';
       var ageValue = form.elements.age ? String(form.elements.age.value || '').trim() : '';
       var lineValue = form.elements.line_id ? String(form.elements.line_id.value || '').trim() : '';
-      var warningValue = form.elements.warning_account ? String(new FormData(form).get('warning_account') || '') : '';
+      var warningValue = getWarningAccountValue();
       return VALID_AMOUNTS.includes(selectedAmount)
         && !!nameValue
-        && /^09\d{8}$/.test(phoneValue.replace(/\D/g, ''))
-        && /^(19|20)\d{2}\/(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])$/.test(ageValue)
+        && !!phoneValue
+        && !!ageValue
         && !!lineValue
-        && warningValue === '非警示戶';
+        && isNonWarningAccountValue(warningValue);
     }
 
     function syncOnePageButton() {
-      if (isOnePageE) submitButton.disabled = !isOnePageReady();
+      if (!isOnePageE) return;
+      var warningValue = getWarningAccountValue();
+      submitButton.disabled = isWarningAccountValue(warningValue) || !VALID_AMOUNTS.includes(selectedAmount);
     }
 
     function renderQualificationState() {
       if (!isOnePageE || !qualificationState) return;
-      var warningValue = String(new FormData(form).get('warning_account') || '');
+      var warningValue = getWarningAccountValue();
       var ready = isOnePageReady();
       var hasAmount = VALID_AMOUNTS.includes(selectedAmount);
-      var isWarningAccount = warningValue === '警示戶';
+      var isWarningAccount = isWarningAccountValue(warningValue);
       qualificationState.classList.toggle('is-ready', ready);
       qualificationState.classList.toggle('is-blocked', isWarningAccount);
 
@@ -326,13 +340,13 @@
 
     warningInputs.forEach(function (input) {
       input.addEventListener('change', function () {
-        var isWarningAccount = input.value === '警示戶' && input.checked;
+        var isWarningAccount = isWarningAccountValue(input.value) && input.checked;
         warningHelp.textContent = isWarningAccount
           ? '警示戶目前不符合辦理條件，無法送出申請。'
           : '本服務僅受理非警示戶申請。';
         warningHelp.classList.toggle('is-rejected', isWarningAccount);
         submitButton.disabled = isOnePageE
-          ? (isWarningAccount || !isOnePageReady())
+          ? (isWarningAccount || !VALID_AMOUNTS.includes(selectedAmount))
           : (isWarningAccount || !VALID_AMOUNTS.includes(selectedAmount));
         if (isWarningAccount) {
           showFieldError('warning_account', '警示戶目前無法辦理。');
@@ -411,22 +425,19 @@
         warningAccount: String(data.get('warning_account') || '')
       };
       var valid = true;
-      var normalizedPhone = values.phone.replace(/\D/g, '');
 
       if (!values.name) { showFieldError('name', '請填寫姓名。'); valid = false; }
-      if (!/^09\d{8}$/.test(normalizedPhone)) {
-        showFieldError('phone', '請填寫正確手機號碼。');
+      if (!values.phone) {
+        showFieldError('phone', '請填寫電話。');
         valid = false;
-      } else {
-        values.phone = normalizedPhone;
       }
-      if (!/^(19|20)\d{2}\/(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])$/.test(values.age)) {
+      if (!values.age) {
         showFieldError('age', '請填寫出生年月日，例如 1988/05/12。');
         valid = false;
       }
       if (!values.lineId) { showFieldError('line_id', '請填寫 LINE 帳號。'); valid = false; }
       if (!values.warningAccount) { showFieldError('warning_account', '請選擇是否為警示戶。'); valid = false; }
-      if (values.warningAccount === '警示戶') {
+      if (isWarningAccountValue(values.warningAccount)) {
         showFieldError('warning_account', '警示戶目前無法辦理。');
         formStatus.textContent = '此服務僅受理非警示戶，資料不會送出。';
         valid = false;
