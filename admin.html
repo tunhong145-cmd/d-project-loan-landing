@@ -1106,8 +1106,9 @@
 
     function landingVariant(lead) {
       const value = String(lead.landing_variant || '').trim().toUpperCase();
-      if (['C', 'E', 'F', 'G'].includes(value)) return value;
+      if (['C', 'E', 'F', 'G', 'I'].includes(value)) return value;
       const url = String(lead.source_url || '').toLowerCase();
+      if (/\/i(?:\/|$)/.test(url)) return 'I';
       if (/\/g(?:\/|$)/.test(url)) return 'G';
       if (/\/f(?:\/|$)/.test(url)) return 'F';
       if (/\/e(?:\/|$)/.test(url)) return 'E';
