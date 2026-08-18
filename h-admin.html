@@ -611,12 +611,17 @@
       line_id: '',
       client_copy_next_number: 1,
       client_copy_next_number_h: 1,
-      pixel_ids: [
-        { id: '975921495153095', enabled: true },
-        { id: '1033980915864419', enabled: true }
-      ],
+      pixel_ids: [],
+      preserved_pixel_ids: [],
       tiktok_pixel_ids: []
     };
+
+    function pixelVersion(pixel) {
+      return String(pixel && (pixel.variant || pixel.landing_variant || pixel.page_variant || pixel.version) || '')
+        .trim()
+        .toUpperCase()
+        .replace(/版$/, '');
+    }
 
     function escapeHTML(value) {
       return String(value || '').replace(/[&<>"']/g, ch => ({
@@ -721,6 +726,7 @@
         error = fallback.error;
       }
       if (!error && data) {
+        const allPixels = Array.isArray(data.pixel_ids) ? data.pixel_ids : [];
         siteSettings = {
           line_url: data.line_url || siteSettings.line_url,
           e_line_url: data.e_line_url || data.line_url || siteSettings.e_line_url,
@@ -729,8 +735,9 @@
           line_id: data.line_id || siteSettings.line_id,
           client_copy_next_number: Number(data.client_copy_next_number || siteSettings.client_copy_next_number || 1),
           client_copy_next_number_h: Number(data.client_copy_next_number_h || siteSettings.client_copy_next_number_h || 1),
-          pixel_ids: Array.isArray(data.pixel_ids) ? data.pixel_ids.filter(pixel => pixel.platform !== 'tiktok') : siteSettings.pixel_ids,
-          tiktok_pixel_ids: Array.isArray(data.pixel_ids) ? data.pixel_ids.filter(pixel => pixel.platform === 'tiktok') : siteSettings.tiktok_pixel_ids,
+          pixel_ids: allPixels.filter(pixel => pixel.platform !== 'tiktok' && pixelVersion(pixel) === 'H'),
+          preserved_pixel_ids: allPixels.filter(pixel => pixel.platform !== 'tiktok' && pixelVersion(pixel) !== 'H'),
+          tiktok_pixel_ids: allPixels.filter(pixel => pixel.platform === 'tiktok'),
           updated_at: data.updated_at
         };
       }
@@ -972,7 +979,7 @@
         alert('最多可設定 10 個 Pixel。');
         return;
       }
-      siteSettings.pixel_ids.push({ id: '', enabled: true });
+      siteSettings.pixel_ids.push({ id: '', enabled: true, variant: 'H' });
       renderSiteSettings();
     }
 
@@ -1027,7 +1034,7 @@
       updateHLinePreview();
       updateSubsidyLinePreview();
       const pixels = siteSettings.pixel_ids
-        .map(pixel => ({ id: String(pixel.id || '').trim(), enabled: pixel.enabled !== false }))
+        .map(pixel => ({ id: String(pixel.id || '').trim(), enabled: pixel.enabled !== false, platform: 'facebook', variant: 'H' }))
         .filter(pixel => pixel.id);
       const ids = pixels.map(pixel => pixel.id);
       const tiktokPixels = siteSettings.tiktok_pixel_ids
@@ -1086,7 +1093,7 @@
         h_line_url: hLineUrl,
         subsidy_line_url: subsidyLineUrl,
         line_id: lineId,
-        pixel_ids: pixels.map(pixel => ({ ...pixel, platform: 'facebook' })).concat(tiktokPixels),
+        pixel_ids: (siteSettings.preserved_pixel_ids || []).concat(pixels, tiktokPixels),
         updated_at: new Date().toISOString()
       };
       const { error } = await client.from('site_settings').update(payload).eq('id', 1);

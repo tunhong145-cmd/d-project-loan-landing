@@ -4,6 +4,7 @@
   var SUPABASE_URL = 'https://sfiflidnsrdotoidvcmh.supabase.co';
   var SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_F9QbR2X9iJp62lf3aJnh8w_NXlYl3aD';
   var VALID_AMOUNTS = ['10萬-20萬', '20萬-30萬', '30萬-50萬', '50萬-100萬'];
+  var LANDING_VARIANT = 'C';
   var STORAGE_KEY = 'd_project_c_selected_amount';
   var ENTERPRISE_LINE_ID = '';
   var ENTERPRISE_LINE_URL = 'https://lin.ee/591VM3X';
@@ -97,15 +98,28 @@
     });
   }
 
-  function extractFbPixelIds(pixelSettings) {
+  function extractFbPixelIds(pixelSettings, variant) {
     if (!Array.isArray(pixelSettings)) return [];
-    return pixelSettings.map(function (item) {
-      if (typeof item === 'string' || typeof item === 'number') return String(item);
+    var currentVariant = String(variant || LANDING_VARIANT || '').trim().toUpperCase();
+    var variantIds = [];
+    var legacyIds = [];
+    pixelSettings.forEach(function (item) {
+      if (typeof item === 'string' || typeof item === 'number') {
+        legacyIds.push(String(item));
+        return;
+      }
       if (!item || item.enabled === false) return '';
       var platform = String(item.platform || item.type || '').toLowerCase();
       if (platform.includes('tiktok')) return '';
-      return String(item.id || item.pixel_id || item.pixelId || '');
-    }).filter(function (id) { return /^\d{8,20}$/.test(id.trim()); });
+      var id = String(item.id || item.pixel_id || item.pixelId || '').trim();
+      var itemVariant = String(item.variant || item.landing_variant || item.page_variant || item.version || '').trim().toUpperCase().replace(/版$/, '');
+      if (itemVariant && itemVariant === currentVariant) variantIds.push(id);
+      if (!itemVariant) legacyIds.push(id);
+    });
+    var source = variantIds.length ? variantIds : legacyIds;
+    return source.filter(function (id, index, list) {
+      return /^\d{8,20}$/.test(String(id).trim()) && list.indexOf(id) === index;
+    });
   }
 
   function applyLineConfig() {
@@ -134,7 +148,7 @@
           ? ''
           : String(settings.line_id || '').trim();
       }
-      var configuredPixelIds = extractFbPixelIds(settings.pixel_ids);
+      var configuredPixelIds = extractFbPixelIds(settings.pixel_ids, LANDING_VARIANT);
       initializeFbPixels(configuredPixelIds.length ? configuredPixelIds : FALLBACK_PIXEL_IDS);
     } catch (error) {
       initializeFbPixels(FALLBACK_PIXEL_IDS);
@@ -142,7 +156,6 @@
     applyLineConfig();
   }
 
-  initializeFbPixels(FALLBACK_PIXEL_IDS);
   var siteConfigPromise = loadSiteConfig();
 
   function initAmountPage() {

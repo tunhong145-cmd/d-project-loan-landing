@@ -337,6 +337,11 @@
     .settings-panel:first-child .notice { margin: 0; color: #aebbd0; }
     .settings-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
     .pixel-list { display: grid; gap: 9px; margin-top: 15px; }
+    .pixel-version-grid { display: grid; gap: 14px; margin-top: 15px; }
+    .pixel-version-card { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: var(--surface-soft); }
+    .pixel-version-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 4px; }
+    .pixel-version-title { font-weight: 900; color: var(--text); }
+    .pixel-version-count { color: var(--muted); font-size: 12px; }
     .pixel-row { display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 8px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-soft); }
     .pixel-row input[type="text"] { font-family: "Cascadia Code", Consolas, monospace; font-size: 12px; }
     .pixel-toggle { display: flex; align-items: center; gap: 6px; margin: 0; white-space: nowrap; }
@@ -550,11 +555,8 @@
 
         <div class="panel settings-panel">
           <h3>Facebook Pixel 管理</h3>
-          <p class="notice">所有啟用中的 Pixel 都會收到落地頁目前的相同事件。建議保留正在投放使用的 Pixel。</p>
-          <div id="pixel-list" class="pixel-list"></div>
-          <div class="settings-actions">
-            <button class="secondary" onclick="addPixelRow()">新增 Pixel</button>
-          </div>
+          <p class="notice">按版本分開設定 Pixel。每個版本最多 5 個，前端只會回傳自己版本的 PageView、CompleteRegistration、Lead，不會互相多抓。</p>
+          <div id="pixel-version-list" class="pixel-version-grid"></div>
         </div>
 
         <div class="panel settings-panel">
@@ -597,6 +599,14 @@
       rejected: '未成交',
       invalid: '無效'
     };
+    const PIXEL_VERSION_LABELS = {
+      C: 'C版',
+      E: 'E版',
+      F: 'F版',
+      G: 'G版',
+      I: 'I版'
+    };
+    const PIXEL_VERSION_ORDER = Object.keys(PIXEL_VERSION_LABELS);
     let leads = [];
     let selectedLeadIds = new Set();
     let activeDetailId = null;
@@ -608,12 +618,59 @@
       subsidy_line_url: 'https://lin.ee/591VM3X',
       line_id: '',
       client_copy_next_number: 1,
-      pixel_ids: [
-        { id: '975921495153095', enabled: true },
-        { id: '1033980915864419', enabled: true }
-      ],
+      legacy_pixel_ids: [],
+      version_pixel_ids: emptyVersionPixels(),
       tiktok_pixel_ids: []
     };
+
+    function emptyVersionPixels() {
+      return PIXEL_VERSION_ORDER.reduce((acc, version) => {
+        acc[version] = [];
+        return acc;
+      }, {});
+    }
+
+    function pixelVersion(pixel) {
+      return String(pixel && (pixel.variant || pixel.landing_variant || pixel.page_variant || pixel.version) || '')
+        .trim()
+        .toUpperCase()
+        .replace(/版$/, '');
+    }
+
+    function splitPixelSettings(pixelSettings) {
+      const result = {
+        legacy: [],
+        versions: emptyVersionPixels(),
+        tiktok: []
+      };
+      if (!Array.isArray(pixelSettings)) return result;
+      pixelSettings.forEach(pixel => {
+        if (typeof pixel === 'string' || typeof pixel === 'number') {
+          const id = String(pixel || '').trim();
+          if (id) result.legacy.push({ id, enabled: true });
+          return;
+        }
+        if (!pixel) return;
+        const platform = String(pixel.platform || pixel.type || '').toLowerCase();
+        const id = String(pixel.id || pixel.pixel_id || pixel.pixelId || '').trim();
+        if (!id) return;
+        if (platform.includes('tiktok')) {
+          result.tiktok.push({ id: id.toUpperCase(), enabled: pixel.enabled !== false, platform: 'tiktok' });
+          return;
+        }
+        const version = pixelVersion(pixel);
+        const normalized = { id, enabled: pixel.enabled !== false, platform: 'facebook' };
+        if (PIXEL_VERSION_ORDER.includes(version)) {
+          result.versions[version].push({ ...normalized, variant: version });
+        } else {
+          result.legacy.push(normalized);
+        }
+      });
+      PIXEL_VERSION_ORDER.forEach(version => {
+        result.versions[version] = result.versions[version].slice(0, 5);
+      });
+      return result;
+    }
 
     function escapeHTML(value) {
       return String(value || '').replace(/[&<>"']/g, ch => ({
@@ -718,14 +775,16 @@
         error = fallback.error;
       }
       if (!error && data) {
+        const splitPixels = splitPixelSettings(data.pixel_ids);
         siteSettings = {
           line_url: data.line_url || siteSettings.line_url,
           e_line_url: data.e_line_url || data.line_url || siteSettings.e_line_url,
           subsidy_line_url: data.subsidy_line_url || data.line_url || siteSettings.subsidy_line_url,
           line_id: data.line_id || siteSettings.line_id,
           client_copy_next_number: Number(data.client_copy_next_number || siteSettings.client_copy_next_number || 1),
-          pixel_ids: Array.isArray(data.pixel_ids) ? data.pixel_ids.filter(pixel => pixel.platform !== 'tiktok') : siteSettings.pixel_ids,
-          tiktok_pixel_ids: Array.isArray(data.pixel_ids) ? data.pixel_ids.filter(pixel => pixel.platform === 'tiktok') : siteSettings.tiktok_pixel_ids,
+          legacy_pixel_ids: splitPixels.legacy,
+          version_pixel_ids: splitPixels.versions,
+          tiktok_pixel_ids: splitPixels.tiktok,
           updated_at: data.updated_at
         };
       }
@@ -767,15 +826,7 @@
       const subsidyLineInput = document.getElementById('setting-subsidy-line-url');
       if (subsidyLineInput) subsidyLineInput.value = siteSettings.subsidy_line_url || siteSettings.line_url || '';
       updateSubsidyLinePreview();
-      const list = document.getElementById('pixel-list');
-      const pixels = Array.isArray(siteSettings.pixel_ids) ? siteSettings.pixel_ids : [];
-      list.innerHTML = pixels.map((pixel, index) => `
-        <div class="pixel-row">
-          <input type="text" value="${escapeHTML(pixel.id)}" inputmode="numeric" onchange="updatePixelId(${index},this.value)" aria-label="Pixel ID" />
-          <label class="pixel-toggle"><input type="checkbox" ${pixel.enabled !== false ? 'checked' : ''} onchange="togglePixel(${index},this.checked)" /> 啟用</label>
-          <button class="danger" onclick="removePixel(${index})">刪除</button>
-        </div>
-      `).join('') || '<p class="notice">目前沒有 Pixel。新增後儲存即可同步到網站。</p>';
+      renderVersionPixels();
       const tiktokList = document.getElementById('tiktok-pixel-list');
       const tiktokPixels = Array.isArray(siteSettings.tiktok_pixel_ids) ? siteSettings.tiktok_pixel_ids : [];
       tiktokList.innerHTML = tiktokPixels.map((pixel, index) => `
@@ -933,27 +984,65 @@
       window.open(url, '_blank', 'noopener');
     }
 
-    function addPixelRow() {
-      if (siteSettings.pixel_ids.length >= 10) {
-        alert('最多可設定 10 個 Pixel。');
+    function renderVersionPixels() {
+      const list = document.getElementById('pixel-version-list');
+      if (!list) return;
+      siteSettings.version_pixel_ids = siteSettings.version_pixel_ids || emptyVersionPixels();
+      list.innerHTML = PIXEL_VERSION_ORDER.map(version => {
+        const pixels = Array.isArray(siteSettings.version_pixel_ids[version]) ? siteSettings.version_pixel_ids[version] : [];
+        const rows = pixels.map((pixel, index) => `
+          <div class="pixel-row">
+            <input type="text" value="${escapeHTML(pixel.id)}" inputmode="numeric" onchange="updatePixelId('${version}',${index},this.value)" aria-label="${PIXEL_VERSION_LABELS[version]} Pixel ID" />
+            <label class="pixel-toggle"><input type="checkbox" ${pixel.enabled !== false ? 'checked' : ''} onchange="togglePixel('${version}',${index},this.checked)" /> 啟用</label>
+            <button class="danger" onclick="removePixel('${version}',${index})">刪除</button>
+          </div>
+        `).join('') || '<p class="notice">目前沒有設定此版本 Pixel。</p>';
+        return `
+          <div class="pixel-version-card">
+            <div class="pixel-version-head">
+              <div>
+                <div class="pixel-version-title">${PIXEL_VERSION_LABELS[version]} FB Pixel</div>
+                <div class="pixel-version-count">已設定 ${pixels.length}/5 個</div>
+              </div>
+              <button class="secondary" onclick="addPixelRow('${version}')">新增</button>
+            </div>
+            <div class="pixel-list">${rows}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function addPixelRow(version) {
+      siteSettings.version_pixel_ids = siteSettings.version_pixel_ids || emptyVersionPixels();
+      const pixels = siteSettings.version_pixel_ids[version] || [];
+      if (!PIXEL_VERSION_ORDER.includes(version)) return;
+      if (pixels.length >= 5) {
+        alert('每個版本最多可設定 5 個 FB Pixel。');
         return;
       }
-      siteSettings.pixel_ids.push({ id: '', enabled: true });
+      pixels.push({ id: '', enabled: true, platform: 'facebook', variant: version });
+      siteSettings.version_pixel_ids[version] = pixels;
       renderSiteSettings();
     }
 
-    function updatePixelId(index, value) {
-      siteSettings.pixel_ids[index].id = String(value || '').trim();
+    function updatePixelId(version, index, value) {
+      const pixels = siteSettings.version_pixel_ids && siteSettings.version_pixel_ids[version];
+      if (!pixels || !pixels[index]) return;
+      pixels[index].id = String(value || '').trim();
     }
 
-    function togglePixel(index, enabled) {
-      siteSettings.pixel_ids[index].enabled = enabled;
+    function togglePixel(version, index, enabled) {
+      const pixels = siteSettings.version_pixel_ids && siteSettings.version_pixel_ids[version];
+      if (!pixels || !pixels[index]) return;
+      pixels[index].enabled = enabled;
     }
 
-    function removePixel(index) {
-      const pixel = siteSettings.pixel_ids[index];
+    function removePixel(version, index) {
+      const pixels = siteSettings.version_pixel_ids && siteSettings.version_pixel_ids[version];
+      if (!pixels || !pixels[index]) return;
+      const pixel = pixels[index];
       if (!confirm(`確定刪除 Pixel ${pixel.id || '此空白項目'}？`)) return;
-      siteSettings.pixel_ids.splice(index, 1);
+      pixels.splice(index, 1);
       renderSiteSettings();
     }
 
@@ -990,10 +1079,22 @@
       const lineId = updateLinePreview();
       updateELinePreview();
       updateSubsidyLinePreview();
-      const pixels = siteSettings.pixel_ids
-        .map(pixel => ({ id: String(pixel.id || '').trim(), enabled: pixel.enabled !== false }))
+      const versionPixels = [];
+      PIXEL_VERSION_ORDER.forEach(version => {
+        const pixels = Array.isArray(siteSettings.version_pixel_ids && siteSettings.version_pixel_ids[version])
+          ? siteSettings.version_pixel_ids[version]
+          : [];
+        pixels.forEach(pixel => {
+          const id = String(pixel.id || '').trim();
+          if (id) versionPixels.push({ id, enabled: pixel.enabled !== false, platform: 'facebook', variant: version });
+        });
+      });
+      const hasVersionPixels = versionPixels.length > 0;
+      const legacyPixels = (Array.isArray(siteSettings.legacy_pixel_ids) ? siteSettings.legacy_pixel_ids : [])
+        .map(pixel => ({ id: String(pixel.id || '').trim(), enabled: pixel.enabled !== false, platform: 'facebook' }))
         .filter(pixel => pixel.id);
-      const ids = pixels.map(pixel => pixel.id);
+      const pixels = hasVersionPixels ? versionPixels : legacyPixels;
+      const ids = pixels.map(pixel => `${pixel.variant || 'ALL'}:${pixel.id}`);
       const tiktokPixels = siteSettings.tiktok_pixel_ids
         .map(pixel => ({ id: String(pixel.id || '').trim().toUpperCase(), enabled: pixel.enabled !== false, platform: 'tiktok' }))
         .filter(pixel => pixel.id);
@@ -1044,7 +1145,7 @@
         e_line_url: eLineUrl,
         subsidy_line_url: subsidyLineUrl,
         line_id: lineId,
-        pixel_ids: pixels.map(pixel => ({ ...pixel, platform: 'facebook' })).concat(tiktokPixels),
+        pixel_ids: pixels.concat(tiktokPixels),
         updated_at: new Date().toISOString()
       };
       const { error } = await client.from('site_settings').update(payload).eq('id', 1);
@@ -1054,7 +1155,7 @@
         status.className = 'notice error setting-status';
         return;
       }
-      siteSettings = { ...siteSettings, line_url: lineUrl, e_line_url: eLineUrl, subsidy_line_url: subsidyLineUrl, line_id: lineId, pixel_ids: pixels, tiktok_pixel_ids: tiktokPixels, updated_at: payload.updated_at };
+      siteSettings = { ...siteSettings, line_url: lineUrl, e_line_url: eLineUrl, subsidy_line_url: subsidyLineUrl, line_id: lineId, legacy_pixel_ids: hasVersionPixels ? [] : legacyPixels, version_pixel_ids: splitPixelSettings(pixels).versions, tiktok_pixel_ids: tiktokPixels, updated_at: payload.updated_at };
       status.textContent = '已儲存。客戶重新整理落地頁後會套用最新設定。';
       status.className = 'notice setting-status';
       renderSiteSettings();
