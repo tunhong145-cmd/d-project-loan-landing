@@ -263,6 +263,7 @@
     .tag-variant-f { background: #fff7e8; color: #9a5b13; border-color: #efd39d; }
     .tag-variant-g { background: #eaf2ff; color: #235aa6; border-color: #c8daf7; }
     .tag-variant-i { background: #e9fbf7; color: #087a6f; border-color: #b7ebe1; }
+    .tag-variant-j { background: #eef3ff; color: #3755a6; border-color: #cdd8f5; }
     .tag-copy-number { background: #eef2f7; color: #41516a; border-color: #d4dde9; }
     .lead-meta { display: flex; align-items: center; gap: 10px 18px; overflow: hidden; color: var(--text-soft); font-size: 12px; white-space: nowrap; }
     .lead-meta span { overflow: hidden; text-overflow: ellipsis; }
@@ -480,6 +481,7 @@
               <button class="filter-chip" type="button" data-variant="F" onclick="toggleVariantFilter('F')">F版</button>
               <button class="filter-chip" type="button" data-variant="G" onclick="toggleVariantFilter('G')">G版</button>
               <button class="filter-chip" type="button" data-variant="I" onclick="toggleVariantFilter('I')">I版</button>
+              <button class="filter-chip" type="button" data-variant="J" onclick="toggleVariantFilter('J')">J版</button>
             </div>
           </div>
           <div class="status-field">
@@ -604,7 +606,8 @@
       E: 'E版',
       F: 'F版',
       G: 'G版',
-      I: 'I版'
+      I: 'I版',
+      J: 'J版'
     };
     const PIXEL_VERSION_ORDER = Object.keys(PIXEL_VERSION_LABELS);
     let leads = [];
@@ -1207,8 +1210,9 @@
 
     function landingVariant(lead) {
       const value = String(lead.landing_variant || '').trim().toUpperCase();
-      if (['C', 'E', 'F', 'G', 'I'].includes(value)) return value;
+      if (['C', 'E', 'F', 'G', 'I', 'J'].includes(value)) return value;
       const url = String(lead.source_url || '').toLowerCase();
+      if (/\/j(?:\/|$)/.test(url)) return 'J';
       if (/\/i(?:\/|$)/.test(url)) return 'I';
       if (/\/g(?:\/|$)/.test(url)) return 'G';
       if (/\/f(?:\/|$)/.test(url)) return 'F';
