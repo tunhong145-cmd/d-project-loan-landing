@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-Hant"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>I版案件工作台</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{--ink:#12233f;--muted:#68758b;--line:#dfe7f1;--bg:#f3f7fb;--panel:#fff;--blue:#246bfd;--blue2:#0c4bce;--green:#0f9f72;--amber:#d88a00;--red:#d84a55;--shadow:0 16px 45px rgba(24,58,103,.1)}
+    *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#eaf2ff 0,#f5f8fc 230px);color:var(--ink);font-family:Inter,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}button,input,select,textarea{font:inherit}.hidden{display:none!important}
+    .login{min-height:100vh;display:grid;place-items:center;padding:24px}.login-card{width:min(430px,100%);background:rgba(255,255,255,.96);border:1px solid rgba(255,255,255,.8);border-radius:26px;padding:34px;box-shadow:var(--shadow)}.eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--blue2);font-weight:800;font-size:13px;background:#eaf1ff;border-radius:999px;padding:7px 12px}.login h1{font-size:30px;margin:18px 0 8px}.sub{color:var(--muted);line-height:1.7;margin:0 0 24px}.field{margin:0 0 16px}.field label{display:block;font-size:13px;font-weight:800;margin:0 0 7px}.field input,.filters input,.filters select,.drawer textarea{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px 13px;outline:none}.field input:focus,.filters input:focus,.filters select:focus,.drawer textarea:focus{border-color:#8eb2ff;box-shadow:0 0 0 4px #eaf1ff}.btn{border:0;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;font-weight:800;padding:12px 16px;cursor:pointer;box-shadow:0 7px 18px rgba(36,107,253,.22)}.btn:disabled{opacity:.55;cursor:not-allowed}.btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:none}.btn.danger{background:#fff;color:var(--red);border:1px solid #f1c6ca;box-shadow:none}.msg{min-height:22px;color:var(--muted);font-size:13px;margin:12px 0 0}.msg.error{color:var(--red)}
+    header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.91);border-bottom:1px solid rgba(207,219,234,.9);backdrop-filter:blur(18px)}.topbar{max-width:1440px;margin:auto;padding:15px 24px;display:flex;align-items:center;gap:14px}.brand{font-weight:900;font-size:19px}.variant{font-size:12px;font-weight:900;color:#075dad;background:#dff5ff;border:1px solid #8edcf4;border-radius:999px;padding:6px 10px}.spacer{flex:1}.account{color:var(--muted);font-size:13px;max-width:260px;overflow:hidden;text-overflow:ellipsis}.shell{max-width:1440px;margin:auto;padding:24px}.summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:16px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:17px 18px;box-shadow:0 7px 22px rgba(36,65,105,.05)}.stat small{display:block;color:var(--muted);font-weight:700}.stat strong{display:block;font-size:28px;margin-top:5px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:0 10px 30px rgba(40,70,110,.06)}.filters{padding:16px;display:grid;grid-template-columns:140px 150px 150px 1fr auto;gap:10px;align-items:end;margin-bottom:16px}.filters label{display:block;color:var(--muted);font-size:12px;font-weight:800;margin-bottom:6px}.filters .search{min-width:220px}.list-head{display:flex;align-items:center;gap:12px;padding:17px 20px;border-bottom:1px solid var(--line)}.list-head h2{font-size:18px;margin:0}.count{color:var(--muted);font-size:13px}.lead-list{padding:5px 14px}.lead{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;padding:17px 6px;border-bottom:1px solid #edf1f6}.lead:last-child{border-bottom:0}.titleline{display:flex;align-items:center;flex-wrap:wrap;gap:8px}.name{font-weight:900;font-size:18px}.meta{display:flex;flex-wrap:wrap;gap:9px 18px;color:var(--muted);font-size:13px;margin-top:9px}.meta strong{color:var(--ink)}.time{color:#8a96a8;font-size:12px;margin-top:8px}.tag{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:900;border:1px solid #91d8ee;background:#e1f7fd;color:#075d78}.tag.new{border-color:#a6dfcc;background:#e5f8f1;color:#087356}.tag.contacted{border-color:#a9c6fa;background:#ebf2ff;color:#245fbc}.tag.line_added{border-color:#a9e3b4;background:#e9f9ec;color:#18782b}.tag.approved{border-color:#a9e3b4;background:#e9f9ec;color:#18782b}.tag.invalid{border-color:#efb4b8;background:#fff0f1;color:#a82e38}.tag.copy{border-color:#f2cf91;background:#fff7e5;color:#9a6200}.actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:7px}.actions .btn{padding:9px 11px;font-size:12px}.inline-confirm{display:flex;align-items:center;gap:6px;background:#fff7e6;border:1px solid #f1d28d;border-radius:12px;padding:5px}.empty{text-align:center;color:var(--muted);padding:50px 20px}.pager{display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;border-top:1px solid var(--line)}
+    .backdrop{position:fixed;inset:0;background:rgba(13,28,52,.45);z-index:50}.drawer{position:fixed;z-index:51;right:0;top:0;width:min(520px,100%);height:100vh;background:#fff;box-shadow:-18px 0 55px rgba(10,30,60,.18);overflow:auto}.drawer-head{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);padding:17px 20px;display:flex;align-items:center;gap:12px}.drawer-head h2{font-size:19px;margin:0}.drawer-body{padding:20px}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.detail{border:1px solid var(--line);border-radius:13px;padding:11px}.detail label{display:block;color:var(--muted);font-size:11px;font-weight:800;margin-bottom:5px}.section{margin-top:22px}.section h3{font-size:15px;margin:0 0 10px}.drawer textarea{min-height:110px;resize:vertical}.copybox{white-space:pre-wrap;background:#f7f9fc;border:1px solid var(--line);border-radius:13px;padding:13px;font-size:13px;line-height:1.65}.drawer-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    @media(max-width:900px){.summary{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:1fr 1fr}.filters .search{grid-column:1/-1}.lead{grid-template-columns:1fr}.actions{justify-content:flex-start}.account{display:none}}
+    @media(max-width:560px){.topbar,.shell{padding-left:14px;padding-right:14px}.summary{gap:8px}.stat{padding:13px}.stat strong{font-size:23px}.filters{grid-template-columns:1fr}.filters .search{grid-column:auto}.list-head{align-items:flex-start;flex-direction:column}.lead-list{padding:4px 12px}.detail-grid{grid-template-columns:1fr}.drawer-head{padding-top:calc(17px + env(safe-area-inset-top))}}
+  </style>
+</head>
+<body>
+  <main id="login" class="login">
+    <section class="login-card">
+      <span class="eyebrow">D PROJECT · I</span>
+      <h1>I版案件工作台</h1>
+      <p class="sub">此帳號僅能查看與處理 I 版本案件。</p>
+      <div class="field"><label for="username">帳號</label><input id="username" autocomplete="username"></div>
+      <div class="field"><label for="password">密碼</label><input id="password" type="password" autocomplete="current-password"></div>
+      <button id="login-btn" class="btn" style="width:100%" onclick="login()">登入工作台</button>
+      <p id="login-msg" class="msg"></p>
+    </section>
+  </main>
+
+  <div id="app" class="hidden">
+    <header><div class="topbar"><span class="brand">案件工作台</span><span class="variant">I版本限定</span><span class="spacer"></span><span id="account" class="account"></span><button class="btn secondary" onclick="logout()">登出</button></div></header>
+    <main class="shell">
+      <section class="summary">
+        <div class="stat"><small>目前篩選</small><strong id="stat-total">0</strong></div>
+        <div class="stat"><small>本頁新客戶</small><strong id="stat-new">0</strong></div>
+        <div class="stat"><small>本頁已聯繫</small><strong id="stat-contacted">0</strong></div>
+        <div class="stat"><small>本頁已加 LINE</small><strong id="stat-line">0</strong></div>
+        <div class="stat"><small>本頁已成交</small><strong id="stat-approved">0</strong></div>
+      </section>
+
+      <section class="panel filters">
+        <div><label>開始日期</label><input id="from" type="date" onchange="resetAndLoad()"></div>
+        <div><label>結束日期</label><input id="to" type="date" onchange="resetAndLoad()"></div>
+        <div><label>案件狀態</label><select id="status" onchange="resetAndLoad()"><option value="">全部狀態</option><option value="new">新客戶</option><option value="contacted">已聯繫</option><option value="line_added">已加 LINE</option><option value="approved">已成交</option><option value="invalid">無效</option></select></div>
+        <div class="search"><label>搜尋I版案件</label><input id="search" placeholder="姓名／年齡／金額" onkeydown="if(event.key==='Enter')resetAndLoad()"></div>
+        <button id="refresh" class="btn" onclick="loadLeads()">刷新本頁</button>
+      </section>
+
+      <section class="panel">
+        <div class="list-head"><h2>I版申請列表</h2><span id="count" class="count">0筆</span></div>
+        <div id="list" class="lead-list"></div>
+        <div id="empty" class="empty hidden">目前沒有符合條件的I版案件。</div>
+        <div class="pager"><button id="prev" class="btn secondary" onclick="changePage(-1)">上一頁</button><span id="page-label" class="count">第1頁</span><button id="next" class="btn secondary" onclick="changePage(1)">下一頁</button></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="backdrop" class="backdrop hidden" onclick="closeDetails()"></div>
+  <aside id="drawer" class="drawer hidden"><div class="drawer-head"><h2 id="drawer-title">案件詳情</h2><span class="spacer"></span><button class="btn secondary" onclick="closeDetails()">關閉</button></div><div id="drawer-body" class="drawer-body"></div></aside>
+
+  <script>
+    const SUPABASE_URL='https://sfiflidnsrdotoidvcmh.supabase.co';
+    const SUPABASE_KEY='sb_publishable_F9QbR2X9iJp62lf3aJnh8w_NXlYl3aD';
+    const LOGIN_USERNAME='ioperator';
+    const LOGIN_EMAIL='i-operator@d-project.local';
+    const PAGE_SIZE=100;
+    const db=window.supabase?supabase.createClient(SUPABASE_URL,SUPABASE_KEY):null;
+    const labels={new:'新客戶',contacted:'已聯繫',line_added:'已加 LINE',approved:'已成交',rejected:'未成交',invalid:'無效'};
+    let leads=[],page=1,total=0,pendingCopyId=null,activeId=null;
+
+    const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+    const date=v=>v?new Date(v).toLocaleString('zh-TW',{hour12:false}):'';
+    const number=v=>{const n=Number(v);return Number.isFinite(n)&&n>0?n:null};
+    function warning(v){const s=String(v||'').trim();if(/^(否|無|没有|沒有|不是|非|正常)/.test(s)||/非警示|帳戶正常/.test(s))return'否';return /^(是|有)|異常|警示/.test(s)?'是':'否'}
+    function copyTextFor(l,n=null){const no=n||number(l.client_copy_number);return[`案件類型：貸款`,`來源版本：D項目I版本`,`姓名：${l.name||''}`,`年齡：${l.age||''}`,`貸款金額：${l.q3_amount_needed||''}`,`是否警示戶：${warning(l.q2_bank_status)}${no?String(no).padStart(2,'0'):''}`].join('\n')}
+    async function clipboard(text){try{await navigator.clipboard.writeText(text)}catch(e){const t=document.createElement('textarea');t.value=text;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();document.execCommand('copy');t.remove()}}
+
+    async function login(){const msg=document.getElementById('login-msg'),btn=document.getElementById('login-btn');msg.textContent='';if(!db){msg.textContent='登入元件載入失敗，請重新整理。';msg.className='msg error';return}if(document.getElementById('username').value.trim()!==LOGIN_USERNAME){msg.textContent='帳號或密碼錯誤。';msg.className='msg error';return}btn.disabled=true;const{error}=await db.auth.signInWithPassword({email:LOGIN_EMAIL,password:document.getElementById('password').value});btn.disabled=false;if(error){msg.textContent='帳號或密碼錯誤。';msg.className='msg error';return}await checkSession()}
+    async function logout(){await db.auth.signOut();location.reload()}
+    async function checkSession(){if(!db)return;const{data}=await db.auth.getUser();if(!data.user)return;if(String(data.user.email||'').toLowerCase()!==LOGIN_EMAIL){await db.auth.signOut();document.getElementById('login-msg').textContent='此帳號沒有I版工作台權限。';return}document.getElementById('login').classList.add('hidden');document.getElementById('app').classList.remove('hidden');document.getElementById('account').textContent=data.user.email||'';await loadLeads()}
+
+    function baseQuery(){let q=db.from('leads').select('*',{count:'exact'}).eq('landing_variant','I');const s=document.getElementById('status').value,from=document.getElementById('from').value,to=document.getElementById('to').value,term=document.getElementById('search').value.trim().replace(/[,%()]/g,' ');if(s)q=q.eq('status',s);if(from)q=q.gte('created_at',from+'T00:00:00');if(to)q=q.lte('created_at',to+'T23:59:59');if(term)q=q.or(`name.ilike.%${term}%,age.ilike.%${term}%,q3_amount_needed.ilike.%${term}%`);return q}
+    async function loadLeads(){const btn=document.getElementById('refresh');btn.disabled=true;btn.textContent='刷新中…';const from=(page-1)*PAGE_SIZE,to=from+PAGE_SIZE-1;const{data,error,count}=await baseQuery().order('created_at',{ascending:false}).range(from,to);btn.disabled=false;btn.textContent='刷新本頁';if(error){alert('讀取失敗：'+error.message);return}leads=data||[];total=count||0;render()}
+    function resetAndLoad(){page=1;loadLeads()}
+    function changePage(delta){const max=Math.max(1,Math.ceil(total/PAGE_SIZE)),next=page+delta;if(next<1||next>max)return;page=next;loadLeads();scrollTo({top:0,behavior:'smooth'})}
+    function render(){document.getElementById('stat-total').textContent=total;document.getElementById('stat-new').textContent=leads.filter(x=>x.status==='new').length;document.getElementById('stat-contacted').textContent=leads.filter(x=>x.status==='contacted').length;document.getElementById('stat-line').textContent=leads.filter(x=>x.status==='line_added').length;document.getElementById('stat-approved').textContent=leads.filter(x=>x.status==='approved').length;document.getElementById('count').textContent=`共 ${total} 筆・本頁 ${leads.length} 筆`;document.getElementById('empty').classList.toggle('hidden',leads.length>0);document.getElementById('page-label').textContent=`第 ${page}／${Math.max(1,Math.ceil(total/PAGE_SIZE))} 頁`;document.getElementById('prev').disabled=page<=1;document.getElementById('next').disabled=page>=Math.max(1,Math.ceil(total/PAGE_SIZE));document.getElementById('list').innerHTML=leads.map(l=>`<article class="lead"><div><div class="titleline"><span class="name">${esc(l.name||'未填姓名')}</span><span class="tag">I版</span>${number(l.client_copy_number)?`<span class="tag copy">甲方${String(l.client_copy_number).padStart(2,'0')}</span>`:''}<span class="tag ${esc(l.status||'new')}">${esc(labels[l.status]||l.status||'新客戶')}</span></div><div class="meta"><span>年齡 <strong>${esc(l.age||'未填')}</strong></span><span>貸款金額 <strong>${esc(l.q3_amount_needed||'未填')}</strong></span><span>警示戶 <strong>${warning(l.q2_bank_status)}</strong></span></div><div class="time">${esc(date(l.created_at))}</div></div><div class="actions"><button class="btn secondary" onclick="setStatus('${l.id}','contacted')">已聯繫</button><button class="btn secondary" onclick="setStatus('${l.id}','line_added')">已加LINE</button><button class="btn" onclick="startCopy('${l.id}')">一鍵複製</button>${pendingCopyId===l.id?`<span class="inline-confirm"><button class="btn" onclick="confirmCopy('${l.id}')">確認並複製</button><button class="btn secondary" onclick="cancelCopy()">取消</button></span>`:''}<button class="btn secondary" onclick="openDetails('${l.id}')">詳情</button></div></article>`).join('');if(activeId&&leads.some(x=>x.id===activeId))openDetails(activeId)}
+
+    async function setStatus(id,status){const{error}=await db.from('leads').update({status,updated_at:new Date().toISOString()}).eq('id',id).eq('landing_variant','I');if(error){alert('更新失敗：'+error.message);return}await loadLeads()}
+    function startCopy(id){const l=leads.find(x=>x.id===id);if(!l)return;if(number(l.client_copy_number)){finishCopy(l,number(l.client_copy_number));return}pendingCopyId=id;render()}
+    function cancelCopy(){pendingCopyId=null;render()}
+    async function confirmCopy(id){const l=leads.find(x=>x.id===id);if(!l)return;const{data,error}=await db.rpc('assign_lead_client_copy_number',{target_lead_id:id});if(error){alert('編號分配失敗：'+error.message);return}const row=Array.isArray(data)?data[0]:data,n=number(row&&row.client_copy_number);if(!n){alert('沒有取得有效編號。');return}l.client_copy_number=n;l.client_copy_assigned_at=row.client_copy_assigned_at;pendingCopyId=null;await finishCopy(l,n);render()}
+    async function finishCopy(l,n){await clipboard(copyTextFor(l,n));alert(`已複製，甲方編號 ${String(n).padStart(2,'0')}`)}
+
+    function detail(label,value){return`<div class="detail"><label>${esc(label)}</label><div>${esc(value||'未填')}</div></div>`}
+    function openDetails(id){const l=leads.find(x=>x.id===id);if(!l)return;activeId=id;document.getElementById('drawer-title').textContent=(l.name||'客戶')+'｜I版詳情';document.getElementById('drawer-body').innerHTML=`<div class="detail-grid">${detail('提交時間',date(l.created_at))}${detail('目前狀態',labels[l.status]||l.status)}${detail('來源版本','D項目I版本')}${detail('甲方編號',number(l.client_copy_number)?String(l.client_copy_number).padStart(2,'0'):'尚未分配')}${detail('姓名',l.name)}${detail('年齡',l.age)}${detail('貸款金額',l.q3_amount_needed)}${detail('是否警示戶',warning(l.q2_bank_status))}</div><div class="section"><h3>提交裝置信息</h3><div class="detail-grid">${detail('IP位址',l.ip_address)}${detail('設備',l.device_type)}${detail('瀏覽器',l.browser_name)}</div></div><div class="section"><h3>提供甲方的資料</h3><div class="copybox">${esc(copyTextFor(l))}</div><div class="drawer-actions"><button class="btn" onclick="startCopy('${l.id}')">一鍵複製客戶資料</button></div></div><div class="section"><h3>快速狀態</h3><div class="drawer-actions">${Object.entries(labels).map(([v,t])=>`<button class="btn secondary" onclick="setStatus('${l.id}','${v}')">${t}</button>`).join('')}</div></div><div class="section"><h3>處理備註</h3><textarea id="notes">${esc(l.notes||'')}</textarea><div class="drawer-actions"><button class="btn" onclick="saveNotes('${l.id}')">儲存備註</button></div></div>`;document.getElementById('backdrop').classList.remove('hidden');document.getElementById('drawer').classList.remove('hidden')}
+    function closeDetails(){activeId=null;document.getElementById('backdrop').classList.add('hidden');document.getElementById('drawer').classList.add('hidden')}
+    async function saveNotes(id){const notes=document.getElementById('notes').value;const{error}=await db.from('leads').update({notes}).eq('id',id).eq('landing_variant','I');if(error){alert('備註儲存失敗：'+error.message);return}await loadLeads();alert('備註已儲存')}
+    checkSession();
+  </script>
+
+
+</body></html>
