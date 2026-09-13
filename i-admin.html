@@ -1,8 +1,9 @@
 <!doctype html>
-<html lang="zh-Hant"><head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="robots" content="noindex,nofollow,noarchive">
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="robots" content="noindex,nofollow,noarchive" />
   <title>I版案件工作台</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -21,8 +22,8 @@
       <span class="eyebrow">D PROJECT · I</span>
       <h1>I版案件工作台</h1>
       <p class="sub">此帳號僅能查看與處理 I 版本案件。</p>
-      <div class="field"><label for="username">帳號</label><input id="username" autocomplete="username"></div>
-      <div class="field"><label for="password">密碼</label><input id="password" type="password" autocomplete="current-password"></div>
+      <div class="field"><label for="username">帳號</label><input id="username" autocomplete="username" /></div>
+      <div class="field"><label for="password">密碼</label><input id="password" type="password" autocomplete="current-password" /></div>
       <button id="login-btn" class="btn" style="width:100%" onclick="login()">登入工作台</button>
       <p id="login-msg" class="msg"></p>
     </section>
@@ -40,10 +41,10 @@
       </section>
 
       <section class="panel filters">
-        <div><label>開始日期</label><input id="from" type="date" onchange="resetAndLoad()"></div>
-        <div><label>結束日期</label><input id="to" type="date" onchange="resetAndLoad()"></div>
+        <div><label>開始日期</label><input id="from" type="date" onchange="resetAndLoad()" /></div>
+        <div><label>結束日期</label><input id="to" type="date" onchange="resetAndLoad()" /></div>
         <div><label>案件狀態</label><select id="status" onchange="resetAndLoad()"><option value="">全部狀態</option><option value="new">新客戶</option><option value="contacted">已聯繫</option><option value="line_added">已加 LINE</option><option value="approved">已成交</option><option value="invalid">無效</option></select></div>
-        <div class="search"><label>搜尋I版案件</label><input id="search" placeholder="姓名／年齡／金額" onkeydown="if(event.key==='Enter')resetAndLoad()"></div>
+        <div class="search"><label>搜尋I版案件</label><input id="search" placeholder="姓名／年齡／金額" onkeydown="if(event.key==='Enter')resetAndLoad()" /></div>
         <button id="refresh" class="btn" onclick="loadLeads()">刷新本頁</button>
       </section>
 
@@ -67,13 +68,12 @@
     const PAGE_SIZE=100;
     const db=window.supabase?supabase.createClient(SUPABASE_URL,SUPABASE_KEY):null;
     const labels={new:'新客戶',contacted:'已聯繫',line_added:'已加 LINE',approved:'已成交',rejected:'未成交',invalid:'無效'};
-    let leads=[],page=1,total=0,pendingCopyId=null,activeId=null;
+    let leads=[],page=1,total=0,activeId=null;
 
     const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
     const date=v=>v?new Date(v).toLocaleString('zh-TW',{hour12:false}):'';
-    const number=v=>{const n=Number(v);return Number.isFinite(n)&&n>0?n:null};
     function warning(v){const s=String(v||'').trim();if(/^(否|無|没有|沒有|不是|非|正常)/.test(s)||/非警示|帳戶正常/.test(s))return'否';return /^(是|有)|異常|警示/.test(s)?'是':'否'}
-    function copyTextFor(l,n=null){const no=n||number(l.client_copy_number);return[`案件類型：貸款`,`來源版本：D項目I版本`,`姓名：${l.name||''}`,`年齡：${l.age||''}`,`貸款金額：${l.q3_amount_needed||''}`,`是否警示戶：${warning(l.q2_bank_status)}${no?String(no).padStart(2,'0'):''}`].join('\n')}
+    function copyTextFor(l){return[`案件類型：貸款`,`來源版本：D項目I版本`,`姓名：${l.name||''}`,`年齡：${l.age||''}`,`貸款金額：${l.q3_amount_needed||''}`,`是否警示戶：${warning(l.q2_bank_status)}`].join('\n')}
     async function clipboard(text){try{await navigator.clipboard.writeText(text)}catch(e){const t=document.createElement('textarea');t.value=text;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();document.execCommand('copy');t.remove()}}
 
     async function login(){const msg=document.getElementById('login-msg'),btn=document.getElementById('login-btn');msg.textContent='';if(!db){msg.textContent='登入元件載入失敗，請重新整理。';msg.className='msg error';return}if(document.getElementById('username').value.trim()!==LOGIN_USERNAME){msg.textContent='帳號或密碼錯誤。';msg.className='msg error';return}btn.disabled=true;const{error}=await db.auth.signInWithPassword({email:LOGIN_EMAIL,password:document.getElementById('password').value});btn.disabled=false;if(error){msg.textContent='帳號或密碼錯誤。';msg.className='msg error';return}await checkSession()}
@@ -84,20 +84,16 @@
     async function loadLeads(){const btn=document.getElementById('refresh');btn.disabled=true;btn.textContent='刷新中…';const from=(page-1)*PAGE_SIZE,to=from+PAGE_SIZE-1;const{data,error,count}=await baseQuery().order('created_at',{ascending:false}).range(from,to);btn.disabled=false;btn.textContent='刷新本頁';if(error){alert('讀取失敗：'+error.message);return}leads=data||[];total=count||0;render()}
     function resetAndLoad(){page=1;loadLeads()}
     function changePage(delta){const max=Math.max(1,Math.ceil(total/PAGE_SIZE)),next=page+delta;if(next<1||next>max)return;page=next;loadLeads();scrollTo({top:0,behavior:'smooth'})}
-    function render(){document.getElementById('stat-total').textContent=total;document.getElementById('stat-new').textContent=leads.filter(x=>x.status==='new').length;document.getElementById('stat-contacted').textContent=leads.filter(x=>x.status==='contacted').length;document.getElementById('stat-line').textContent=leads.filter(x=>x.status==='line_added').length;document.getElementById('stat-approved').textContent=leads.filter(x=>x.status==='approved').length;document.getElementById('count').textContent=`共 ${total} 筆・本頁 ${leads.length} 筆`;document.getElementById('empty').classList.toggle('hidden',leads.length>0);document.getElementById('page-label').textContent=`第 ${page}／${Math.max(1,Math.ceil(total/PAGE_SIZE))} 頁`;document.getElementById('prev').disabled=page<=1;document.getElementById('next').disabled=page>=Math.max(1,Math.ceil(total/PAGE_SIZE));document.getElementById('list').innerHTML=leads.map(l=>`<article class="lead"><div><div class="titleline"><span class="name">${esc(l.name||'未填姓名')}</span><span class="tag">I版</span>${number(l.client_copy_number)?`<span class="tag copy">甲方${String(l.client_copy_number).padStart(2,'0')}</span>`:''}<span class="tag ${esc(l.status||'new')}">${esc(labels[l.status]||l.status||'新客戶')}</span></div><div class="meta"><span>年齡 <strong>${esc(l.age||'未填')}</strong></span><span>貸款金額 <strong>${esc(l.q3_amount_needed||'未填')}</strong></span><span>警示戶 <strong>${warning(l.q2_bank_status)}</strong></span></div><div class="time">${esc(date(l.created_at))}</div></div><div class="actions"><button class="btn secondary" onclick="setStatus('${l.id}','contacted')">已聯繫</button><button class="btn secondary" onclick="setStatus('${l.id}','line_added')">已加LINE</button><button class="btn" onclick="startCopy('${l.id}')">一鍵複製</button>${pendingCopyId===l.id?`<span class="inline-confirm"><button class="btn" onclick="confirmCopy('${l.id}')">確認並複製</button><button class="btn secondary" onclick="cancelCopy()">取消</button></span>`:''}<button class="btn secondary" onclick="openDetails('${l.id}')">詳情</button></div></article>`).join('');if(activeId&&leads.some(x=>x.id===activeId))openDetails(activeId)}
+    function render(){document.getElementById('stat-total').textContent=total;document.getElementById('stat-new').textContent=leads.filter(x=>x.status==='new').length;document.getElementById('stat-contacted').textContent=leads.filter(x=>x.status==='contacted').length;document.getElementById('stat-line').textContent=leads.filter(x=>x.status==='line_added').length;document.getElementById('stat-approved').textContent=leads.filter(x=>x.status==='approved').length;document.getElementById('count').textContent=`共 ${total} 筆・本頁 ${leads.length} 筆`;document.getElementById('empty').classList.toggle('hidden',leads.length>0);document.getElementById('page-label').textContent=`第 ${page}／${Math.max(1,Math.ceil(total/PAGE_SIZE))} 頁`;document.getElementById('prev').disabled=page<=1;document.getElementById('next').disabled=page>=Math.max(1,Math.ceil(total/PAGE_SIZE));document.getElementById('list').innerHTML=leads.map(l=>`<article class="lead"><div><div class="titleline"><span class="name">${esc(l.name||'未填姓名')}</span><span class="tag">I版</span><span class="tag ${esc(l.status||'new')}">${esc(labels[l.status]||l.status||'新客戶')}</span></div><div class="meta"><span>年齡 <strong>${esc(l.age||'未填')}</strong></span><span>貸款金額 <strong>${esc(l.q3_amount_needed||'未填')}</strong></span><span>警示戶 <strong>${warning(l.q2_bank_status)}</strong></span></div><div class="time">${esc(date(l.created_at))}</div></div><div class="actions"><button class="btn secondary" onclick="setStatus('${l.id}','contacted')">已聯繫</button><button class="btn secondary" onclick="setStatus('${l.id}','line_added')">已加LINE</button><button class="btn" onclick="copyLead('${l.id}')">一鍵複製</button><button class="btn secondary" onclick="openDetails('${l.id}')">詳情</button></div></article>`).join('');if(activeId&&leads.some(x=>x.id===activeId))openDetails(activeId)}
 
     async function setStatus(id,status){const{error}=await db.from('leads').update({status,updated_at:new Date().toISOString()}).eq('id',id).eq('landing_variant','I');if(error){alert('更新失敗：'+error.message);return}await loadLeads()}
-    function startCopy(id){const l=leads.find(x=>x.id===id);if(!l)return;if(number(l.client_copy_number)){finishCopy(l,number(l.client_copy_number));return}pendingCopyId=id;render()}
-    function cancelCopy(){pendingCopyId=null;render()}
-    async function confirmCopy(id){const l=leads.find(x=>x.id===id);if(!l)return;const{data,error}=await db.rpc('assign_lead_client_copy_number',{target_lead_id:id});if(error){alert('編號分配失敗：'+error.message);return}const row=Array.isArray(data)?data[0]:data,n=number(row&&row.client_copy_number);if(!n){alert('沒有取得有效編號。');return}l.client_copy_number=n;l.client_copy_assigned_at=row.client_copy_assigned_at;pendingCopyId=null;await finishCopy(l,n);render()}
-    async function finishCopy(l,n){await clipboard(copyTextFor(l,n));alert(`已複製，甲方編號 ${String(n).padStart(2,'0')}`)}
+    async function copyLead(id){const l=leads.find(x=>x.id===id);if(!l)return;await clipboard(copyTextFor(l));alert('客戶資料已複製')}
 
     function detail(label,value){return`<div class="detail"><label>${esc(label)}</label><div>${esc(value||'未填')}</div></div>`}
-    function openDetails(id){const l=leads.find(x=>x.id===id);if(!l)return;activeId=id;document.getElementById('drawer-title').textContent=(l.name||'客戶')+'｜I版詳情';document.getElementById('drawer-body').innerHTML=`<div class="detail-grid">${detail('提交時間',date(l.created_at))}${detail('目前狀態',labels[l.status]||l.status)}${detail('來源版本','D項目I版本')}${detail('甲方編號',number(l.client_copy_number)?String(l.client_copy_number).padStart(2,'0'):'尚未分配')}${detail('姓名',l.name)}${detail('年齡',l.age)}${detail('貸款金額',l.q3_amount_needed)}${detail('是否警示戶',warning(l.q2_bank_status))}</div><div class="section"><h3>提交裝置信息</h3><div class="detail-grid">${detail('IP位址',l.ip_address)}${detail('設備',l.device_type)}${detail('瀏覽器',l.browser_name)}</div></div><div class="section"><h3>提供甲方的資料</h3><div class="copybox">${esc(copyTextFor(l))}</div><div class="drawer-actions"><button class="btn" onclick="startCopy('${l.id}')">一鍵複製客戶資料</button></div></div><div class="section"><h3>快速狀態</h3><div class="drawer-actions">${Object.entries(labels).map(([v,t])=>`<button class="btn secondary" onclick="setStatus('${l.id}','${v}')">${t}</button>`).join('')}</div></div><div class="section"><h3>處理備註</h3><textarea id="notes">${esc(l.notes||'')}</textarea><div class="drawer-actions"><button class="btn" onclick="saveNotes('${l.id}')">儲存備註</button></div></div>`;document.getElementById('backdrop').classList.remove('hidden');document.getElementById('drawer').classList.remove('hidden')}
+    function openDetails(id){const l=leads.find(x=>x.id===id);if(!l)return;activeId=id;document.getElementById('drawer-title').textContent=(l.name||'客戶')+'｜I版詳情';document.getElementById('drawer-body').innerHTML=`<div class="detail-grid">${detail('提交時間',date(l.created_at))}${detail('目前狀態',labels[l.status]||l.status)}${detail('來源版本','D項目I版本')}${detail('姓名',l.name)}${detail('年齡',l.age)}${detail('貸款金額',l.q3_amount_needed)}${detail('是否警示戶',warning(l.q2_bank_status))}</div><div class="section"><h3>提交裝置信息</h3><div class="detail-grid">${detail('IP位址',l.ip_address)}${detail('設備',l.device_type)}${detail('瀏覽器',l.browser_name)}</div></div><div class="section"><h3>客戶資料</h3><div class="copybox">${esc(copyTextFor(l))}</div><div class="drawer-actions"><button class="btn" onclick="copyLead('${l.id}')">一鍵複製客戶資料</button></div></div><div class="section"><h3>快速狀態</h3><div class="drawer-actions">${Object.entries(labels).map(([v,t])=>`<button class="btn secondary" onclick="setStatus('${l.id}','${v}')">${t}</button>`).join('')}</div></div><div class="section"><h3>處理備註</h3><textarea id="notes">${esc(l.notes||'')}</textarea><div class="drawer-actions"><button class="btn" onclick="saveNotes('${l.id}')">儲存備註</button></div></div>`;document.getElementById('backdrop').classList.remove('hidden');document.getElementById('drawer').classList.remove('hidden')}
     function closeDetails(){activeId=null;document.getElementById('backdrop').classList.add('hidden');document.getElementById('drawer').classList.add('hidden')}
     async function saveNotes(id){const notes=document.getElementById('notes').value;const{error}=await db.from('leads').update({notes}).eq('id',id).eq('landing_variant','I');if(error){alert('備註儲存失敗：'+error.message);return}await loadLeads();alert('備註已儲存')}
     checkSession();
   </script>
-
-
-</body></html>
+</body>
+</html>
