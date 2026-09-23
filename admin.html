@@ -1412,6 +1412,77 @@
       return '';
     }
 
+    function validTrackingValue(value) {
+      const text = String(value || '').trim();
+      if (!text || /^\{\{.+\}\}$/.test(text)) return '';
+      return text.slice(0, 240);
+    }
+
+    function trackingParam(params, names) {
+      for (const name of names) {
+        const value = validTrackingValue(params.get(name));
+        if (value) return value;
+      }
+      return '';
+    }
+
+    function trackingPlatform(lead, params) {
+      const source = trackingParam(params, ['site_source_name', 'utm_source', 'source']).toLowerCase();
+      if (['fb', 'facebook', 'meta'].includes(source)) return 'Facebook';
+      if (['ig', 'instagram'].includes(source)) return 'Instagram';
+      if (['msg', 'messenger'].includes(source)) return 'Messenger';
+      if (['an', 'audience_network'].includes(source)) return 'Audience Network';
+      if (['tiktok', 'tk'].includes(source)) return 'TikTok';
+      const fallback = trafficSource(lead);
+      if (fallback === 'FB') return 'Facebook';
+      return fallback || '';
+    }
+
+    function trackingPlacement(value) {
+      const raw = validTrackingValue(value);
+      if (!raw) return '';
+      const normalized = raw.toLowerCase().replace(/[\s-]+/g, '_');
+      const labels = {
+        facebook_reels: 'Facebook Reels',
+        instagram_reels: 'Instagram Reels',
+        facebook_feed: 'Facebook 動態消息',
+        instagram_feed: 'Instagram 動態消息',
+        facebook_stories: 'Facebook 限時動態',
+        instagram_stories: 'Instagram 限時動態',
+        messenger_inbox: 'Messenger 收件匣',
+        audience_network: 'Audience Network'
+      };
+      return labels[normalized] || raw.replace(/_/g, ' ');
+    }
+
+    function adAttribution(lead) {
+      const rawUrl = String(lead.source_url || '').trim();
+      let url;
+      try {
+        url = new URL(rawUrl);
+      } catch (error) {
+        return {
+          platform: trafficSource(lead) === 'FB' ? 'Facebook' : trafficSource(lead),
+          domain: '',
+          campaignId: '',
+          adsetId: '',
+          adName: '',
+          adId: '',
+          placement: ''
+        };
+      }
+      const params = url.searchParams;
+      return {
+        platform: trackingPlatform(lead, params),
+        domain: url.hostname.replace(/^www\./i, ''),
+        campaignId: trackingParam(params, ['campaign_id', 'campaignid']),
+        adsetId: trackingParam(params, ['adset_id', 'ad_set_id', 'adsetid']),
+        adName: trackingParam(params, ['ad_name', 'utm_content']),
+        adId: trackingParam(params, ['ad_id', 'adid']),
+        placement: trackingPlacement(trackingParam(params, ['placement']))
+      };
+    }
+
     function trafficSourceTag(lead) {
       const source = trafficSource(lead);
       return source ? `<span class="tag ${source === 'FB' ? 'tag-fb' : 'tag-tiktok'}">${source}</span>` : '';
@@ -1470,6 +1541,7 @@
     function openDetails(id) {
       const lead = leads.find(item => item.id === id);
       if (!lead) return;
+      const attribution = adAttribution(lead);
       activeDetailId = id;
       document.getElementById('detail-title').textContent = `${lead.name || '客戶'}｜詳細資料`;
       document.getElementById('detail-body').innerHTML = `
@@ -1489,6 +1561,19 @@
           ${detailItem('是否是警示戶', bankWarningValue(lead.q2_bank_status))}
           ${detailItem('LINE 點擊', lead.line_clicked ? '已點擊加入 LINE' : '尚未點擊')}
           ${detailItem('廣告來源', trafficSource(lead) || '未識別')}
+        </div>
+        <div class="detail-section">
+          <h3>廣告來源信息</h3>
+          <div class="detail-grid">
+            ${detailItem('來源平台', attribution.platform || '未提供')}
+            ${detailItem('來源域名', attribution.domain || '未提供')}
+            ${detailItem('來源版本', landingVariantLabel(lead))}
+            ${detailItem('廣告系列ID', attribution.campaignId || '未提供')}
+            ${detailItem('廣告組ID', attribution.adsetId || '未提供')}
+            ${detailItem('來源廣告', attribution.adName || '未提供')}
+            ${detailItem('廣告ID', attribution.adId || '未提供')}
+            ${detailItem('展示位置', attribution.placement || '未提供')}
+          </div>
         </div>
         <div class="detail-section">
           <h3>提交裝置信息</h3>
