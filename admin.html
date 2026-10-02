@@ -1844,15 +1844,18 @@
 
     function exportCSV() {
       const cols = ['created_at','business_type','landing_variant','client_copy_number','name','phone','age','line_id','q3_amount_needed','q2_bank_status','status','base_duplicate','base_duplicate_source','traffic_source','notes'];
+      const headers = cols.concat(['來源廣告']);
       const selectedRows = leads.filter(row => selectedLeadIds.has(row.id));
       const exportRows = selectedRows.length > 0 ? selectedRows : filteredLeads();
       if (exportRows.length === 0) {
         alert('目前沒有可匯出的名單。');
         return;
       }
-      const csv = [cols.join(',')].concat(exportRows.map(row =>
-        cols.map(col => '"' + String(row[col] || '').replace(/"/g, '""') + '"').join(',')
-      )).join('\n');
+      const csv = [headers.join(',')].concat(exportRows.map(row => {
+        const values = cols.map(col => row[col] || '');
+        values.push(adAttribution(row).adName || '');
+        return values.map(value => '"' + String(value).replace(/"/g, '""') + '"').join(',');
+      })).join('\n');
       const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
