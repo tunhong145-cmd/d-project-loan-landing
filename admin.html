@@ -502,7 +502,7 @@
           <button id="refresh-btn" onclick="loadLeads()">刷新訂單</button>
           <div class="filter-spacer"></div>
           <div class="search-wrap">
-            <input id="search" placeholder="搜尋姓名 / 年齡 / 金額" oninput="renderLeads()" />
+            <input id="search" placeholder="搜尋姓名 / 年齡 / 金額 / 來源廣告" oninput="renderLeads()" />
             <button type="button" onclick="renderLeads()">搜尋</button>
           </div>
         </div>
@@ -1377,7 +1377,7 @@
         if (from && new Date(dateValue) < new Date(from + 'T00:00:00')) return false;
         if (to && new Date(dateValue) > new Date(to + 'T23:59:59')) return false;
         if (!q) return true;
-        return [lead.name, lead.age, lead.q3_amount_needed, lead.q2_bank_status, lead.phone, lead.line_id, lead.city, lead.id_number]
+        return [lead.name, lead.age, lead.q3_amount_needed, lead.q2_bank_status, lead.phone, lead.line_id, lead.city, lead.id_number, adAttribution(lead).adName]
           .some(value => String(value || '').toLowerCase().includes(q));
       });
     }
