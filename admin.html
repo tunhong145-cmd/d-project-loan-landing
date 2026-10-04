@@ -229,6 +229,21 @@
     .select-all-wrap { display: flex; align-items: center; gap: 7px; margin: 0; color: var(--text-soft); font-size: 12px; }
     .select-all-wrap input, .lead-check { width: auto; min-height: 0; accent-color: var(--accent); }
     .lead-list { min-height: 140px; }
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--line);
+      background: var(--surface-soft);
+    }
+    .pagination button { min-height: 34px; padding: 6px 12px; }
+    .pagination button:disabled { cursor: not-allowed; opacity: .45; }
+    .pagination-info { min-width: 210px; color: var(--text-soft); font-size: 12px; text-align: center; }
+    .pagination-info strong { color: var(--text); font-size: 14px; }
+    .pagination-jump { display: flex; align-items: center; gap: 6px; color: var(--text-faint); font-size: 12px; }
+    .pagination-jump input { width: 66px; min-height: 34px; padding: 6px 8px; text-align: center; }
     .lead-row { display: grid; grid-template-columns: 30px minmax(360px,1fr) auto; gap: 12px; align-items: center; padding: 15px 20px; border-bottom: 1px solid #e8edf3; }
     .lead-row:last-child { border-bottom: 0; }
     .lead-row:hover { background: #f8fafd; }
@@ -384,6 +399,8 @@
       .date-separator, .filter-spacer { display: none; }
       .list-head { align-items: flex-start; flex-direction: column; }
       .list-head-right { width: 100%; flex-wrap: wrap; }
+      .pagination { flex-wrap: wrap; padding: 13px 10px; }
+      .pagination-info { width: 100%; order: -1; }
       .lead-row { display: block; padding: 14px; }
       .lead-check { margin-bottom: 9px; }
       .lead-meta { gap: 7px 13px; flex-wrap: wrap; white-space: normal; }
@@ -448,14 +465,14 @@
             <button type="button" data-days="30" onclick="setQuickDate(30,this)">近30日</button>
           </div>
           <div class="date-field">
-            <input id="date-from" type="date" aria-label="開始日期" onchange="clearQuickDate();renderLeads()" />
+            <input id="date-from" type="date" aria-label="開始日期" onchange="clearQuickDate();applyFilters()" />
           </div>
           <span class="date-separator">至</span>
           <div class="date-field">
-            <input id="date-to" type="date" aria-label="結束日期" onchange="clearQuickDate();renderLeads()" />
+            <input id="date-to" type="date" aria-label="結束日期" onchange="clearQuickDate();applyFilters()" />
           </div>
           <div class="status-field">
-            <select id="status-filter" onchange="renderLeads()">
+            <select id="status-filter" onchange="applyFilters()">
               <option value="">全部</option>
               <option value="new">新客戶</option>
               <option value="contacted">已聯繫</option>
@@ -466,7 +483,7 @@
             </select>
           </div>
           <div class="status-field">
-            <select id="business-filter" onchange="renderLeads()">
+            <select id="business-filter" onchange="applyFilters()">
               <option value="">案件：全部</option>
               <option value="loan">貸款</option>
               <option value="subsidy">補助金</option>
@@ -485,14 +502,14 @@
             </div>
           </div>
           <div class="status-field">
-            <select id="base-duplicate-filter" onchange="renderLeads()">
+            <select id="base-duplicate-filter" onchange="applyFilters()">
               <option value="">底粉：全部</option>
               <option value="yes">底粉重複</option>
               <option value="no">非底粉重複</option>
             </select>
           </div>
           <div class="status-field">
-            <select id="traffic-source-filter" onchange="renderLeads()">
+            <select id="traffic-source-filter" onchange="applyFilters()">
               <option value="">來源：全部</option>
               <option value="FB">FB</option>
               <option value="TikTok">TikTok</option>
@@ -502,8 +519,8 @@
           <button id="refresh-btn" onclick="loadLeads()">刷新訂單</button>
           <div class="filter-spacer"></div>
           <div class="search-wrap">
-            <input id="search" placeholder="搜尋姓名 / 年齡 / 金額 / 來源廣告" oninput="renderLeads()" />
-            <button type="button" onclick="renderLeads()">搜尋</button>
+            <input id="search" placeholder="搜尋姓名 / 年齡 / 金額 / 來源廣告" oninput="scheduleSearch()" onkeydown="if(event.key==='Enter'){event.preventDefault();applyFilters()}" />
+            <button type="button" onclick="applyFilters()">搜尋</button>
           </div>
         </div>
         <div class="copy-number-panel">
@@ -520,13 +537,21 @@
         <div class="list-head">
           <h2>申請列表</h2>
           <div class="list-head-right">
-            <label class="select-all-wrap"><input id="select-all" type="checkbox" onchange="toggleAllVisible(this.checked)" /> 全選目前結果</label>
+            <label class="select-all-wrap"><input id="select-all" type="checkbox" onchange="toggleAllVisible(this.checked)" /> 全選本頁</label>
             <span id="result-count">0 筆</span>
             <button id="export-btn" class="secondary" onclick="exportCSV()">匯出 CSV</button>
           </div>
         </div>
         <div id="lead-list" class="lead-list"></div>
         <p id="empty-msg" class="notice empty hidden">目前沒有符合條件的名單。</p>
+        <div id="pagination" class="pagination hidden">
+          <button type="button" class="secondary" id="page-first" onclick="goToPage(1)">首頁</button>
+          <button type="button" class="secondary" id="page-prev" onclick="goToPage(currentPage-1)">上一頁</button>
+          <div class="pagination-info"><strong id="page-current">1</strong> / <span id="page-total">1</span> 頁・共 <span id="page-count">0</span> 筆</div>
+          <button type="button" class="secondary" id="page-next" onclick="goToPage(currentPage+1)">下一頁</button>
+          <button type="button" class="secondary" id="page-last" onclick="goToPage(totalPages)">末頁</button>
+          <label class="pagination-jump">跳至 <input id="page-jump" type="number" min="1" inputmode="numeric" onkeydown="if(event.key==='Enter')jumpToPage()" /> 頁</label>
+        </div>
       </div>
 
       <div id="settings-view" class="settings-wrap hidden">
@@ -615,11 +640,18 @@
       J: 'J版'
     };
     const PIXEL_VERSION_ORDER = Object.keys(PIXEL_VERSION_LABELS);
+    const PAGE_SIZE = 100;
     let leads = [];
     let selectedLeadIds = new Set();
+    let selectedLeadCache = new Map();
     let activeDetailId = null;
     let pendingCopyLeadId = null;
     let selectedVariantFilters = new Set();
+    let currentPage = 1;
+    let totalPages = 1;
+    let totalLeadCount = 0;
+    let searchTimer = null;
+    let leadsRequestToken = 0;
     let siteSettings = {
       line_url: 'https://lin.ee/591VM3X',
       fg_line_url: 'https://lin.ee/591VM3X',
@@ -1252,7 +1284,7 @@
     }
 
     function landingVariant(lead) {
-      const value = String(lead.landing_variant || '').trim().toUpperCase();
+      const value = String(lead.resolved_landing_variant || lead.landing_variant || '').trim().toUpperCase();
       if (['C', 'E', 'F', 'G', 'I', 'J'].includes(value)) return value;
       const url = String(lead.source_url || '').toLowerCase();
       if (/\/j(?:\/|$)/.test(url)) return 'J';
@@ -1292,7 +1324,7 @@
     function clearVariantFilters() {
       selectedVariantFilters.clear();
       updateVariantFilterUI();
-      renderLeads();
+      applyFilters();
     }
 
     function toggleVariantFilter(variant) {
@@ -1301,7 +1333,7 @@
       if (selectedVariantFilters.has(value)) selectedVariantFilters.delete(value);
       else selectedVariantFilters.add(value);
       updateVariantFilterUI();
-      renderLeads();
+      applyFilters();
     }
 
     function updateVariantFilterUI() {
@@ -1312,17 +1344,96 @@
       });
     }
 
+    function readFilterState() {
+      const from = document.getElementById('date-from').value;
+      const to = document.getElementById('date-to').value;
+      return {
+        status: document.getElementById('status-filter').value,
+        businessType: document.getElementById('business-filter').value,
+        baseDuplicate: document.getElementById('base-duplicate-filter').value,
+        trafficSource: document.getElementById('traffic-source-filter').value,
+        variants: [...selectedVariantFilters],
+        search: document.getElementById('search').value.trim(),
+        dateFrom: from ? new Date(from + 'T00:00:00').toISOString() : null,
+        dateTo: to ? new Date(to + 'T23:59:59.999').toISOString() : null
+      };
+    }
+
+    function escapeLikePattern(value) {
+      return String(value || '').replace(/[\\%_]/g, match => '\\' + match);
+    }
+
+    function applyLeadQueryFilters(query, state) {
+      query = query.or('resolved_landing_variant.is.null,resolved_landing_variant.neq.H');
+      if (state.status) query = query.eq('status', state.status);
+      if (state.businessType === 'loan') query = query.or('business_type.is.null,business_type.eq.loan');
+      if (state.businessType === 'subsidy') query = query.eq('business_type', 'subsidy');
+      if (state.variants.length) query = query.in('resolved_landing_variant', state.variants);
+      if (state.baseDuplicate === 'yes') query = query.eq('base_duplicate', true);
+      if (state.baseDuplicate === 'no') query = query.or('base_duplicate.is.null,base_duplicate.eq.false');
+      if (state.trafficSource === 'unknown') query = query.is('resolved_traffic_source', null);
+      if (state.trafficSource && state.trafficSource !== 'unknown') query = query.eq('resolved_traffic_source', state.trafficSource);
+      if (state.search) query = query.ilike('search_text', '%' + escapeLikePattern(state.search) + '%');
+      if (state.dateFrom) query = query.gte('created_at', state.dateFrom);
+      if (state.dateTo) query = query.lte('created_at', state.dateTo);
+      return query;
+    }
+
+    function statsRpcParams(state) {
+      return {
+        p_status: state.status || null,
+        p_business_type: state.businessType || null,
+        p_variants: state.variants.length ? state.variants : null,
+        p_base_duplicate: state.baseDuplicate || null,
+        p_traffic_source: state.trafficSource || null,
+        p_search: state.search || null,
+        p_date_from: state.dateFrom,
+        p_date_to: state.dateTo
+      };
+    }
+
+    async function loadStats(state) {
+      const { data, error } = await client.rpc('get_admin_lead_stats', statsRpcParams(state));
+      if (error || !data) {
+        document.getElementById('stat-filtered').textContent = totalLeadCount;
+        return;
+      }
+      document.getElementById('stat-filtered').textContent = Number(data.filtered || 0);
+      document.getElementById('stat-today').textContent = Number(data.today || 0);
+      document.getElementById('stat-new').textContent = Number(data.new || 0);
+      document.getElementById('stat-contacted').textContent = Number(data.contacted || 0);
+      document.getElementById('stat-line-added').textContent = Number(data.line_added || 0);
+      document.getElementById('stat-approved').textContent = Number(data.approved || 0);
+      document.getElementById('stat-invalid').textContent = Number(data.invalid || 0);
+    }
+
+    function scheduleSearch() {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(applyFilters, 420);
+    }
+
+    function applyFilters() {
+      clearTimeout(searchTimer);
+      currentPage = 1;
+      loadLeads();
+    }
+
     async function loadLeads() {
+      const requestToken = ++leadsRequestToken;
       const refreshBtn = document.getElementById('refresh-btn');
       if (refreshBtn) {
         refreshBtn.disabled = true;
         refreshBtn.textContent = '刷新中...';
       }
-      const { data, error } = await client
-        .from('leads')
-        .select('*')
-        .or('landing_variant.is.null,landing_variant.neq.H')
-        .order('created_at', { ascending: false });
+      const state = readFilterState();
+      const offset = (currentPage - 1) * PAGE_SIZE;
+      let query = client.from('leads').select('*', { count: 'exact' });
+      query = applyLeadQueryFilters(query, state)
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .range(offset, offset + PAGE_SIZE - 1);
+      const { data, error, count } = await query;
+      if (requestToken !== leadsRequestToken) return;
       if (error) {
         alert('讀取名單失敗：' + error.message);
         if (refreshBtn) {
@@ -1331,11 +1442,20 @@
         }
         return;
       }
-      leads = data || [];
-      markDuplicateLeads();
-      selectedLeadIds = new Set([...selectedLeadIds].filter(id => leads.some(lead => lead.id === id)));
-      renderStats();
+      totalLeadCount = Number(count || 0);
+      totalPages = Math.max(1, Math.ceil(totalLeadCount / PAGE_SIZE));
+      if (currentPage > totalPages) {
+        currentPage = totalPages;
+        await loadLeads();
+        return;
+      }
+      leads = (data || []).map(lead => ({ ...lead, __isDuplicate: Boolean(lead.is_duplicate) }));
+      leads.forEach(lead => {
+        if (selectedLeadIds.has(lead.id)) selectedLeadCache.set(lead.id, lead);
+      });
       renderLeads();
+      renderPagination();
+      await loadStats(state);
       if (activeDetailId && leads.some(lead => lead.id === activeDetailId)) openDetails(activeDetailId);
       if (refreshBtn) {
         refreshBtn.disabled = false;
@@ -1343,43 +1463,37 @@
       }
     }
 
-    function renderStats() {
-      const today = new Date();
-      const createdData = filteredLeads('created_at');
-      const statusData = filteredLeads('updated_at');
-      document.getElementById('stat-filtered').textContent = createdData.length;
-      document.getElementById('stat-today').textContent = createdData.filter(x => isSameDay(x.created_at, today)).length;
-      document.getElementById('stat-new').textContent = createdData.filter(x => x.status === 'new').length;
-      document.getElementById('stat-contacted').textContent = statusData.filter(x => x.status === 'contacted').length;
-      document.getElementById('stat-line-added').textContent = statusData.filter(x => x.status === 'line_added').length;
-      document.getElementById('stat-approved').textContent = statusData.filter(x => x.status === 'approved').length;
-      document.getElementById('stat-invalid').textContent = statusData.filter(x => x.status === 'invalid').length;
+    function renderPagination() {
+      const pagination = document.getElementById('pagination');
+      pagination.classList.toggle('hidden', totalLeadCount === 0);
+      document.getElementById('page-current').textContent = currentPage;
+      document.getElementById('page-total').textContent = totalPages;
+      document.getElementById('page-count').textContent = totalLeadCount;
+      document.getElementById('page-first').disabled = currentPage <= 1;
+      document.getElementById('page-prev').disabled = currentPage <= 1;
+      document.getElementById('page-next').disabled = currentPage >= totalPages;
+      document.getElementById('page-last').disabled = currentPage >= totalPages;
+      const jump = document.getElementById('page-jump');
+      jump.max = totalPages;
+      jump.placeholder = String(currentPage);
     }
 
-    function filteredLeads(dateField = 'created_at') {
-      const q = document.getElementById('search').value.trim().toLowerCase();
-      const status = document.getElementById('status-filter').value;
-      const businessFilter = document.getElementById('business-filter').value;
-      const baseDuplicate = document.getElementById('base-duplicate-filter').value;
-      const trafficSourceFilter = document.getElementById('traffic-source-filter').value;
-      const from = document.getElementById('date-from').value;
-      const to = document.getElementById('date-to').value;
-      return leads.filter(lead => {
-        if (status && lead.status !== status) return false;
-        if (businessFilter && businessType(lead) !== businessFilter) return false;
-        if (selectedVariantFilters.size > 0 && !selectedVariantFilters.has(landingVariant(lead))) return false;
-        if (baseDuplicate === 'yes' && !lead.base_duplicate) return false;
-        if (baseDuplicate === 'no' && lead.base_duplicate) return false;
-        const source = trafficSource(lead);
-        if (trafficSourceFilter === 'unknown' && source) return false;
-        if (trafficSourceFilter && trafficSourceFilter !== 'unknown' && source !== trafficSourceFilter) return false;
-        const dateValue = lead[dateField] || lead.created_at;
-        if (from && new Date(dateValue) < new Date(from + 'T00:00:00')) return false;
-        if (to && new Date(dateValue) > new Date(to + 'T23:59:59')) return false;
-        if (!q) return true;
-        return [lead.name, lead.age, lead.q3_amount_needed, lead.q2_bank_status, lead.phone, lead.line_id, lead.city, lead.id_number, adAttribution(lead).adName]
-          .some(value => String(value || '').toLowerCase().includes(q));
-      });
+    function goToPage(page) {
+      const target = Math.min(totalPages, Math.max(1, Number(page) || 1));
+      if (target === currentPage) return;
+      currentPage = target;
+      loadLeads();
+      document.querySelector('.list-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function jumpToPage() {
+      const input = document.getElementById('page-jump');
+      goToPage(input.value);
+      input.value = '';
+    }
+
+    function filteredLeads() {
+      return leads;
     }
 
     function setQuickDate(days, button) {
@@ -1396,7 +1510,7 @@
       document.getElementById('date-to').value = dateInputValue(to);
       document.querySelectorAll('.quick-dates button').forEach(btn => btn.classList.remove('active'));
       if (button) button.classList.add('active');
-      renderLeads();
+      applyFilters();
     }
 
     function clearQuickDate() {
@@ -1404,7 +1518,7 @@
     }
 
     function trafficSource(lead) {
-      const saved = String(lead.traffic_source || '');
+      const saved = String(lead.resolved_traffic_source || lead.traffic_source || '');
       if (saved === 'FB' || saved === 'TikTok') return saved;
       const url = String(lead.source_url || '').toLowerCase();
       if (url.includes('fbclid=') || /utm_source=(facebook|fb|meta)/.test(url)) return 'FB';
@@ -1466,7 +1580,7 @@
           domain: '',
           campaignId: '',
           adsetId: '',
-          adName: '',
+          adName: validTrackingValue(lead.source_ad),
           adId: '',
           placement: ''
         };
@@ -1477,7 +1591,7 @@
         domain: url.hostname.replace(/^www\./i, ''),
         campaignId: trackingParam(params, ['campaign_id', 'campaignid']),
         adsetId: trackingParam(params, ['adset_id', 'ad_set_id', 'adsetid']),
-        adName: trackingParam(params, ['ad_name', 'utm_content']),
+        adName: validTrackingValue(lead.source_ad) || trackingParam(params, ['ad_name', 'utm_content']),
         adId: trackingParam(params, ['ad_id', 'adid']),
         placement: trackingPlacement(trackingParam(params, ['placement']))
       };
@@ -1490,15 +1604,15 @@
 
     function renderLeads() {
       const list = document.getElementById('lead-list');
-      const data = filteredLeads();
+      const data = leads;
       document.getElementById('empty-msg').classList.toggle('hidden', data.length > 0);
-      document.getElementById('result-count').textContent = `${data.length} 筆・篩選中`;
+      document.getElementById('result-count').textContent = `${totalLeadCount} 筆・第 ${currentPage}/${totalPages} 頁`;
       list.innerHTML = data.map((lead, index) => `
         <article class="lead-row">
           <input class="lead-check" type="checkbox" ${selectedLeadIds.has(lead.id) ? 'checked' : ''} onchange="toggleLeadSelection('${lead.id}', this.checked)" />
           <div class="lead-summary">
             <div class="lead-title-line">
-              <span class="lead-index">${data.length - index}</span>
+              <span class="lead-index">${Math.max(1, totalLeadCount - ((currentPage - 1) * PAGE_SIZE) - index)}</span>
               <span class="lead-name">${escapeHTML(lead.name || '未填姓名')}</span>
               <span class="tag tag-${businessType(lead)}">${businessLabel(lead)}</span>
               ${landingVariantTag(lead)}
@@ -1530,7 +1644,6 @@
           </div>
         </article>
       `).join('');
-      renderStats();
       updateSelectionUI(data);
     }
 
@@ -1769,15 +1882,26 @@
     }
 
     function toggleLeadSelection(id, checked) {
-      if (checked) selectedLeadIds.add(id);
-      else selectedLeadIds.delete(id);
-      updateSelectionUI(filteredLeads());
+      const lead = leads.find(item => item.id === id);
+      if (checked) {
+        selectedLeadIds.add(id);
+        if (lead) selectedLeadCache.set(id, lead);
+      } else {
+        selectedLeadIds.delete(id);
+        selectedLeadCache.delete(id);
+      }
+      updateSelectionUI(leads);
     }
 
     function toggleAllVisible(checked) {
-      filteredLeads().forEach(lead => {
-        if (checked) selectedLeadIds.add(lead.id);
-        else selectedLeadIds.delete(lead.id);
+      leads.forEach(lead => {
+        if (checked) {
+          selectedLeadIds.add(lead.id);
+          selectedLeadCache.set(lead.id, lead);
+        } else {
+          selectedLeadIds.delete(lead.id);
+          selectedLeadCache.delete(lead.id);
+        }
       });
       renderLeads();
     }
@@ -1842,13 +1966,47 @@
       }
     }
 
-    function exportCSV() {
+    async function fetchAllFilteredLeads() {
+      const rows = [];
+      const batchSize = 1000;
+      const state = readFilterState();
+      for (let offset = 0; ; offset += batchSize) {
+        let query = client.from('leads').select('*');
+        query = applyLeadQueryFilters(query, state)
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: false })
+          .range(offset, offset + batchSize - 1);
+        const { data, error } = await query;
+        if (error) throw error;
+        const batch = data || [];
+        rows.push(...batch);
+        if (batch.length < batchSize) break;
+      }
+      return rows;
+    }
+
+    async function exportCSV() {
       const cols = ['created_at','business_type','landing_variant','client_copy_number','name','phone','age','line_id','q3_amount_needed','q2_bank_status','status','base_duplicate','base_duplicate_source','traffic_source','notes'];
       const headers = cols.concat(['來源廣告']);
-      const selectedRows = leads.filter(row => selectedLeadIds.has(row.id));
-      const exportRows = selectedRows.length > 0 ? selectedRows : filteredLeads();
+      const exportBtn = document.getElementById('export-btn');
+      const selectedRows = [...selectedLeadCache.values()].filter(row => selectedLeadIds.has(row.id));
+      let exportRows = selectedRows;
+      if (!selectedRows.length) {
+        exportBtn.disabled = true;
+        exportBtn.textContent = '正在準備全部篩選結果...';
+        try {
+          exportRows = await fetchAllFilteredLeads();
+        } catch (error) {
+          alert('匯出失敗：' + error.message);
+          exportBtn.disabled = false;
+          updateSelectionUI(leads);
+          return;
+        }
+      }
       if (exportRows.length === 0) {
         alert('目前沒有可匯出的名單。');
+        exportBtn.disabled = false;
+        updateSelectionUI(leads);
         return;
       }
       const csv = [headers.join(',')].concat(exportRows.map(row => {
@@ -1863,6 +2021,8 @@
       a.download = 'leads-' + new Date().toISOString().slice(0,10) + '.csv';
       a.click();
       URL.revokeObjectURL(url);
+      exportBtn.disabled = false;
+      updateSelectionUI(leads);
     }
 
     checkSession();
