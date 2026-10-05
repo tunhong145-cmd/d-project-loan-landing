@@ -3644,12 +3644,6 @@ async function submitForm(e) {
   e.preventDefault();
   if (kSubmitting) return;
 
-  // 防重複提交
-  if (sessionStorage.getItem('x_loan_k_submitted_preview_v2') === '1') {
-    showModal('⚠️ 提示', '您已成功送出申請，請勿重複提交。');
-    return;
-  }
-
   var name   = document.getElementById('f-name').value.trim();
   var age    = document.getElementById('f-age').value.trim();
   var phone  = document.getElementById('f-phone').value.trim();
@@ -3740,9 +3734,6 @@ async function submitForm(e) {
       content_type: 'loan_application'
     });
   }
-
-  // 防重複提交標記
-  sessionStorage.setItem('x_loan_k_submitted_preview_v2', '1');
 
   // 更新 LINE 引導區塊
   document.getElementById('line-add-btn').href = ENTERPRISE_LINE_URL;
