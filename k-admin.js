@@ -4,6 +4,9 @@
   const size = 100;
   let rows = [], page = 1, count = 0, request = 0, initialized = false, busy = false;
   const selected = new Map();
+  const style = document.createElement('style');
+  style.textContent = `#k-admin-view>.settings-panel{margin-bottom:18px}#k-admin-view>.settings-panel a{color:#b5d6ff;align-self:center;text-decoration:underline}#k-settings .settings-panel{margin-bottom:16px}#k-settings .settings-panel:first-child{background:#fff;border-color:var(--line);color:var(--text)}#k-settings .settings-panel:first-child .notice{color:var(--text-soft);margin:10px 0 18px}#k-settings .pixel-row{margin-bottom:16px}#k-detail::backdrop{background:rgba(16,24,39,.45)}#k-detail label{margin-top:14px}`;
+  document.head.append(style);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fields = [['name','姓名'],['age','年齡'],['phone','手機號碼'],['q3_amount_needed','需求金額'],
     ['q2_bank_status','銀行警示戶／告誡戶'],['court_deduction_status','法院強制扣款'],
