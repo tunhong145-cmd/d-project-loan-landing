@@ -3,9 +3,10 @@
   'use strict';
   const size = 100;
   let rows = [], page = 1, count = 0, request = 0, initialized = false, busy = false;
+  let settingsReady = null;
   const selected = new Map();
   const style = document.createElement('style');
-  style.textContent = `#k-admin-view>.settings-panel{margin-bottom:18px}#k-admin-view>.settings-panel a{color:#b5d6ff;align-self:center;text-decoration:underline}#k-settings .settings-panel{margin-bottom:16px}#k-settings .settings-panel:first-child{background:#fff;border-color:var(--line);color:var(--text)}#k-settings .settings-panel:first-child .notice{color:var(--text-soft);margin:10px 0 18px}#k-settings .pixel-row{margin-bottom:16px}#k-detail::backdrop{background:rgba(16,24,39,.45)}#k-detail label{margin-top:14px}`;
+  style.textContent = `#k-admin-view>.settings-panel{margin-bottom:18px}#k-settings{grid-column:1/-1}#k-settings .settings-panel{margin-bottom:16px}#k-settings .settings-panel:first-child{background:#fff;border-color:var(--line);color:var(--text)}#k-settings .settings-panel:first-child .notice{color:var(--text-soft);margin:10px 0 18px}#k-settings .settings-panel:last-child{position:static;display:block;box-shadow:none}#k-settings .pixel-row{margin-bottom:16px}#k-detail::backdrop{background:rgba(16,24,39,.45)}#k-detail label{margin-top:14px}`;
   document.head.append(style);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fields = [['name','姓名'],['age','年齡'],['phone','手機號碼'],['q3_amount_needed','需求金額'],
@@ -15,8 +16,7 @@
   root.id = 'k-admin-view'; root.className = 'hidden';
   root.innerHTML = `
     <div class="panel settings-panel"><h2>X貸款 K版</h2>
-      <p class="notice">K版專屬訂單、甲方編號與 LINE／FB 像素設定。</p>
-      <div class="settings-actions"><button data-action="tab-orders">K版訂單</button><button class="secondary" data-action="tab-settings">K版設定</button><a href="k/" target="_blank" rel="noopener">開啟 K版落地頁 ↗</a></div>
+      <p class="notice">K版專屬訂單與甲方編號。</p>
       <p id="k-msg" role="status" class="notice" style="white-space:pre-wrap"></p></div>
     <div id="k-orders">
       <div class="panel filters"><div class="filter-row">
@@ -29,16 +29,27 @@
         <div id="k-list" class="lead-list"></div><div class="pagination"><button class="secondary" data-action="prev">上一頁</button><span id="k-page"></span><button class="secondary" data-action="next">下一頁</button></div>
       </div>
     </div>
-    <div id="k-settings" class="hidden">
+    <div id="k-settings">
       <div class="panel settings-panel"><h3>K版 LINE 設定</h3><label for="k-line">K版獨立 LINE 連結</label><input id="k-line" type="url" placeholder="https://lin.ee/xxxxxxx 或 https://line.me/R/ti/p/@xxxxxxxx"><p class="notice">支援輪換短連結。尚未填寫時，K版暫停送件。</p><label for="k-line-id">LINE ID（選填，短連結可留白）</label><input id="k-line-id" placeholder="@xxxxxxxx"><button class="secondary" data-action="test-line">測試 LINE</button></div>
       <div class="panel settings-panel"><h3>K版 Facebook Pixel</h3><p class="notice">最多 5 個；留白不啟用。只在 K版回傳 PageView、Lead、CompleteRegistration。</p>
         ${Array.from({length:5},(_,i)=>`<label for="k-pixel-${i}">像素 ${i+1}</label><div class="pixel-row"><input id="k-pixel-${i}" inputmode="numeric" placeholder="Facebook Pixel ID"><label class="pixel-toggle"><input id="k-pixel-on-${i}" type="checkbox" checked>啟用</label></div>`).join('')}
-      </div><div class="panel settings-panel"><button data-action="save-settings">儲存 K版 LINE 與像素</button><p class="notice">設定儲存後，重新整理 K版落地頁生效。</p></div>
+      </div><div class="panel settings-panel"><button data-action="save-settings" disabled>儲存 K版 LINE 與像素</button><p class="notice">K版獨立儲存，設定儲存後重新整理 K版落地頁生效。</p><p id="k-settings-msg" class="notice" role="status"></p></div>
     </div>
     <dialog id="k-detail" style="width:min(650px,94vw);max-height:90vh;overflow:auto;border:1px solid #dce4ee;border-radius:14px;padding:24px;margin:auto"><div class="drawer-head"><h2>K版客戶詳細資料</h2><button class="secondary" data-action="close-detail">關閉</button></div><div id="k-detail-body"></div></dialog>`;
   document.getElementById('app-panel').append(root);
-  const $ = id => root.querySelector('#'+id);
+  const settingsRoot = root.querySelector('#k-settings');
+  const systemSettings = document.getElementById('settings-view');
+  systemSettings.insertBefore(settingsRoot, systemSettings.lastElementChild);
+  const $ = id => root.querySelector('#'+id) || settingsRoot.querySelector('#'+id);
   function message(text, error=false) { $('k-msg').textContent=text; $('k-msg').className='notice'+(error?' error':''); }
+  function settingsMessage(text, error=false) { $('k-settings-msg').textContent=text; $('k-settings-msg').className='notice'+(error?' error':''); }
+  function ensureSettings() {
+    if (!settingsReady) {
+      settingsMessage('正在載入 K版設定…');
+      settingsReady=loadSettings().then(()=>{settingsRoot.querySelector('[data-action="save-settings"]').disabled=false;settingsMessage('');}).catch(e=>{settingsReady=null;settingsMessage('K版設定載入失敗：'+e.message,true);throw e;});
+    }
+    return settingsReady;
+  }
   function number(n) { return n == null ? '未編號' : String(n).padStart(2,'0'); }
   function copyTextFor(r) {
     return ['案件類型：X貸款','來源版本：K版本',...fields.map(([key,label])=>`${label}：${r[key] ?? ''}`),`甲方編號：${number(r.client_copy_number)}`].join('\n');
@@ -93,7 +104,7 @@
     if(new Set(pixels.map(p=>p.id)).size!==pixels.length) throw new Error('像素 ID 不可重複。');
     const {error}=await client.from('x_loan_settings').update({line_url:line,line_id:$('k-line-id').value.trim(),pixel_ids:pixels,updated_at:new Date().toISOString()}).eq('version_code','K').select('version_code').single();
     if(error) throw error;
-    message('K版 LINE 與像素已儲存。');
+    settingsMessage('K版 LINE 與像素已儲存。');
   }
   function detail(id) {
     const r=rows.find(r=>r.id===id); if(!r)return;
@@ -127,12 +138,11 @@
     const csv=[columns.map(([,l])=>cell(l)).join(','),...data.map(r=>columns.map(([k])=>cell(r[k])).join(','))].join('\r\n');
     const url=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='K版訂單-'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message(`已匯出 ${data.length} 筆 K版訂單。`);
   }
-  root.addEventListener('click',async event=>{
+  async function handleAction(event) {
     const button=event.target.closest('[data-action]');if(!button||busy)return;
     const action=button.dataset.action,id=button.dataset.id;
     busy=true;button.disabled=true;
     try {
-      if(action==='tab-orders'||action==='tab-settings') {$('k-orders').classList.toggle('hidden',action!=='tab-orders');$('k-settings').classList.toggle('hidden',action!=='tab-settings');}
       if(action==='search'){page=1;selected.clear();await load();}
       if(action==='refresh')await load();
       if(action==='prev'||action==='next'){page+=action==='prev'?-1:1;await load();}
@@ -145,9 +155,11 @@
       if(action==='notes'){await patch(id,{notes:$('k-notes').value});message('K版備註已儲存。');}
       if(action==='edit-number'||action==='clear-number'){const n=action==='clear-number'?null:Number($('k-edit-number').value);if(n!==null&&(!Number.isInteger(n)||n<1||n>999999))throw new Error('編號請填寫 1–999999。');await patch(id,{client_copy_number:n});detail(id);message(n===null?'K版訂單編號已清除，下次複製會重新分配。':'K版訂單編號已更新。');}
       if(action==='export')await exportRows();
-    }catch(e){message('K版操作失敗：'+(e.message||e),true);}
+    }catch(e){(settingsRoot.contains(button)?settingsMessage:message)('K版操作失敗：'+(e.message||e),true);}
     finally{busy=false;button.disabled=false;if(action==='prev'||action==='next')render();}
-  });
+  }
+  root.addEventListener('click',handleAction);
+  settingsRoot.addEventListener('click',handleAction);
   root.addEventListener('change',async event=>{
     const el=event.target;
     if(el.dataset.select){const r=rows.find(r=>r.id===el.dataset.select);if(el.checked)selected.set(r.id,r);else selected.delete(r.id);render();}
@@ -155,5 +167,8 @@
     if(el.dataset.status){try{await patch(el.dataset.status,{status:el.value});message('K版狀態已更新。');}catch(e){message(e.message,true);render();}}
   });
   $('k-search').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();root.querySelector('[data-action="search"]').click();}});
-  window.KAdmin={async show(visible){root.classList.toggle('hidden',!visible);if(!visible){if($('k-detail').open)$('k-detail').close();return;}if(!initialized){try{await Promise.all([load(),loadSettings()]);initialized=true;}catch(e){message('K版載入失敗：'+e.message,true);}}}};
+  window.KAdmin={
+    async showSettings(){try{await ensureSettings();}catch{}},
+    async show(visible){root.classList.toggle('hidden',!visible);if(!visible){if($('k-detail').open)$('k-detail').close();return;}if(!initialized){try{await Promise.all([load(),ensureSettings()]);initialized=true;}catch(e){message('K版載入失敗：'+e.message,true);}}}
+  };
 })();

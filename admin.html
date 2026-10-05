@@ -802,7 +802,10 @@
       document.getElementById('nav-settings').classList.toggle('active', isSettings);
       document.getElementById('nav-k').classList.toggle('active', isK);
       if (window.KAdmin) window.KAdmin.show(isK);
-      if (isSettings) renderSiteSettings();
+      if (isSettings) {
+        renderSiteSettings();
+        if (window.KAdmin) window.KAdmin.showSettings();
+      }
     }
 
     async function loadSiteSettings() {
@@ -2032,6 +2035,6 @@
 
     checkSession();
   </script>
-  <script src="k-admin.js?v=20261006-2"></script>
+  <script src="k-admin.js?v=20261006-3"></script>
 </body>
 </html>
