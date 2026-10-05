@@ -653,6 +653,7 @@
     let totalLeadCount = 0;
     let searchTimer = null;
     let leadsRequestToken = 0;
+    let savedExistingSettings = null;
     let siteSettings = {
       line_url: 'https://lin.ee/591VM3X',
       fg_line_url: 'https://lin.ee/591VM3X',
@@ -840,6 +841,22 @@
       }
       renderSiteSettings();
       renderCopyNumberControls();
+      if (!error && data) savedExistingSettings = existingSettingsSnapshot();
+    }
+
+    function existingSettingsSnapshot() {
+      const versionPixels = PIXEL_VERSION_ORDER.flatMap(version =>
+        (siteSettings.version_pixel_ids[version] || []).map(p => ({id:String(p.id || '').trim(),enabled:p.enabled !== false,platform:'facebook',variant:version})).filter(p => p.id));
+      const legacyPixels = (siteSettings.legacy_pixel_ids || []).map(p => ({id:String(p.id || '').trim(),enabled:p.enabled !== false,platform:'facebook'})).filter(p => p.id);
+      const tiktokPixels = (siteSettings.tiktok_pixel_ids || []).map(p => ({id:String(p.id || '').trim().toUpperCase(),enabled:p.enabled !== false,platform:'tiktok'})).filter(p => p.id);
+      return {
+        line_url: document.getElementById('setting-line-url').value.trim(),
+        fg_line_url: document.getElementById('setting-fg-line-url').value.trim(),
+        e_line_url: document.getElementById('setting-e-line-url').value.trim(),
+        subsidy_line_url: document.getElementById('setting-subsidy-line-url').value.trim(),
+        line_id: extractLineId(document.getElementById('setting-line-url').value.trim()),
+        pixel_ids: (versionPixels.length ? versionPixels : legacyPixels).concat(tiktokPixels)
+      };
     }
 
     function extractLineId(value) {
@@ -1223,6 +1240,7 @@
       }
       let kPayload;
       try {
+        if (!savedExistingSettings) throw new Error('原有版本設定尚未載入，請重新整理後再儲存。');
         if (!window.KAdmin) throw new Error('K版設定元件載入失敗，請重新整理。');
         kPayload = window.KAdmin.prepareSettings();
       } catch (error) {
@@ -1244,7 +1262,14 @@
         pixel_ids: pixels.concat(tiktokPixels),
         updated_at: new Date().toISOString()
       };
-      const { error } = await client.from('site_settings').update(payload).eq('id', 1);
+      const changedFields = Object.fromEntries(Object.entries(payload).filter(([key,value]) =>
+        key !== 'updated_at' && JSON.stringify(value) !== JSON.stringify(savedExistingSettings[key])));
+      let error = null;
+      if (Object.keys(changedFields).length) {
+        try {
+          ({ error } = await client.from('site_settings').update({...changedFields,updated_at:payload.updated_at}).eq('id', 1));
+        } catch (failure) { error = failure; }
+      }
       button.disabled = false;
       if (error) {
         status.textContent = '儲存失敗：' + error.message;
@@ -1252,6 +1277,7 @@
         return;
       }
       siteSettings = { ...siteSettings, line_url: lineUrl, fg_line_url: fgLineUrl, e_line_url: eLineUrl, subsidy_line_url: subsidyLineUrl, line_id: lineId, legacy_pixel_ids: hasVersionPixels ? [] : legacyPixels, version_pixel_ids: splitPixelSettings(pixels).versions, tiktok_pixel_ids: tiktokPixels, updated_at: payload.updated_at };
+      savedExistingSettings = {...savedExistingSettings,...changedFields};
       status.textContent = '已儲存。客戶重新整理落地頁後會套用最新設定。';
       status.className = 'notice setting-status';
       renderSiteSettings();
@@ -1261,7 +1287,7 @@
         await window.KAdmin.saveSettings(kPayload);
         status.textContent = '已儲存。客戶重新整理落地頁後會套用最新設定。';
       } catch (error) {
-        status.textContent = '其他版本已儲存，但 K版儲存失敗：' + error.message + '。請重新儲存。';
+        status.textContent = (Object.keys(changedFields).length ? '其他版本已儲存，但 ' : '') + 'K版儲存失敗：' + error.message + '。請重新儲存。';
         status.className = 'notice error setting-status';
       } finally {
         button.disabled = false;
