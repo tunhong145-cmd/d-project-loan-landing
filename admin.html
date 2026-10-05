@@ -423,6 +423,7 @@
     <div id="user-bar" class="hidden">
       <div class="header-nav">
         <button id="nav-leads" class="active" onclick="showAdminView('leads')">申請列表</button>
+        <button id="nav-k" onclick="showAdminView('k')">X貸款 K版</button>
         <button id="nav-settings" onclick="showAdminView('settings')">系統設定</button>
       </div>
       <span id="user-email"></span>
@@ -793,10 +794,14 @@
 
     function showAdminView(view) {
       const isSettings = view === 'settings';
-      document.querySelectorAll('.leads-view-section').forEach(el => el.classList.toggle('hidden', isSettings));
+      const isK = view === 'k';
+      closeDetails();
+      document.querySelectorAll('.leads-view-section').forEach(el => el.classList.toggle('hidden', isSettings || isK));
       document.getElementById('settings-view').classList.toggle('hidden', !isSettings);
-      document.getElementById('nav-leads').classList.toggle('active', !isSettings);
+      document.getElementById('nav-leads').classList.toggle('active', !isSettings && !isK);
       document.getElementById('nav-settings').classList.toggle('active', isSettings);
+      document.getElementById('nav-k').classList.toggle('active', isK);
+      if (window.KAdmin) window.KAdmin.show(isK);
       if (isSettings) renderSiteSettings();
     }
 
@@ -2027,5 +2032,6 @@
 
     checkSession();
   </script>
+  <script src="k-admin.js?v=20261006-1"></script>
 </body>
 </html>
