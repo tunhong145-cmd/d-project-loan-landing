@@ -1088,6 +1088,7 @@
           </div>
         `;
       }).join('');
+      if (window.KAdmin) window.KAdmin.renderPixels();
     }
 
     function addPixelRow(version) {
@@ -1220,6 +1221,15 @@
         status.className = 'notice error setting-status';
         return;
       }
+      let kPayload;
+      try {
+        if (!window.KAdmin) throw new Error('K版設定元件載入失敗，請重新整理。');
+        kPayload = window.KAdmin.prepareSettings();
+      } catch (error) {
+        status.textContent = error.message;
+        status.className = 'notice error setting-status';
+        return;
+      }
       if (!confirm('確定儲存並同步 LINE 與 Pixel 設定到客戶網站？')) return;
 
       button.disabled = true;
@@ -1245,6 +1255,17 @@
       status.textContent = '已儲存。客戶重新整理落地頁後會套用最新設定。';
       status.className = 'notice setting-status';
       renderSiteSettings();
+      button.disabled = true;
+      status.textContent = '正在儲存 K版設定...';
+      try {
+        await window.KAdmin.saveSettings(kPayload);
+        status.textContent = '已儲存。客戶重新整理落地頁後會套用最新設定。';
+      } catch (error) {
+        status.textContent = '其他版本已儲存，但 K版儲存失敗：' + error.message + '。請重新儲存。';
+        status.className = 'notice error setting-status';
+      } finally {
+        button.disabled = false;
+      }
     }
 
     function normalizeLeadName(value) {
@@ -2035,6 +2056,6 @@
 
     checkSession();
   </script>
-  <script src="k-admin.js?v=20261006-3"></script>
+  <script src="k-admin.js?v=20261006-4"></script>
 </body>
 </html>

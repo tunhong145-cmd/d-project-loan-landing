@@ -4,9 +4,10 @@
   const size = 100;
   let rows = [], page = 1, count = 0, request = 0, initialized = false, busy = false;
   let settingsReady = null;
+  let configLoaded = false, kPixels = [], savedConfig = null, savedLineId = '';
   const selected = new Map();
   const style = document.createElement('style');
-  style.textContent = `#k-admin-view>.settings-panel{margin-bottom:18px}#k-settings{grid-column:1/-1}#k-settings .settings-panel{margin-bottom:16px}#k-settings .settings-panel:first-child{background:#fff;border-color:var(--line);color:var(--text)}#k-settings .settings-panel:first-child .notice{color:var(--text-soft);margin:10px 0 18px}#k-settings .settings-panel:last-child{position:static;display:block;box-shadow:none}#k-settings .pixel-row{margin-bottom:16px}#k-detail::backdrop{background:rgba(16,24,39,.45)}#k-detail label{margin-top:14px}`;
+  style.textContent = `#k-admin-view>.settings-panel{margin-bottom:18px}#k-detail::backdrop{background:rgba(16,24,39,.45)}#k-detail label{margin-top:14px}`;
   document.head.append(style);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fields = [['name','姓名'],['age','年齡'],['phone','手機號碼'],['q3_amount_needed','需求金額'],
@@ -29,24 +30,23 @@
         <div id="k-list" class="lead-list"></div><div class="pagination"><button class="secondary" data-action="prev">上一頁</button><span id="k-page"></span><button class="secondary" data-action="next">下一頁</button></div>
       </div>
     </div>
-    <div id="k-settings">
-      <div class="panel settings-panel"><h3>K版 LINE 設定</h3><label for="k-line">K版獨立 LINE 連結</label><input id="k-line" type="url" placeholder="https://lin.ee/xxxxxxx 或 https://line.me/R/ti/p/@xxxxxxxx"><p class="notice">支援輪換短連結。尚未填寫時，K版暫停送件。</p><label for="k-line-id">LINE ID（選填，短連結可留白）</label><input id="k-line-id" placeholder="@xxxxxxxx"><button class="secondary" data-action="test-line">測試 LINE</button></div>
-      <div class="panel settings-panel"><h3>K版 Facebook Pixel</h3><p class="notice">最多 5 個；留白不啟用。只在 K版回傳 PageView、Lead、CompleteRegistration。</p>
-        ${Array.from({length:5},(_,i)=>`<label for="k-pixel-${i}">像素 ${i+1}</label><div class="pixel-row"><input id="k-pixel-${i}" inputmode="numeric" placeholder="Facebook Pixel ID"><label class="pixel-toggle"><input id="k-pixel-on-${i}" type="checkbox" checked>啟用</label></div>`).join('')}
-      </div><div class="panel settings-panel"><button data-action="save-settings" disabled>儲存 K版 LINE 與像素</button><p class="notice">K版獨立儲存，設定儲存後重新整理 K版落地頁生效。</p><p id="k-settings-msg" class="notice" role="status"></p></div>
-    </div>
     <dialog id="k-detail" style="width:min(650px,94vw);max-height:90vh;overflow:auto;border:1px solid #dce4ee;border-radius:14px;padding:24px;margin:auto"><div class="drawer-head"><h2>K版客戶詳細資料</h2><button class="secondary" data-action="close-detail">關閉</button></div><div id="k-detail-body"></div></dialog>`;
   document.getElementById('app-panel').append(root);
-  const settingsRoot = root.querySelector('#k-settings');
-  const systemSettings = document.getElementById('settings-view');
-  systemSettings.insertBefore(settingsRoot, systemSettings.lastElementChild);
-  const $ = id => root.querySelector('#'+id) || settingsRoot.querySelector('#'+id);
+  const settingsRoot = document.createElement('div');
+  settingsRoot.id='k-line-settings';
+  settingsRoot.innerHTML='<div style="height:14px"></div><label for="k-line">貸款 K版 LINE 連結</label><input id="k-line" type="url" placeholder="https://lin.ee/xxxxxxx 或 https://line.me/R/ti/p/@xxxxxxxx"><p id="k-settings-msg" class="notice"></p>';
+  const linePanel=document.getElementById('setting-subsidy-line-url').closest('.settings-panel');
+  linePanel.insertBefore(settingsRoot,linePanel.querySelector('.settings-actions'));
+  const testButton=document.createElement('button');testButton.className='secondary';testButton.textContent='測試 K版 LINE';testButton.dataset.action='test-line';
+  linePanel.querySelector('.settings-actions').append(testButton);
+  testButton.addEventListener('click',handleAction);
+  const $ = id => root.querySelector('#'+id) || document.getElementById(id);
   function message(text, error=false) { $('k-msg').textContent=text; $('k-msg').className='notice'+(error?' error':''); }
   function settingsMessage(text, error=false) { $('k-settings-msg').textContent=text; $('k-settings-msg').className='notice'+(error?' error':''); }
   function ensureSettings() {
     if (!settingsReady) {
       settingsMessage('正在載入 K版設定…');
-      settingsReady=loadSettings().then(()=>{settingsRoot.querySelector('[data-action="save-settings"]').disabled=false;settingsMessage('');}).catch(e=>{settingsReady=null;settingsMessage('K版設定載入失敗：'+e.message,true);throw e;});
+      settingsReady=loadSettings().catch(e=>{settingsReady=null;settingsMessage('K版設定載入失敗：'+e.message,true);throw e;});
     }
     return settingsReady;
   }
@@ -90,21 +90,36 @@
   async function loadSettings() {
     const {data,error}=await client.from('x_loan_settings').select('*').eq('version_code','K').single();
     if(error) throw error;
-    $('k-line').value=data.line_url||''; $('k-line-id').value=data.line_id||'';
+    $('k-line').value=data.line_url||'';savedLineId=data.line_id||'';
     $('k-next').value=data.client_copy_next_number||1;
-    for(let i=0;i<5;i++) {const p=(data.pixel_ids||[])[i];$('k-pixel-'+i).value=p?.id||'';$('k-pixel-on-'+i).checked=p?.enabled!==false;}
+    kPixels=(data.pixel_ids||[]).map(p=>({id:String(p.id||''),enabled:p.enabled!==false,platform:'facebook'}));
+    configLoaded=true;savedConfig=JSON.stringify({line_url:data.line_url||'',line_id:savedLineId,pixel_ids:kPixels});renderPixels();updateKLinePreview();
   }
   function validLine(value) {
     try {const u=new URL(value);return u.protocol==='https:'&&['lin.ee','line.me'].includes(u.hostname)&&u.pathname.length>1&&!u.username&&!u.password&&!u.port;} catch{return false;}
   }
-  async function saveSettings() {
-    const line=$('k-line').value.trim(), pixels=[];
+  function updateKLinePreview(){if(configLoaded)settingsMessage($('k-line').value.trim()?'客戶將前往此 K版專屬 LINE 連結。':'尚未設定 K版 LINE；K版暫停送件。');}
+  $('k-line').addEventListener('input',updateKLinePreview);
+  function prepareSettings() {
+    if(!configLoaded)throw new Error('K版設定尚未載入完成，請稍後再儲存。');
+    const line=$('k-line').value.trim(), pixels=kPixels.map(p=>({id:p.id.trim(),enabled:p.enabled!==false,platform:'facebook'})).filter(p=>p.id);
     if(line&&!validLine(line)) throw new Error('請填寫有效的 https://lin.ee/ 或 https://line.me/ 連結。');
-    for(let i=0;i<5;i++) {const id=$('k-pixel-'+i).value.trim();if(!id)continue;if(!/^\d{8,20}$/.test(id))throw new Error(`像素 ${i+1} ID 格式不正確。`);pixels.push({id,enabled:$('k-pixel-on-'+i).checked,platform:'facebook'});}
+    if(pixels.length>5||pixels.some(p=>!/^\d{8,20}$/.test(p.id)))throw new Error('K版最多 5 個像素，ID 必須為 8 至 20 位數字。');
     if(new Set(pixels.map(p=>p.id)).size!==pixels.length) throw new Error('像素 ID 不可重複。');
-    const {error}=await client.from('x_loan_settings').update({line_url:line,line_id:$('k-line-id').value.trim(),pixel_ids:pixels,updated_at:new Date().toISOString()}).eq('version_code','K').select('version_code').single();
+    const sameLine=savedConfig&&JSON.parse(savedConfig).line_url===line;
+    return {line_url:line,line_id:sameLine?savedLineId:(line.match(/@[^/?#]+/)||[''])[0],pixel_ids:pixels};
+  }
+  async function saveSettings(payload) {
+    if(JSON.stringify(payload)===savedConfig)return;
+    const {error}=await client.from('x_loan_settings').update({...payload,updated_at:new Date().toISOString()}).eq('version_code','K').select('version_code').single();
     if(error) throw error;
-    settingsMessage('K版 LINE 與像素已儲存。');
+    savedConfig=JSON.stringify(payload);savedLineId=payload.line_id;updateKLinePreview();
+  }
+  function renderPixels(){
+    document.getElementById('k-pixel-card')?.remove();
+    const card=document.createElement('div');card.id='k-pixel-card';card.className='pixel-version-card';
+    card.innerHTML=`<div class="pixel-version-head"><div><div class="pixel-version-title">K版 FB Pixel</div><div class="pixel-version-count">已設定 ${kPixels.length}/5 個</div></div><button class="secondary" onclick="KAdmin.addPixel()" ${configLoaded?'':'disabled'}>新增</button></div><div class="pixel-list">${kPixels.map((p,i)=>`<div class="pixel-row"><input type="text" id="k-pixel-${i}" value="${esc(p.id)}" inputmode="numeric" aria-label="K版 Pixel ID" onchange="KAdmin.updatePixel(${i},this.value)"><label class="pixel-toggle"><input type="checkbox" ${p.enabled?'checked':''} onchange="KAdmin.togglePixel(${i},this.checked)">啟用</label><button class="danger" onclick="KAdmin.removePixel(${i})">刪除</button></div>`).join('')||`<p class="notice">${configLoaded?'目前沒有設定此版本 Pixel。':'K版設定載入中…'}</p>`}</div>`;
+    document.getElementById('pixel-version-list').append(card);
   }
   function detail(id) {
     const r=rows.find(r=>r.id===id); if(!r)return;
@@ -146,7 +161,6 @@
       if(action==='search'){page=1;selected.clear();await load();}
       if(action==='refresh')await load();
       if(action==='prev'||action==='next'){page+=action==='prev'?-1:1;await load();}
-      if(action==='save-settings')await saveSettings();
       if(action==='test-line'){const url=$('k-line').value.trim();if(!validLine(url))throw new Error('請先填寫 K版 LINE 連結。');window.open(url,'_blank','noopener,noreferrer');}
       if(action==='save-number'){const n=Number($('k-next').value);if(!Number.isInteger(n)||n<1||n>999998)throw new Error('下一編號請填寫 1–999998。');const {error}=await client.from('x_loan_settings').update({client_copy_next_number:n,updated_at:new Date().toISOString()}).eq('version_code','K').select('version_code').single();if(error)throw error;message(`K版下一編號已設為 ${n}。`);}
       if(action==='detail')detail(id);
@@ -155,7 +169,7 @@
       if(action==='notes'){await patch(id,{notes:$('k-notes').value});message('K版備註已儲存。');}
       if(action==='edit-number'||action==='clear-number'){const n=action==='clear-number'?null:Number($('k-edit-number').value);if(n!==null&&(!Number.isInteger(n)||n<1||n>999999))throw new Error('編號請填寫 1–999999。');await patch(id,{client_copy_number:n});detail(id);message(n===null?'K版訂單編號已清除，下次複製會重新分配。':'K版訂單編號已更新。');}
       if(action==='export')await exportRows();
-    }catch(e){(settingsRoot.contains(button)?settingsMessage:message)('K版操作失敗：'+(e.message||e),true);}
+    }catch(e){(action==='test-line'?settingsMessage:message)('K版操作失敗：'+(e.message||e),true);}
     finally{busy=false;button.disabled=false;if(action==='prev'||action==='next')render();}
   }
   root.addEventListener('click',handleAction);
@@ -168,6 +182,11 @@
   });
   $('k-search').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();root.querySelector('[data-action="search"]').click();}});
   window.KAdmin={
+    prepareSettings,saveSettings,renderPixels,
+    addPixel(){if(kPixels.length>=5){alert('每個版本最多可設定 5 個 FB Pixel。');return;}kPixels.push({id:'',enabled:true,platform:'facebook'});renderPixels();},
+    updatePixel(i,value){kPixels[i].id=String(value).trim();},
+    togglePixel(i,value){kPixels[i].enabled=value;},
+    removePixel(i){if(confirm(`確定刪除 Pixel ${kPixels[i].id||'此空白項目'}？`)){kPixels.splice(i,1);renderPixels();}},
     async showSettings(){try{await ensureSettings();}catch{}},
     async show(visible){root.classList.toggle('hidden',!visible);if(!visible){if($('k-detail').open)$('k-detail').close();return;}if(!initialized){try{await Promise.all([load(),ensureSettings()]);initialized=true;}catch(e){message('K版載入失敗：'+e.message,true);}}}
   };
