@@ -2906,7 +2906,7 @@
               </div>
               <div class="form-group">
                 <label>手機號碼 *</label>
-                <input type="tel" id="f-phone" placeholder="例：0912345678" pattern="09[0-9]{8}" maxlength="10" required inputmode="tel" autocomplete="tel" enterkeyhint="done" />
+                <input type="tel" id="f-phone" placeholder="例：0912345678" required inputmode="tel" autocomplete="tel" enterkeyhint="done" />
               </div>
             </div>
             <button type="submit" class="cta-btn" id="application-submit-btn">提交資料，讓專員確認可評估額度</button>
@@ -3660,10 +3660,6 @@ async function submitForm(e) {
   }
   if (parseInt(age) > 100 || parseInt(age) < 18) {
     showModal('⚠️ 提示', '請填寫正確年齡。');
-    return;
-  }
-  if (!/^09\d{8}$/.test(phone)) {
-    showModal('⚠️ 提示', '請輸入正確的10碼手機號碼。');
     return;
   }
 

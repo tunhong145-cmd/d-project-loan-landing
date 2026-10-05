@@ -18,7 +18,7 @@ create table if not exists public.x_loan_leads (
   updated_at timestamptz not null default now(),
   name text not null check (length(trim(name)) between 1 and 80),
   age integer not null check (age between 18 and 100),
-  phone text not null check (phone ~ '^09[0-9]{8}$'),
+  phone text not null check (length(trim(phone)) > 0),
   q3_amount_needed text not null check (length(q3_amount_needed) between 1 and 80),
   q2_bank_status text not null check (q2_bank_status = '否'),
   court_deduction_status text not null check (court_deduction_status in ('是','否')),
