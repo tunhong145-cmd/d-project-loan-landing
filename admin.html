@@ -558,7 +558,7 @@
       <div id="settings-view" class="settings-wrap hidden">
         <div class="panel settings-panel">
           <h2>系統設定</h2>
-          <p class="notice">儲存後，客戶重新整理落地頁即可套用最新設定。前端仍保留現有設定作為讀取失敗時的備用。</p>
+          <p class="notice">FB Pixel 按倉庫／域名及版本獨立儲存。客戶重新整理落地頁後生效；FB 設定為空或讀取失敗時，不會使用其他倉庫的像素。</p>
         </div>
 
         <div class="panel settings-panel">
@@ -587,9 +587,9 @@
         </div>
 
         <div class="panel settings-panel">
-          <h3>Facebook Pixel 管理</h3>
-          <p class="notice">按版本分開設定 Pixel。每個版本最多 5 個，前端只會回傳自己版本的 PageView、CompleteRegistration、Lead，不會互相多抓。</p>
-          <div id="pixel-version-list" class="pixel-version-grid"></div>
+          <h3>Facebook Pixel 管理 · 按倉庫與域名</h3>
+          <div id="repo-pixel-manager"><p class="notice">正在載入獨立 FB 設定…</p></div>
+          <div id="pixel-version-list" style="display:none" aria-hidden="true"></div>
         </div>
 
         <div class="panel settings-panel">
@@ -602,7 +602,7 @@
         </div>
 
         <div class="panel settings-panel">
-          <button id="save-settings-btn" onclick="saveSiteSettings()">儲存並同步到網站</button>
+          <button id="save-settings-btn" onclick="saveSiteSettings()">儲存 LINE 與 TikTok 設定</button>
           <p id="settings-status" class="notice setting-status"></p>
         </div>
       </div>
@@ -883,6 +883,7 @@
     }
 
     function renderSiteSettings() {
+      if (window.RepositoryPixelsAdmin) window.RepositoryPixelsAdmin.show();
       const lineInput = document.getElementById('setting-line-url');
       if (!lineInput) return;
       lineInput.value = siteSettings.line_url || '';
@@ -1248,7 +1249,7 @@
         status.className = 'notice error setting-status';
         return;
       }
-      if (!confirm('確定儲存並同步 LINE 與 Pixel 設定到客戶網站？')) return;
+      if (!confirm('確定儲存 LINE 與 TikTok 設定？FB Pixel 請使用各倉庫版本卡片的儲存按鈕。')) return;
 
       button.disabled = true;
       status.textContent = '儲存中...';
@@ -2083,5 +2084,6 @@
     checkSession();
   </script>
   <script src="k-admin.js?v=20261006-5"></script>
+  <script src="repository-pixels-admin.js?v=20261010-1"></script>
 </body>
 </html>
