@@ -2,9 +2,9 @@
 (() => {
   'use strict';
   const sites = [
-    {id:'main',name:'主倉庫',domain:'zenittra.com',versions:['C','E','F','G','I','J','K']},
-    {id:'copy1',name:'複製倉庫一',domain:'monofhj.com',versions:['C','E','F','I','J','K']},
-    {id:'copy2',name:'複製倉庫二',domain:'nexspirs.com',versions:['C','E','F','I','J','K']}
+    {id:'main',name:'主倉庫',domain:'syftsio.com',versions:['C','E','F','G','I','J','K']},
+    {id:'copy1',name:'複製倉庫一',domain:'vervesc.com',versions:['C','E','F','I','J','K']},
+    {id:'copy2',name:'複製倉庫二',domain:'lumeniasc.com',versions:['C','E','F','I','J','K']}
   ];
   const root = document.getElementById('repo-pixel-manager');
   let rows = new Map(), loading = null, loaded = false;
