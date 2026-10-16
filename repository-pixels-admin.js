@@ -2,12 +2,12 @@
 (() => {
   'use strict';
   const sites = [
-    {id:'main',name:'主倉庫',domain:'syftsio.com',versions:['C','E','F','G','I','J','K']},
-    {id:'copy1',name:'複製倉庫一',domain:'vervesc.com',versions:['C','E','F','G','I','J','K']},
+    {id:'main',name:'主倉庫',domain:'aethereas.top',versions:['C','E','F','G','I','J','K']},
+    {id:'copy1',name:'複製倉庫一',domain:'orbies.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy2',name:'複製倉庫二',domain:'lumeniasc.com',versions:['C','E','F','G','I','J','K']},
-    {id:'copy3',name:'複製倉庫三',domain:'tunhong145-cmd.github.io/d-project-landing-copy3',pendingDomain:true,versions:['C','E','F','G','I','J','K']},
-    {id:'copy4',name:'複製倉庫四',domain:'tunhong145-cmd.github.io/d-project-landing-copy4',pendingDomain:true,versions:['C','E','F','G','I','J','K']},
-    {id:'copy5',name:'複製倉庫五',domain:'tunhong145-cmd.github.io/d-project-landing-copy5',pendingDomain:true,versions:['C','E','F','G','I','J','K']}
+    {id:'copy3',name:'複製倉庫三',domain:'vectes.top',versions:['C','E','F','G','I','J','K']},
+    {id:'copy4',name:'複製倉庫四',domain:'pyrese.top',versions:['C','E','F','G','I','J','K']},
+    {id:'copy5',name:'複製倉庫五',domain:'zephrs.top',versions:['C','E','F','G','I','J','K']}
   ];
   const root = document.getElementById('repo-pixel-manager');
   let rows = new Map(), loading = null, loaded = false;
