@@ -248,7 +248,11 @@
     .lead-row:last-child { border-bottom: 0; }
     .lead-row:hover { background: #f8fafd; }
     .lead-summary { min-width: 0; }
-    .lead-title-line { display: flex; align-items: center; gap: 8px; min-width: 0; margin-bottom: 7px; }
+    .lead-title-line { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; margin-bottom: 7px; }
+    .copy-chip-button { flex: 0 0 auto; min-height: 25px; padding: 3px 9px; border: 1px solid #b9c9e2; border-radius: 6px; background: #f4f7fc; color: #315078; font-size: 11px; font-weight: 800; }
+    .copy-chip-button[data-copy-state="success"] { border-color: #a8ddc1; background: #e9f8ef; color: #16734a; }
+    .copy-chip-button[data-copy-state="error"] { border-color: #f0c48e; background: #fff6e8; color: #885713; }
+    .copy-chip-button:disabled { cursor: wait; opacity: .8; }
     .lead-index { width: 27px; flex: 0 0 auto; color: var(--text-faint); font-size: 12px; font-variant-numeric: tabular-nums; }
     .lead-name { overflow: hidden; color: var(--text); font-size: 15px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
     .tag {
@@ -529,7 +533,7 @@
           <span class="notice">下一编号</span>
           <input id="copy-next-number" type="number" min="1" max="9999" inputmode="numeric" value="1" />
           <button type="button" class="secondary" onclick="saveCopyNextNumber()">儲存下一編號</button>
-          <p id="copy-number-status" class="notice">一鍵複製時，未編號訂單會先確認並綁定此編號；已編號訂單會沿用原編號。</p>
+          <p id="copy-number-status" class="notice">點擊一鍵複製後，未編號訂單會自動分配並綁定下一編號；已編號訂單會沿用原編號。</p>
         </div>
         <p id="export-note" class="notice export-note">未勾選時，會匯出目前篩選結果。</p>
       </div>
@@ -646,7 +650,8 @@
     let selectedLeadIds = new Set();
     let selectedLeadCache = new Map();
     let activeDetailId = null;
-    let pendingCopyLeadId = null;
+    const copyFeedback = new Map();
+    const copyFeedbackTimers = new Map();
     let selectedVariantFilters = new Set();
     let currentPage = 1;
     let totalPages = 1;
@@ -964,14 +969,12 @@
       if (existing) return { number: existing, lead };
       const { data, error } = await client.rpc('assign_lead_client_copy_number', { target_lead_id: lead.id });
       if (error) {
-        alert('分配編號失敗：請確認已執行甲方編號資料庫更新 SQL。' + (error.message ? `\n${error.message}` : ''));
         return null;
       }
       const row = Array.isArray(data) ? data[0] : data;
       const number = Number(row && (row.client_copy_number || row.assigned_number));
       const nextNumber = Number(row && row.next_number);
       if (!Number.isFinite(number) || number <= 0) {
-        alert('分配編號失敗：資料庫沒有回傳有效編號。');
         return null;
       }
       lead.client_copy_number = number;
@@ -1366,15 +1369,17 @@
       return number ? `<span class="tag tag-copy-number">甲方${formatCopyNumber(number)}</span>` : '';
     }
 
-    function copyConfirmInline(lead) {
-      const next = formatCopyNumber(siteSettings.client_copy_next_number || 1);
-      return `
-        <span class="copy-confirm-inline">
-          <span>分配 ${next}？</span>
-          <button type="button" onclick="confirmCopyLead('${lead.id}')">確認並複製</button>
-          <button type="button" class="cancel" onclick="cancelCopyConfirm()">取消</button>
-        </span>
-      `;
+    function copyButtonMarkup(lead, detail = false) {
+      const feedback = copyFeedback.get(lead.id);
+      let label = detail ? '一鍵複製客戶資料' : '一鍵複製';
+      let state = '';
+      if (feedback?.state === 'working') { label = '正在分配編號…'; state = 'working'; }
+      else if (feedback?.state === 'success') { label = '已複製｜甲方編號 ' + formatCopyNumber(feedback.number); state = 'success'; }
+      else if (feedback?.state === 'copy-error') { label = '已分配編號 ' + formatCopyNumber(feedback.number) + '｜點擊重試複製'; state = 'error'; }
+      else if (feedback?.state === 'assign-error') { label = '編號分配失敗｜點擊重試'; state = 'error'; }
+      const id = detail ? 'client-copy-btn' : 'copy-lead-' + lead.id;
+      const className = detail ? '' : ' class="copy-chip-button"';
+      return '<button type="button" id="' + id + '"' + className + ' data-copy-state="' + state + '" onclick="copyLead(\'' + lead.id + '\')" ' + (state === 'working' ? 'disabled' : '') + '>' + escapeHTML(label) + '</button>';
     }
 
     function clearVariantFilters() {
@@ -1681,6 +1686,7 @@
               ${lead.status === 'new' ? '' : `<span class="tag tag-${escapeHTML(lead.status)}">${escapeHTML(statusLabels[lead.status] || lead.status)}</span>`}
               ${lead.line_clicked ? '<span class="tag tag-line">已點 LINE</span>' : ''}
               ${trafficSourceTag(lead)}
+              ${copyButtonMarkup(lead)}
             </div>
             <div class="lead-meta">
               <span>年齡 <strong>${escapeHTML(lead.age || '未填')}</strong></span>
@@ -1694,8 +1700,6 @@
             <button class="status-btn ${lead.status === 'line_added' ? 'active' : ''}" onclick="updateLead('${lead.id}',{status:'line_added'})">已添加</button>
             <button class="status-btn ${lead.status === 'approved' ? 'active' : ''}" onclick="updateLead('${lead.id}',{status:'approved'})">已成交</button>
             <button class="status-btn ${lead.status === 'invalid' ? 'active' : ''}" onclick="updateLead('${lead.id}',{status:'invalid'})">無效</button>
-            <button onclick="copyLead('${lead.id}')">一鍵複製</button>
-            ${pendingCopyLeadId === lead.id ? copyConfirmInline(lead) : ''}
             <button class="secondary" onclick="openDetails('${lead.id}')">詳情</button>
           </div>
         </article>
@@ -1756,8 +1760,7 @@
           <h3>提供甲方的客戶資料</h3>
           <textarea id="client-copy-text" class="client-copy-box" readonly>${escapeHTML(clientCopyText(lead))}</textarea>
           <div style="height:10px"></div>
-          <button id="client-copy-btn" onclick="copyLead('${lead.id}')">一鍵複製客戶資料</button>
-          <div id="detail-copy-confirm">${pendingCopyLeadId === lead.id ? copyConfirmInline(lead) : ''}</div>
+          ${copyButtonMarkup(lead, true)}
           <div class="copy-number-actions">
             <button class="secondary" onclick="editLeadCopyNumber('${lead.id}')">修改甲方編號</button>
             <button class="danger" onclick="clearLeadCopyNumber('${lead.id}')">清除甲方編號</button>
@@ -1850,36 +1853,51 @@
       ].join('\n');
     }
 
-    async function copyLead(id, forceAssign = false) {
+    async function copyLead(id) {
       const lead = leads.find(item => item.id === id);
       if (!lead) return;
-      if (!copyNumberValue(lead) && !forceAssign) {
-        pendingCopyLeadId = id;
+      if (copyFeedback.get(id)?.state === 'working') return;
+      const showFeedback = () => {
         renderLeads();
         if (activeDetailId === id) openDetails(id);
-        return;
+      };
+      const setFeedback = (state, number = null) => {
+        copyFeedback.set(id, { state, number });
+        const timer = copyFeedbackTimers.get(id);
+        if (timer) clearTimeout(timer);
+        copyFeedbackTimers.delete(id);
+      };
+      setFeedback('working');
+      showFeedback();
+      let assigned = null;
+      try {
+        assigned = await assignLeadCopyNumber(lead);
+        if (!assigned) {
+          setFeedback('assign-error');
+          showFeedback();
+          return;
+        }
+        const copied = await copyText(clientCopyText(assigned.lead, assigned.number));
+        if (!copied) {
+          setFeedback('copy-error', assigned.number);
+          showFeedback();
+          return;
+        }
+        setFeedback('success', assigned.number);
+        showFeedback();
+        const timer = setTimeout(() => {
+          if (copyFeedback.get(id)?.state === 'success') {
+            copyFeedback.delete(id);
+            copyFeedbackTimers.delete(id);
+            renderLeads();
+            if (activeDetailId === id) openDetails(id);
+          }
+        }, 2200);
+        copyFeedbackTimers.set(id, timer);
+      } catch (error) {
+        setFeedback(assigned ? 'copy-error' : 'assign-error', assigned?.number || null);
+        showFeedback();
       }
-      pendingCopyLeadId = null;
-      const assigned = await assignLeadCopyNumber(lead);
-      if (!assigned) return;
-      await copyText(clientCopyText(assigned.lead, assigned.number));
-      const button = document.getElementById('client-copy-btn');
-      if (button) {
-        button.textContent = `已複製，甲方編號 ${formatCopyNumber(assigned.number)}`;
-        setTimeout(() => { button.textContent = '一鍵複製客戶資料'; }, 1800);
-      }
-      renderLeads();
-      if (activeDetailId === id) openDetails(id);
-    }
-
-    function confirmCopyLead(id) {
-      copyLead(id, true);
-    }
-
-    function cancelCopyConfirm() {
-      pendingCopyLeadId = null;
-      renderLeads();
-      if (activeDetailId) openDetails(activeDetailId);
     }
 
     async function editLeadCopyNumber(id) {
@@ -1907,7 +1925,6 @@
       }
       lead.client_copy_number = value;
       lead.client_copy_assigned_at = lead.client_copy_assigned_at || new Date().toISOString();
-      pendingCopyLeadId = null;
       await loadLeads();
     }
 
@@ -1933,7 +1950,6 @@
       }
       lead.client_copy_number = null;
       lead.client_copy_assigned_at = null;
-      pendingCopyLeadId = null;
       await loadLeads();
     }
 
@@ -2010,6 +2026,7 @@
       const text = value || '';
       try {
         await navigator.clipboard.writeText(text);
+        return true;
       } catch (error) {
         const textarea = document.createElement('textarea');
         textarea.value = text;
@@ -2017,8 +2034,10 @@
         textarea.style.opacity = '0';
         document.body.appendChild(textarea);
         textarea.select();
-        document.execCommand('copy');
+        let copied = false;
+        try { copied = document.execCommand('copy'); } catch (fallbackError) { copied = false; }
         textarea.remove();
+        return copied;
       }
     }
 
