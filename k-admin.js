@@ -28,8 +28,9 @@
   document.head.append(style);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fields = [['name','姓名'],['age','年齡'],['phone','手機號碼'],['q3_amount_needed','需求金額'],
-    ['q2_bank_status','銀行警示戶／告誡戶'],['court_deduction_status','法院強制扣款'],
-    ['has_passport','是否有護照'],['q4_foreign_currency_account','個人外幣帳戶']];
+    ['q2_bank_status','銀行警示戶／告誡戶']];
+  const legacyFields = [['court_deduction_status','法院強制扣款'],['has_passport','是否有護照'],
+    ['q4_foreign_currency_account','個人外幣帳戶']];
   const root = document.createElement('section');
   root.id = 'k-admin-view'; root.className = 'hidden';
   root.innerHTML = `
@@ -147,7 +148,9 @@
     const item=(label,value)=>`<div class="detail-item"><label>${esc(label)}</label><div>${esc(value??'未填')}</div></div>`;
     const attribution=adAttribution(r);
     $('k-detail').dataset.id=id;$('k-detail-title').textContent=`${r.name||'客戶'}｜詳細資料`;$('k-detail-msg').textContent='';
+    const oldAnswers=legacyFields.filter(([key])=>r[key]!=null&&r[key]!=='');
     $('k-detail-body').innerHTML=`<div class="detail-grid">${item('提交時間',formatDate(r.created_at))}${item('目前狀態',statusLabels[r.status]||r.status)}${item('案件類型','X貸款')}${item('來源版本','K版本')}${item('甲方編號',number(r.client_copy_number))}${item('LINE 點擊',r.line_clicked?'已點擊加入 LINE':'尚未點擊')}${fields.map(([key,label])=>item(label,r[key])).join('')}</div>
+      ${oldAnswers.length?`<div class="detail-section"><h3>舊版問卷資料（歷史訂單）</h3><div class="detail-grid">${oldAnswers.map(([key,label])=>item(label,r[key])).join('')}</div></div>`:''}
       <div class="detail-section"><h3>廣告來源信息</h3><div class="detail-grid">${[['來源平台',attribution.platform||r.traffic_source],['來源域名',attribution.domain],['廣告系列ID',attribution.campaignId],['廣告組ID',attribution.adsetId],['來源廣告',attribution.adName],['廣告ID',attribution.adId],['展示位置',attribution.placement]].map(([l,v])=>item(l,v||'未提供')).join('')}</div></div>
       <div class="detail-section"><h3>提交裝置信息</h3><div class="detail-grid">${item('裝置／瀏覽器',r.user_agent||'未提供')}</div></div>
       <div class="detail-section"><h3>提供甲方的客戶資料</h3><textarea id="k-copy-preview" class="client-copy-box" aria-label="K版甲方資料" readonly>${esc(copyTextFor(r))}</textarea><div style="height:10px"></div><button data-action="copy" data-id="${r.id}">一鍵複製${r.client_copy_number==null?'・自動編號':'・沿用訂單編號'}</button><div class="copy-number-actions"><label for="k-edit-number">甲方編號</label><input id="k-edit-number" type="number" min="1" max="999999" value="${r.client_copy_number||''}"><button class="secondary" data-action="edit-number" data-id="${r.id}">儲存編號</button><button class="danger" data-action="clear-number" data-id="${r.id}">清除編號</button></div></div>
