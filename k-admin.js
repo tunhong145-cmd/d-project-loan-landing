@@ -11,6 +11,7 @@
     #k-admin-view .filters{margin-bottom:18px}
     #k-admin-view .lead-title-line{flex-wrap:wrap}
     #k-admin-view .lead-meta{flex-wrap:wrap;white-space:normal}
+    #k-admin-view .tag-variant-j{background:#e1f3ff;color:#075985;border-color:#7dd3fc}
     #k-admin-view .tag-variant-k{background:#f3edff;color:#6541a5;border-color:#d8c9f3}
     #k-msg:empty,#k-detail-msg:empty{display:none}
     #k-msg{margin:10px 0 0;white-space:pre-wrap}
