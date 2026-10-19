@@ -11,7 +11,7 @@
     #k-admin-view .filters{margin-bottom:18px}
     #k-admin-view .lead-title-line{flex-wrap:wrap}
     #k-admin-view .lead-meta{flex-wrap:wrap;white-space:normal}
-    #k-admin-view .tag-variant-j{background:#e1f3ff;color:#075985;border-color:#7dd3fc}
+    #k-admin-view .tag-variant-j{background:#dbeafe;color:#1d4ed8;border-color:#93c5fd}
     #k-admin-view .tag-variant-k{background:#f3edff;color:#6541a5;border-color:#d8c9f3}
     #k-msg:empty,#k-detail-msg:empty{display:none}
     #k-msg{margin:10px 0 0;white-space:pre-wrap}
@@ -126,7 +126,7 @@
     $('k-select-all').indeterminate=rows.some(r=>selected.has(r.id))&&!$('k-select-all').checked;
     $('k-list').innerHTML=rows.length?rows.map((r,i)=>`<article class="lead-row">
       <input class="lead-check" type="checkbox" data-select="${r.id}" aria-label="選取 ${esc(r.name)}" ${selected.has(r.id)?'checked':''}>
-      <div class="lead-summary"><div class="lead-title-line"><span class="lead-index">${count-(page-1)*size-i}</span><span class="lead-name">${esc(r.name)}</span><span class="tag tag-loan">X貸款</span><span class="tag tag-variant-k">${esc(sourceVersion(r).replace('版本','版'))}</span>${r.client_copy_number==null?'':`<span class="tag tag-copy-number">甲方 ${number(r.client_copy_number)}</span>`}<span class="tag tag-${Object.hasOwn(statusLabels,r.status)?r.status:'new'}">${esc(statusLabels[r.status]||r.status)}</span>${r.line_clicked?'<span class="tag tag-line">已點 LINE</span>':''}${trafficSourceTag(r)}</div>
+      <div class="lead-summary"><div class="lead-title-line"><span class="lead-index">${count-(page-1)*size-i}</span><span class="lead-name">${esc(r.name)}</span><span class="tag tag-loan">X貸款</span><span class="tag tag-variant-${sourceVersion(r)==='J版本'?'j':'k'}">${esc(sourceVersion(r).replace('版本','版'))}</span>${r.client_copy_number==null?'':`<span class="tag tag-copy-number">甲方 ${number(r.client_copy_number)}</span>`}<span class="tag tag-${Object.hasOwn(statusLabels,r.status)?r.status:'new'}">${esc(statusLabels[r.status]||r.status)}</span>${r.line_clicked?'<span class="tag tag-line">已點 LINE</span>':''}${trafficSourceTag(r)}</div>
         <div class="lead-meta"><span>年齡 <strong>${esc(r.age)}</strong></span><span>需求金額 <strong>${esc(r.q3_amount_needed)}</strong></span><span>是否為警示戶 <strong>${esc(r.q2_bank_status)}</strong></span><span>手機 <strong>${esc(r.phone)}</strong></span></div><div class="lead-time">${esc(formatDate(r.created_at))}</div></div>
       <div class="lead-actions">${[['contacted','已聯繫'],['line_added','已添加'],['approved','已成交'],['invalid','無效']].map(([v,l])=>`<button class="status-btn ${r.status===v?'active':''}" data-action="status" data-value="${v}" data-id="${r.id}">${l}</button>`).join('')}<button data-action="copy" data-id="${r.id}">一鍵複製${r.client_copy_number==null?'・編號':''}</button><button class="secondary" data-action="detail" data-id="${r.id}">詳情</button></div>
     </article>`).join(''):'<p class="notice empty">目前沒有符合條件的二篩訂單。</p>';
