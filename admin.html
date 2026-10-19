@@ -180,6 +180,24 @@
     .stat span { color: var(--text-soft); font-size: 12px; }
     .stat:first-child { background: var(--accent-soft); }
     .stat:first-child b { color: var(--accent); }
+    #home-view h2 { margin: 0 0 5px; font-size: 19px; }
+    #home-view .home-filters { display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap; }
+    #home-view .home-filters .notice { margin:0; }
+    #home-view .home-filters .filter-row { align-items:center; }
+    #home-view .home-filters label { margin:0; }
+    #home-view .home-filters select { margin-top:5px; }
+    #home-message { flex-basis:100%; }
+    .home-stats { grid-template-columns:repeat(6,minmax(110px,1fr)); }
+    .home-version-panel { padding:18px; }
+    .home-version-panel .list-head { margin-bottom:12px; }
+    .home-version-panel .list-head h2 { margin:0 0 4px; }
+    .home-version-panel .list-head .notice { margin:0; }
+    .home-table-wrap { overflow-x:auto; }
+    .home-table { width:100%; border-collapse:collapse; min-width:820px; }
+    .home-table th,.home-table td { padding:12px 10px; border-bottom:1px solid var(--line); text-align:right; white-space:nowrap; font-size:13px; }
+    .home-table th { color:var(--text-soft); background:#f7f9fc; font-size:11px; }
+    .home-table th:first-child,.home-table td:first-child { text-align:left; font-weight:700; }
+    .home-table tbody tr:last-child td { border-bottom:0; }
     .filters { padding: 18px; box-shadow: none; }
     .filter-row { display: flex; align-items: end; gap: 10px; flex-wrap: wrap; }
     .quick-dates { display: flex; padding: 3px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-soft); }
@@ -369,6 +387,7 @@
     .setting-status { min-height: 22px; margin: 0; }
     @media (max-width: 1180px) {
       .stats { grid-template-columns: repeat(4,1fr); }
+      .home-stats { grid-template-columns:repeat(3,1fr); }
       .stat { border-bottom: 1px solid var(--line); }
       .lead-row { grid-template-columns: 28px minmax(0,1fr); }
       .lead-actions { grid-column: 2; justify-content: flex-start; max-width: none; }
@@ -393,6 +412,7 @@
       .header-nav { flex: 1; }
       .header-nav button { flex: 1; justify-content: center; }
       .stats { grid-template-columns: repeat(2,1fr); }
+      .home-stats { grid-template-columns:repeat(2,1fr); }
       .stat { min-height: 88px; padding: 16px 14px; }
       .stat:nth-child(2n) { border-right: 0; }
       .stat b { font-size: 26px; }
@@ -426,8 +446,9 @@
     <h1>客戶資料管理台 <span class="header-sub">審核工作區</span></h1>
     <div id="user-bar" class="hidden">
       <div class="header-nav">
-        <button id="nav-leads" class="active" onclick="showAdminView('leads')">申請列表</button>
-        <button id="nav-k" onclick="showAdminView('k')">X貸款 K版</button>
+        <button id="nav-home" class="active" onclick="showAdminView('home')">首頁總覽</button>
+        <button id="nav-leads" onclick="showAdminView('leads')">申請列表</button>
+        <button id="nav-k" onclick="showAdminView('k')">二篩訂單</button>
         <button id="nav-settings" onclick="showAdminView('settings')">系統設定</button>
       </div>
       <span id="user-email"></span>
@@ -450,6 +471,26 @@
     </section>
 
     <section id="app-panel" class="hidden">
+      <section id="home-view">
+        <div class="panel filters home-filters">
+          <div><h2>營運總覽</h2><p class="notice">各版本進件與處理狀態；只載入統計數字，不下載客戶資料。</p></div>
+          <div class="filter-row"><label class="status-field" for="home-range">統計期間<select id="home-range" onchange="toggleHomeCustomRange()"><option value="today">當日</option><option value="7d">近 7 日</option><option value="30d">近 30 日</option><option value="all">全部</option><option value="custom">自訂日期</option></select></label><div id="home-custom-range" class="filter-row hidden"><label class="date-field">開始日期<input id="home-date-from" type="date"></label><label class="date-field">結束日期<input id="home-date-to" type="date"></label></div><button class="secondary" id="home-refresh" type="button" onclick="loadHomeOverview()">更新統計</button></div>
+          <p id="home-message" class="notice" role="status"></p>
+        </div>
+        <div class="stats home-stats">
+          <div class="stat" style="--accent:#5865f2"><b id="home-total">0</b><span>總訂單</span></div>
+          <div class="stat" style="--accent:#3185ff"><b id="home-new">0</b><span>新客戶</span></div>
+          <div class="stat" style="--accent:#8a55ed"><b id="home-contacted">0</b><span>已聯繫</span></div>
+          <div class="stat" style="--accent:#08a56a"><b id="home-line">0</b><span>已添加 LINE</span></div>
+          <div class="stat" style="--accent:#6741c7"><b id="home-approved">0</b><span>已成交</span></div>
+          <div class="stat" style="--accent:#dc3030"><b id="home-invalid">0</b><span>無效／未成交</span></div>
+        </div>
+        <div class="panel home-version-panel">
+          <div class="list-head"><div><h2>版本進件概況</h2><p class="notice">J 版分列原申請列表歷史訂單與二篩新單，避免混淆。</p></div></div>
+          <div class="home-table-wrap"><table class="home-table"><thead><tr><th>版本／案件</th><th>申請列表</th><th>二篩</th><th>合計</th><th>新客戶</th><th>已聯繫</th><th>已加 LINE</th><th>已成交</th><th>無效／未成交</th></tr></thead><tbody id="home-version-rows"><tr><td colspan="9">統計載入中…</td></tr></tbody></table></div>
+        </div>
+      </section>
+
       <div class="stats leads-view-section">
         <div class="stat" style="--accent:#5865f2"><b id="stat-filtered">0</b><span>篩選結果</span></div>
         <div class="stat" style="--accent:#3185ff"><b id="stat-today">0</b><span>當日新增</span></div>
@@ -768,7 +809,7 @@
         password
       });
       btn.disabled = false;
-      msg.textContent = error ? '帳號或密碼錯誤。' : '登入成功，正在載入名單...';
+      msg.textContent = error ? '帳號或密碼錯誤。' : '登入成功，正在載入總覽...';
       msg.className = error ? 'notice error' : 'notice';
       if (!error) await checkSession();
     }
@@ -795,19 +836,25 @@
       document.getElementById('app-panel').classList.remove('hidden');
       document.getElementById('user-bar').classList.remove('hidden');
       document.getElementById('user-email').textContent = data.user.email || '';
-      await Promise.all([loadLeads(), loadSiteSettings()]);
+      await loadSiteSettings();
+      showAdminView('home');
     }
 
-    function showAdminView(view) {
+    function showAdminView(view, versionFilter) {
+      const isHome = view === 'home';
       const isSettings = view === 'settings';
       const isK = view === 'k';
       closeDetails();
-      document.querySelectorAll('.leads-view-section').forEach(el => el.classList.toggle('hidden', isSettings || isK));
+      document.getElementById('home-view').classList.toggle('hidden', !isHome);
+      document.querySelectorAll('.leads-view-section').forEach(el => el.classList.toggle('hidden', isHome || isSettings || isK));
       document.getElementById('settings-view').classList.toggle('hidden', !isSettings);
-      document.getElementById('nav-leads').classList.toggle('active', !isSettings && !isK);
+      document.getElementById('nav-home').classList.toggle('active', isHome);
+      document.getElementById('nav-leads').classList.toggle('active', view === 'leads');
       document.getElementById('nav-settings').classList.toggle('active', isSettings);
       document.getElementById('nav-k').classList.toggle('active', isK);
-      if (window.KAdmin) window.KAdmin.show(isK);
+      if (window.KAdmin) window.KAdmin.show(isK, versionFilter);
+      if (isHome) loadHomeOverview();
+      if (view === 'leads') loadLeads();
       if (isSettings) {
         renderSiteSettings();
         if (window.KAdmin) window.KAdmin.showSettings();
@@ -1468,6 +1515,90 @@
       document.getElementById('stat-invalid').textContent = Number(data.invalid || 0);
     }
 
+    function taipeiDateString(date) {
+      const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date);
+      const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+      return `${values.year}-${values.month}-${values.day}`;
+    }
+
+    function homeDateBounds() {
+      const mode = document.getElementById('home-range').value;
+      if (mode === 'all') return { p_date_from: null, p_date_to: null };
+      if (mode === 'custom') {
+        const from = document.getElementById('home-date-from').value;
+        const to = document.getElementById('home-date-to').value;
+        return {
+          p_date_from: from ? `${from}T00:00:00+08:00` : null,
+          p_date_to: to ? `${new Date(Date.parse(to + 'T00:00:00Z') + 86400000).toISOString().slice(0,10)}T00:00:00+08:00` : null
+        };
+      }
+      const today = taipeiDateString(new Date());
+      const span = mode === '7d' ? 6 : mode === '30d' ? 29 : 0;
+      const start = new Date(Date.parse(today + 'T00:00:00Z') - span * 86400000).toISOString().slice(0,10);
+      const end = new Date(Date.parse(today + 'T00:00:00Z') + 86400000).toISOString().slice(0,10);
+      return { p_date_from: `${start}T00:00:00+08:00`, p_date_to: `${end}T00:00:00+08:00` };
+    }
+
+    function toggleHomeCustomRange() {
+      const custom = document.getElementById('home-range').value === 'custom';
+      document.getElementById('home-custom-range').classList.toggle('hidden', !custom);
+    }
+
+    async function loadHomeOverview() {
+      const message = document.getElementById('home-message');
+      const body = document.getElementById('home-version-rows');
+      message.textContent = '正在更新統計…';
+      const bounds = homeDateBounds();
+      try {
+        const { data, error } = await client.rpc('get_admin_home_overview', bounds);
+        if (error) throw error;
+        const totals = data?.totals || {};
+        const value = key => Number(totals[key] || 0).toLocaleString('zh-TW');
+        document.getElementById('home-total').textContent = value('total');
+        document.getElementById('home-new').textContent = value('new_count');
+        document.getElementById('home-contacted').textContent = value('contacted');
+        document.getElementById('home-line').textContent = value('line_added');
+        document.getElementById('home-approved').textContent = value('approved');
+        document.getElementById('home-invalid').textContent = value('invalid');
+        const order = ['C','E','F','G','I','J','K','補助'];
+        const labels = { C:'C 版本', E:'E 版本', F:'F 版本', G:'G 版本', I:'I 版本', J:'J 版本', K:'K 版本', '補助':'補助金' };
+        const byVersion = Object.fromEntries(order.map(key => [key, { main:0, second:0, total:0, new_count:0, contacted:0, line_added:0, approved:0, invalid:0 }]));
+        (data?.versions || []).forEach(item => {
+          const key = item.version_key;
+          if (!byVersion[key]) byVersion[key] = { main:0, second:0, total:0, new_count:0, contacted:0, line_added:0, approved:0, invalid:0 };
+          const row = byVersion[key];
+          const bucket = item.queue_key === '二篩' ? 'second' : 'main';
+          row[bucket] += Number(item.total || 0); row.total += Number(item.total || 0);
+          ['new_count','contacted','line_added','approved','invalid'].forEach(field => row[field] += Number(item[field] || 0));
+        });
+        body.innerHTML = order.map(key => {
+          const row = byVersion[key];
+          const mainLink = row.main ? `<button class="secondary" type="button" onclick="openHomeMainVersion('${key}')">${row.main.toLocaleString('zh-TW')}</button>` : '0';
+          const secondLink = row.second ? `<button class="secondary" type="button" onclick="openHomeSecondStage('${key}')">${row.second.toLocaleString('zh-TW')}</button>` : '0';
+          return `<tr><td>${labels[key] || key}</td><td>${mainLink}</td><td>${secondLink}</td><td>${row.total.toLocaleString('zh-TW')}</td><td>${row.new_count.toLocaleString('zh-TW')}</td><td>${row.contacted.toLocaleString('zh-TW')}</td><td>${row.line_added.toLocaleString('zh-TW')}</td><td>${row.approved.toLocaleString('zh-TW')}</td><td>${row.invalid.toLocaleString('zh-TW')}</td></tr>`;
+        }).join('');
+        message.textContent = '統計已更新。J 舊單留在申請列表，新單歸二篩；不會重複計數。';
+      } catch (error) {
+        message.textContent = '統計載入失敗：請先執行配套資料庫更新，再重新整理。';
+        message.className = 'notice error';
+        body.innerHTML = '<tr><td colspan="9">目前無法讀取統計。</td></tr>';
+        console.error('Home overview unavailable', error);
+      }
+    }
+
+    function openHomeMainVersion(variant) {
+      selectedVariantFilters.clear();
+      if (variant && variant !== '補助') selectedVariantFilters.add(variant);
+      updateVariantFilterUI();
+      document.getElementById('business-filter').value = variant === '補助' ? 'subsidy' : '';
+      currentPage = 1;
+      showAdminView('leads');
+    }
+
+    function openHomeSecondStage(variant) {
+      showAdminView('k', variant ? `${variant}版本` : '');
+    }
+
     function scheduleSearch() {
       clearTimeout(searchTimer);
       searchTimer = setTimeout(applyFilters, 420);
@@ -1850,7 +1981,7 @@
         `年齡：${lead.age || ''}`,
         `${amountLabel(lead)}：${lead.q3_amount_needed || ''}`,
         `是否警示戶：${warningText}`
-      ].join('\n');
+      ].join('\r\n');
     }
 
     async function copyLead(id) {
@@ -1935,7 +2066,7 @@
         alert('這筆訂單目前沒有甲方編號。');
         return;
       }
-      if (!confirm(`確定清除這筆訂單的甲方編號 ${formatCopyNumber(copyNumberValue(lead))}？\n\n清除不會自動倒退「下一編號」，需要回退時請在上方手動修改。`)) return;
+      if (!confirm(`確定清除這筆訂單的甲方編號 ${formatCopyNumber(copyNumberValue(lead))}？\r\n\r\n清除不會自動倒退「下一編號」，需要回退時請在上方手動修改。`)) return;
       const { error } = await client
         .from('leads')
         .update({
@@ -2088,7 +2219,7 @@
         const values = cols.map(col => row[col] || '');
         values.push(adAttribution(row).adName || '');
         return values.map(value => '"' + String(value).replace(/"/g, '""') + '"').join(',');
-      })).join('\n');
+      })).join('\r\n');
       const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
