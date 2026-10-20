@@ -3,7 +3,7 @@
   'use strict';
   const sites = [
     {id:'main',name:'主倉庫',domain:'aethereas.top',versions:['C','E','F','G','I','J','K']},
-    {id:'copy1',name:'複製倉庫一',domain:'orbies.top',versions:['C','E','F','G','I','J','K']},
+    {id:'copy1',name:'複製倉庫一',domain:'aetherices.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy2',name:'複製倉庫二',domain:'lumeniasc.com',versions:['C','E','F','G','I','J','K']},
     {id:'copy3',name:'複製倉庫三',domain:'vectes.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy4',name:'複製倉庫四',domain:'vexisds.top',versions:['C','E','F','G','I','J','K']},
@@ -34,3 +34,46 @@
     warning();
   }
   async function load() {
+    if(loading)return loading;
+    loading=(async()=>{
+      const {data,error}=await client.from('repository_fb_pixels').select('site_id,variant,pixel_ids,updated_at').order('site_id').order('variant');
+      if(error)throw error;
+      const next=new Map();
+      for(const r of data||[])next.set(key(r.site_id,r.variant),{...r,draft:r.pixel_ids.map(p=>({id:p.id,enabled:p.enabled!==false}))});
+      if(sites.some(s=>s.versions.some(v=>!next.has(key(s.id,v)))))throw new Error('倉庫設定不完整，未開放儲存。');
+      rows=next;loaded=true;render();
+    })().catch(e=>{root.innerHTML='<p class="notice error">FB 設定載入失敗：'+esc(e.message)+'</p><button type="button" data-action="reload">重試</button>';throw e;}).finally(()=>{loading=null;});
+    return loading;
+  }
+  function changed(r){return JSON.stringify(r.draft)!==JSON.stringify(r.pixel_ids);}
+  root.addEventListener('input',e=>{
+    const card=e.target.closest('[data-key]'), field=e.target.dataset.field;if(!card||!field)return;
+    const r=rows.get(card.dataset.key),p=r?.draft[Number(e.target.dataset.index)];if(!p||r.busy)return;
+    p[field]=field==='enabled'?e.target.checked:e.target.value;r.message='尚未儲存';
+    card.querySelector('[role=status]').textContent='尚未儲存';warning();
+  });
+  root.addEventListener('click',async e=>{
+    const button=e.target.closest('[data-action]');if(!button)return;
+    const action=button.dataset.action,card=button.closest('[data-key]'),r=card&&rows.get(card.dataset.key);
+    if(action==='reload'){
+      if([...rows.values()].some(x=>x.busy))return;
+      if([...rows.values()].some(changed)&&!confirm('重新載入將放棄尚未儲存的 FB 修改，確定繼續？'))return;
+      loaded=false;await load().catch(()=>{});return;
+    }
+    if(!r||r.busy)return;
+    if(action==='add'){if(r.draft.length<5)r.draft.push({id:'',enabled:true});r.message='尚未儲存';render();return;}
+    if(action==='remove'){r.draft.splice(Number(button.dataset.index),1);r.message='尚未儲存';render();return;}
+    if(action!=='save')return;
+    const pixels=r.draft.map(p=>({id:p.id.trim(),enabled:!!p.enabled})).filter(p=>p.id);
+    if(pixels.length>5||pixels.some(p=>!/^\d{8,20}$/.test(p.id))||new Set(pixels.map(p=>p.id)).size!==pixels.length){r.error=true;r.message='請填寫 8–20 位數字，同一版本不得重複，最多 5 個。';render();return;}
+    const site=sites.find(s=>s.id===r.site_id);
+    if(!confirm(`只儲存 ${site.name} ${site.domain} 的 ${r.variant}版 FB Pixel（${pixels.length} 個）。${pixels.length?'':'此版本將停止回傳 FB 事件。'}其他設定不變，確定？`))return;
+    r.busy=true;r.error=false;r.message='儲存中…';render();
+    try{
+      const {data,error}=await client.from('repository_fb_pixels').update({pixel_ids:pixels,updated_at:new Date().toISOString()}).eq('site_id',r.site_id).eq('variant',r.variant).eq('updated_at',r.updated_at).select('pixel_ids,updated_at');
+      if(error)throw error;if(!data?.length)throw new Error('此版本已被其他人修改或沒有寫入權限，請重新載入後再儲存。');
+      r.pixel_ids=data[0].pixel_ids;r.updated_at=data[0].updated_at;r.draft=r.pixel_ids.map(p=>({...p}));r.message='已儲存。客戶重新開啟／重新整理頁面後生效。';
+    }catch(error){r.error=true;r.message='儲存失敗：'+error.message;}finally{r.busy=false;render();}
+  });
+  window.RepositoryPixelsAdmin={show(){if(!loaded)load().catch(()=>{});}};
+})();
