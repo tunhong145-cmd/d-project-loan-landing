@@ -4,7 +4,7 @@
   const sites = [
     {id:'main',name:'主倉庫',domain:'aethereas.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy1',name:'複製倉庫一',domain:'aetherices.top',versions:['C','E','F','G','I','J','K']},
-    {id:'copy2',name:'複製倉庫二',domain:'lumeniasc.com',versions:['C','E','F','G','I','J','K']},
+    {id:'copy2',name:'複製倉庫二',domain:'citadelqe.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy3',name:'複製倉庫三',domain:'vectes.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy4',name:'複製倉庫四',domain:'vexisds.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy5',name:'複製倉庫五',domain:'zephrs.top',versions:['C','E','F','G','I','J','K']}
