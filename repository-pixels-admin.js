@@ -8,7 +8,7 @@
     {id:'copy3',name:'複製倉庫三',domain:'vectes.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy4',name:'複製倉庫四',domain:'vexisds.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy5',name:'複製倉庫五',domain:'zephrs.top',versions:['C','E','F','G','I','J','K']},
-    {id:'copy6',name:'複製倉庫六',domain:'域名待定',pendingDomain:true,versions:['C','E','F','G','I','J','K']}
+    {id:'copy6',name:'複製倉庫六',domain:'kumose.top',versions:['C','E','F','G','I','J','K']}
   ];
   const root = document.getElementById('repo-pixel-manager');
   let rows = new Map(), loading = null, loaded = false;
