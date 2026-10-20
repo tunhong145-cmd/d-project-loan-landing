@@ -193,7 +193,10 @@
     .home-version-panel .list-head h2 { margin:0 0 4px; }
     .home-version-panel .list-head .notice { margin:0; }
     .home-table-wrap { overflow-x:auto; }
-    .home-table { width:100%; border-collapse:collapse; min-width:820px; }
+    .home-table { width:100%; border-collapse:collapse; min-width:340px; }
+    .home-sort { background:transparent; color:inherit; border:0; padding:8px 4px; box-shadow:none; font:inherit; cursor:pointer; }
+    .home-sort:hover,.home-sort:focus-visible { background:#eaf1ff; color:var(--accent); }
+    .home-table th[aria-sort="descending"],.home-table th[aria-sort="ascending"] { color:var(--accent); }
     .home-table th,.home-table td { padding:12px 10px; border-bottom:1px solid var(--line); text-align:right; white-space:nowrap; font-size:13px; }
     .home-table th { color:var(--text-soft); background:#f7f9fc; font-size:11px; }
     .home-table th:first-child,.home-table td:first-child { text-align:left; font-weight:700; }
@@ -447,7 +450,7 @@
     <div id="user-bar" class="hidden">
       <div class="header-nav">
         <button id="nav-home" class="active" onclick="showAdminView('home')">首頁總覽</button>
-        <button id="nav-leads" onclick="showAdminView('leads')">申請列表</button>
+        <button id="nav-leads" onclick="showAdminView('leads')">直流</button>
         <button id="nav-k" onclick="showAdminView('k')">二篩訂單</button>
         <button id="nav-settings" onclick="showAdminView('settings')">系統設定</button>
       </div>
@@ -486,8 +489,8 @@
           <div class="stat" style="--accent:#dc3030"><b id="home-invalid">0</b><span>無效／未成交</span></div>
         </div>
         <div class="panel home-version-panel">
-          <div class="list-head"><div><h2>版本進件概況</h2><p class="notice">J 版分列原申請列表歷史訂單與二篩新單，避免混淆。</p></div></div>
-          <div class="home-table-wrap"><table class="home-table"><thead><tr><th>版本／案件</th><th>申請列表</th><th>二篩</th><th>合計</th><th>新客戶</th><th>已聯繫</th><th>已加 LINE</th><th>已成交</th><th>無效／未成交</th></tr></thead><tbody id="home-version-rows"><tr><td colspan="9">統計載入中…</td></tr></tbody></table></div>
+          <div class="list-head"><div><h2>版本進件概況</h2><p class="notice">J 版歷史訂單列於直流，新單列於二篩。點擊表頭可排序。</p></div></div>
+          <div class="home-table-wrap"><table class="home-table"><thead><tr><th>版本／案件</th><th data-home-sort="main" aria-sort="none"><button class="home-sort" type="button" onclick="sortHomeVersions('main')">直流 <span data-sort-arrow>↕</span></button></th><th data-home-sort="second" aria-sort="none"><button class="home-sort" type="button" onclick="sortHomeVersions('second')">二篩 <span data-sort-arrow>↕</span></button></th><th data-home-sort="total" aria-sort="descending"><button class="home-sort" type="button" onclick="sortHomeVersions('total')">合計 <span data-sort-arrow>▼</span></button></th></tr></thead><tbody id="home-version-rows"><tr><td colspan="4">統計載入中…</td></tr></tbody></table></div>
         </div>
       </section>
 
@@ -581,7 +584,7 @@
 
       <div class="panel list-panel leads-view-section">
         <div class="list-head">
-          <h2>申請列表</h2>
+          <h2>直流</h2>
           <div class="list-head-right">
             <label class="select-all-wrap"><input id="select-all" type="checkbox" onchange="toggleAllVisible(this.checked)" /> 全選本頁</label>
             <span id="result-count">0 筆</span>
@@ -1542,15 +1545,53 @@
     function toggleHomeCustomRange() {
       const custom = document.getElementById('home-range').value === 'custom';
       document.getElementById('home-custom-range').classList.toggle('hidden', !custom);
+      resetHomeSort();
+      if (!custom) loadHomeOverview();
     }
 
+    let homeVersionRows = [];
+    let homeSort = { key:'total', direction:'desc' };
+    let homeRequestId = 0;
+    function resetHomeSort() {
+      homeSort = { key:'total', direction:'desc' };
+      renderHomeVersions();
+    }
+    function sortHomeVersions(key) {
+      if (!['main','second','total'].includes(key)) return;
+      homeSort = { key, direction:homeSort.key === key && homeSort.direction === 'desc' ? 'asc' : 'desc' };
+      renderHomeVersions();
+    }
+    function renderHomeVersions() {
+      document.querySelectorAll('[data-home-sort]').forEach(th => {
+        const active = th.dataset.homeSort === homeSort.key;
+        th.setAttribute('aria-sort', active ? (homeSort.direction === 'desc' ? 'descending' : 'ascending') : 'none');
+        th.querySelector('[data-sort-arrow]').textContent = active ? (homeSort.direction === 'desc' ? '▼' : '▲') : '↕';
+      });
+      if (!homeVersionRows.length) return;
+      const sorted = [...homeVersionRows].sort((a,b) => (homeSort.direction === 'desc' ? b[homeSort.key]-a[homeSort.key] : a[homeSort.key]-b[homeSort.key]) || a.rank-b.rank);
+      document.getElementById('home-version-rows').innerHTML = sorted.map(row => {
+        const mainLink = row.main ? `<button class="secondary" type="button" onclick="openHomeMainVersion('${row.key}')">${row.main.toLocaleString('zh-TW')}</button>` : '0';
+        const secondLink = row.second ? `<button class="secondary" type="button" onclick="openHomeSecondStage('${row.key}')">${row.second.toLocaleString('zh-TW')}</button>` : '0';
+        return `<tr><td>${row.label}</td><td>${mainLink}</td><td>${secondLink}</td><td>${row.total.toLocaleString('zh-TW')}</td></tr>`;
+      }).join('');
+    }
+    ['home-date-from','home-date-to'].forEach(id => document.getElementById(id).addEventListener('change', () => {
+      resetHomeSort();
+      const from = document.getElementById('home-date-from').value;
+      const to = document.getElementById('home-date-to').value;
+      if (from && to && from <= to) loadHomeOverview();
+    }));
+
     async function loadHomeOverview() {
+      const requestId = ++homeRequestId;
+      resetHomeSort();
       const message = document.getElementById('home-message');
       const body = document.getElementById('home-version-rows');
       message.textContent = '正在更新統計…';
       const bounds = homeDateBounds();
       try {
         const { data, error } = await client.rpc('get_admin_home_overview', bounds);
+        if (requestId !== homeRequestId) return;
         if (error) throw error;
         const totals = data?.totals || {};
         const value = key => Number(totals[key] || 0).toLocaleString('zh-TW');
@@ -1571,17 +1612,16 @@
           row[bucket] += Number(item.total || 0); row.total += Number(item.total || 0);
           ['new_count','contacted','line_added','approved','invalid'].forEach(field => row[field] += Number(item[field] || 0));
         });
-        body.innerHTML = order.map(key => {
-          const row = byVersion[key];
-          const mainLink = row.main ? `<button class="secondary" type="button" onclick="openHomeMainVersion('${key}')">${row.main.toLocaleString('zh-TW')}</button>` : '0';
-          const secondLink = row.second ? `<button class="secondary" type="button" onclick="openHomeSecondStage('${key}')">${row.second.toLocaleString('zh-TW')}</button>` : '0';
-          return `<tr><td>${labels[key] || key}</td><td>${mainLink}</td><td>${secondLink}</td><td>${row.total.toLocaleString('zh-TW')}</td><td>${row.new_count.toLocaleString('zh-TW')}</td><td>${row.contacted.toLocaleString('zh-TW')}</td><td>${row.line_added.toLocaleString('zh-TW')}</td><td>${row.approved.toLocaleString('zh-TW')}</td><td>${row.invalid.toLocaleString('zh-TW')}</td></tr>`;
-        }).join('');
-        message.textContent = '統計已更新。J 舊單留在申請列表，新單歸二篩；不會重複計數。';
+        homeVersionRows = order.map((key,rank) => ({ ...byVersion[key], key, rank, label:labels[key] || key }));
+        resetHomeSort();
+        message.className = 'notice';
+        message.textContent = '統計已更新。J 舊單留在直流，新單歸二篩；不會重複計數。';
       } catch (error) {
+        if (requestId !== homeRequestId) return;
+        homeVersionRows = [];
         message.textContent = '統計載入失敗：請先執行配套資料庫更新，再重新整理。';
         message.className = 'notice error';
-        body.innerHTML = '<tr><td colspan="9">目前無法讀取統計。</td></tr>';
+        body.innerHTML = '<tr><td colspan="4">目前無法讀取統計。</td></tr>';
         console.error('Home overview unavailable', error);
       }
     }
@@ -2233,7 +2273,7 @@
 
     checkSession();
   </script>
-  <script src="k-admin.js?v=20261019-2"></script>
+  <script src="k-admin.js?v=20261020-direct-sort"></script>
   <script src="repository-pixels-admin.js?v=repository-pixels-admin.js?v=20261020-1"></script>
 </body>
 </html>
