@@ -489,7 +489,7 @@
           <div class="stat" style="--accent:#dc3030"><b id="home-invalid">0</b><span>無效／未成交</span></div>
         </div>
         <div class="panel home-version-panel">
-          <div class="list-head"><div><h2>版本進件概況</h2><p class="notice">J 版歷史訂單列於直流，新單列於二篩。點擊表頭可排序。</p></div></div>
+          <div class="list-head"><div><h2>版本進件概況</h2><p class="notice">E／J 版歷史訂單列於直流，新單列於二篩。點擊表頭可排序。</p></div></div>
           <div class="home-table-wrap"><table class="home-table"><thead><tr><th>版本／案件</th><th data-home-sort="main" aria-sort="none"><button class="home-sort" type="button" onclick="sortHomeVersions('main')">直流 <span data-sort-arrow>↕</span></button></th><th data-home-sort="second" aria-sort="none"><button class="home-sort" type="button" onclick="sortHomeVersions('second')">二篩 <span data-sort-arrow>↕</span></button></th><th data-home-sort="total" aria-sort="descending"><button class="home-sort" type="button" onclick="sortHomeVersions('total')">合計 <span data-sort-arrow>▼</span></button></th></tr></thead><tbody id="home-version-rows"><tr><td colspan="4">統計載入中…</td></tr></tbody></table></div>
         </div>
       </section>
@@ -1615,7 +1615,7 @@
         homeVersionRows = order.map((key,rank) => ({ ...byVersion[key], key, rank, label:labels[key] || key }));
         resetHomeSort();
         message.className = 'notice';
-        message.textContent = '統計已更新。J 舊單留在直流，新單歸二篩；不會重複計數。';
+        message.textContent = '統計已更新。E／J 舊單留在直流，新單歸二篩；不會重複計數。';
       } catch (error) {
         if (requestId !== homeRequestId) return;
         homeVersionRows = [];
@@ -2273,7 +2273,7 @@
 
     checkSession();
   </script>
-  <script src="k-admin.js?v=20261020-direct-sort"></script>
+  <script src="k-admin.js?v=20261021-e-second-stage"></script>
   <script src="repository-pixels-admin.js?v=20261021-copy6-hertzians"></script>
 </body>
 </html>
