@@ -6,6 +6,7 @@
   let settingsReady = null;
   let configLoaded = false, kPixels = [], savedConfig = null, savedLineId = '';
   const selected = new Map();
+  const versions = new Set();
   const style = document.createElement('style');
   style.textContent = `
     #k-admin-view .filters{margin-bottom:18px}
@@ -49,7 +50,7 @@
         <div class="quick-dates">${[['0','當日'],['1','昨日'],['3','近3日'],['7','近7日'],['30','近30日'],['all','全部']].map(([days,label])=>`<button type="button" data-action="date" data-days="${days}" class="${days==='all'?'active':''}">${label}</button>`).join('')}</div>
         <div class="date-field"><input id="k-from" type="date" aria-label="二篩開始日期"></div><span class="date-separator">至</span><div class="date-field"><input id="k-to" type="date" aria-label="二篩結束日期"></div>
         <div class="status-field"><select id="k-status" aria-label="二篩狀態"><option value="">全部狀態</option>${Object.entries(statusLabels).map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select></div>
-        <div class="status-field"><select id="k-version" aria-label="二篩來源版本"><option value="">來源版本：全部</option><option value="E版本">E版</option><option value="J版本">J版</option><option value="K版本">K版</option></select></div>
+        <div class="variant-filter-wrap" role="group" aria-label="二篩版本：可多選"><div class="variant-filter-label">版本：可多選</div><div class="variant-filter-chips" id="k-versions"><button type="button" data-action="version" data-version="" class="filter-chip active" aria-pressed="true">全部</button><button type="button" data-action="version" data-version="E版本" class="filter-chip" aria-pressed="false">E版</button><button type="button" data-action="version" data-version="J版本" class="filter-chip" aria-pressed="false">J版</button><button type="button" data-action="version" data-version="K版本" class="filter-chip" aria-pressed="false">K版</button></div></div>
         <div class="status-field"><select id="k-source" aria-label="二篩來源"><option value="">來源：全部</option><option value="FB">FB</option><option value="TikTok">TikTok</option><option value="unknown">未識別</option></select></div>
         <button data-action="refresh">刷新本頁</button><div class="filter-spacer"></div>
         <div class="search-wrap k-search"><input id="k-search" aria-label="搜尋二篩訂單" placeholder="搜尋姓名 / 手機 / 年齡 / 金額 / 來源廣告"><button data-action="search">搜尋</button></div>
@@ -83,13 +84,19 @@
   function copyTextFor(r) {
     return ['案件類型：X貸款',`來源版本：D項目${sourceVersion(r)}`,...fields.map(([key,label])=>`${label}：${r[key] ?? ''}`),`甲方編號：${number(r.client_copy_number)}`].join('\n');
   }
-  function filters() { return {from:$('k-from').value,to:$('k-to').value,status:$('k-status').value,version:$('k-version').value,source:$('k-source').value,search:$('k-search').value.trim()}; }
+  function renderVersions() {
+    root.querySelectorAll('[data-action="version"]').forEach(button=>{
+      const active=button.dataset.version?versions.has(button.dataset.version):versions.size===0;
+      button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));
+    });
+  }
+  function filters() { return {from:$('k-from').value,to:$('k-to').value,status:$('k-status').value,versions:[...versions],source:$('k-source').value,search:$('k-search').value.trim()}; }
   function query(f, exact=false) {
-    let q=client.from('x_loan_leads').select('*',exact?{count:'exact'}:{});
+    let q=client.from('x_loan_leads_admin').select('*',exact?{count:'exact'}:{});
     if(f.from) q=q.gte('created_at',f.from+'T00:00:00+08:00');
     if(f.to) q=q.lte('created_at',f.to+'T23:59:59.999+08:00');
     if(f.status) q=q.eq('status',f.status);
-    if(f.version) q=q.eq('landing_version',f.version);
+    if(f.versions.length) q=q.in('landing_version',f.versions);
     if(f.source==='unknown')q=q.or('traffic_source.is.null,traffic_source.eq.');
     else if(f.source)q=q.eq('traffic_source',f.source);
     if(f.search) q=q.ilike('search_text','%'+f.search.replace(/[\\%_]/g,'\\$&')+'%');
@@ -107,14 +114,15 @@
     rows.forEach(r=>{if(selected.has(r.id)) selected.set(r.id,r);});
     render(); message(`共 ${count} 筆二篩訂單，每頁 ${size} 筆。`);
     try {
-      const {data,error}=await client.rpc('get_second_stage_stats',{
+      const {data,error}=await client.rpc('get_second_stage_stats_multi',{
         p_date_from:f.from?f.from+'T00:00:00+08:00':null,
         p_date_to:f.to?f.to+'T23:59:59.999+08:00':null,
-        p_version:f.version||null
+        p_versions:f.versions.length?f.versions:null
       });
+      if(token!==request)return;
       if(error)throw error;
       for(const [key,id] of [['total','k-stat-total'],['new','k-stat-new'],['contacted','k-stat-contacted'],['line_added','k-stat-line'],['approved','k-stat-approved'],['invalid','k-stat-invalid']])$(id).textContent=Number(data[key]||0).toLocaleString('zh-TW');
-    } catch(error) { for(const id of ['k-stat-total','k-stat-new','k-stat-contacted','k-stat-line','k-stat-approved','k-stat-invalid'])$(id).textContent='—'; }
+    } catch(error) { if(token!==request)return;for(const id of ['k-stat-total','k-stat-new','k-stat-contacted','k-stat-line','k-stat-approved','k-stat-invalid'])$(id).textContent='—'; }
   }
   function render() {
     $('k-count').textContent=`共 ${count} 筆・已選 ${selected.size} 筆`;
@@ -127,7 +135,7 @@
     $('k-select-all').indeterminate=rows.some(r=>selected.has(r.id))&&!$('k-select-all').checked;
     $('k-list').innerHTML=rows.length?rows.map((r,i)=>`<article class="lead-row">
       <input class="lead-check" type="checkbox" data-select="${r.id}" aria-label="選取 ${esc(r.name)}" ${selected.has(r.id)?'checked':''}>
-      <div class="lead-summary"><div class="lead-title-line"><span class="lead-index">${count-(page-1)*size-i}</span><span class="lead-name">${esc(r.name)}</span><span class="tag tag-loan">X貸款</span><span class="tag tag-variant-${sourceVersion(r)==='E版本'?'e':sourceVersion(r)==='J版本'?'j':'k'}">${esc(sourceVersion(r).replace('版本','版'))}</span>${r.client_copy_number==null?'':`<span class="tag tag-copy-number">甲方 ${number(r.client_copy_number)}</span>`}<span class="tag tag-${Object.hasOwn(statusLabels,r.status)?r.status:'new'}">${esc(statusLabels[r.status]||r.status)}</span>${r.line_clicked?'<span class="tag tag-line">已點 LINE</span>':''}${trafficSourceTag(r)}</div>
+      <div class="lead-summary"><div class="lead-title-line"><span class="lead-index">${count-(page-1)*size-i}</span><span class="lead-name">${esc(r.name)}</span><span class="tag tag-loan">X貸款</span><span class="tag tag-variant-${sourceVersion(r)==='E版本'?'e':sourceVersion(r)==='J版本'?'j':'k'}">${esc(sourceVersion(r).replace('版本','版'))}</span>${r.client_copy_number==null?'':`<span class="tag tag-copy-number">甲方 ${number(r.client_copy_number)}</span>`}${r.is_duplicate?'<span class="tag tag-duplicate" title="二篩歷史訂單中有相同姓名或手機號碼">重粉</span>':''}<span class="tag tag-${Object.hasOwn(statusLabels,r.status)?r.status:'new'}">${esc(statusLabels[r.status]||r.status)}</span>${r.line_clicked?'<span class="tag tag-line">已點 LINE</span>':''}${trafficSourceTag(r)}</div>
         <div class="lead-meta"><span>年齡 <strong>${esc(r.age)}</strong></span><span>需求金額 <strong>${esc(r.q3_amount_needed)}</strong></span><span>是否為警示戶 <strong>${esc(r.q2_bank_status)}</strong></span><span>手機 <strong>${esc(r.phone)}</strong></span></div><div class="lead-time">${esc(formatDate(r.created_at))}</div></div>
       <div class="lead-actions">${[['contacted','已聯繫'],['line_added','已添加'],['approved','已成交'],['invalid','無效']].map(([v,l])=>`<button class="status-btn ${r.status===v?'active':''}" data-action="status" data-value="${v}" data-id="${r.id}">${l}</button>`).join('')}<button data-action="copy" data-id="${r.id}">一鍵複製${r.client_copy_number==null?'・編號':''}</button><button class="secondary" data-action="detail" data-id="${r.id}">詳情</button></div>
     </article>`).join(''):'<p class="notice empty">目前沒有符合條件的二篩訂單。</p>';
@@ -184,7 +192,8 @@
   async function patch(id,value) {
     const {data,error}=await client.from('x_loan_leads').update({...value,updated_at:new Date().toISOString()}).eq('id',id).select('*').single();
     if(error) throw error;
-    rows=rows.map(r=>r.id===id?data:r); if(selected.has(id))selected.set(id,data); render();return data;
+    const updated={...rows.find(r=>r.id===id),...data};
+    rows=rows.map(r=>r.id===id?updated:r); if(selected.has(id))selected.set(id,updated); render();return updated;
   }
   async function copy(id) {
     const r=rows.find(r=>r.id===id);if(!r)return;
@@ -210,6 +219,14 @@
     const action=button.dataset.action,id=button.dataset.id;
     busy=true;button.disabled=true;
     try {
+      if(action==='version'){
+        const version=button.dataset.version;
+        if(!version)versions.clear();
+        else if(versions.has(version))versions.delete(version);
+        else versions.add(version);
+        if(versions.size===3)versions.clear();
+        renderVersions();page=1;selected.clear();await load();
+      }
       if(action==='date'){
         const days=button.dataset.days;const today=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Taipei'}));
         const date=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -246,7 +263,7 @@
   settingsRoot.addEventListener('click',handleAction);
   root.addEventListener('change',async event=>{
     const el=event.target;
-    if(['k-from','k-to','k-status','k-source','k-version'].includes(el.id)){
+    if(['k-from','k-to','k-status','k-source'].includes(el.id)){
       if(el.id==='k-from'||el.id==='k-to')root.querySelectorAll('.quick-dates button').forEach(b=>b.classList.remove('active'));
       page=1;selected.clear();try{await load();}catch(e){message('K版載入失敗：'+e.message,true);}return;
     }
@@ -259,7 +276,7 @@
   $('k-detail').addEventListener('click',e=>{if(e.target===$('k-detail')){const b=e.target.getBoundingClientRect();if(e.clientX<b.left||e.clientX>b.right||e.clientY<b.top||e.clientY>b.bottom)e.target.close();}});
   window.KAdmin={
     prepareSettings,saveSettings,renderPixels,
-    setVersion(version){$('k-version').value=version||'';page=1;selected.clear();},
+    setVersion(version){versions.clear();if(['E版本','J版本','K版本'].includes(version))versions.add(version);renderVersions();page=1;selected.clear();},
     openVersion(version){this.setVersion(version);load().catch(e=>message('二篩訂單載入失敗：'+e.message,true));},
     addPixel(){if(kPixels.length>=5){alert('每個版本最多可設定 5 個 FB Pixel。');return;}kPixels.push({id:'',enabled:true,platform:'facebook'});renderPixels();},
     updatePixel(i,value){kPixels[i].id=String(value).trim();},
