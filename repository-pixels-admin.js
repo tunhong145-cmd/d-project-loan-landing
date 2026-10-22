@@ -2,15 +2,15 @@
 (() => {
   'use strict';
   const sites = [
-    {id:'main',name:'主倉庫',domain:'aethereas.top',versions:['C','E','F','G','I','J','K']},
+    {id:'main',name:'主倉庫X',domain:'aethereas.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy1',name:'複製倉庫一',domain:'aetherices.top',versions:['C','E','F','G','I','J','K']},
-    {id:'copy2',name:'複製倉庫二',domain:'citadelqe.top',versions:['C','E','F','G','I','J','K']},
+    {id:'copy2',name:'複製倉庫二J',domain:'citadelqe.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy3',name:'複製倉庫三',domain:'vectes.top',versions:['C','E','F','G','I','J','K']},
-    {id:'copy4',name:'複製倉庫四',domain:'vexisds.top',versions:['C','E','F','G','I','J','K']},
-    {id:'copy5',name:'複製倉庫五',domain:'nexose.top',versions:['C','E','F','G','I','J','K']},
-    {id:'copy6',name:'複製倉庫六',domain:'hertzians.top',versions:['C','E','F','G','I','J','K']},
+    {id:'copy4',name:'複製倉庫四J',domain:'vexisds.top',versions:['C','E','F','G','I','J','K']},
+    {id:'copy5',name:'複製倉庫五M',domain:'nexose.top',versions:['C','E','F','G','I','J','K']},
+    {id:'copy6',name:'複製倉庫六X',domain:'hertzians.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy7',name:'複製倉庫七',domain:'chromaqs.top',versions:['C','E','F','G','I','J','K']},
-    {id:'copy8',name:'複製倉庫八',domain:'域名待定',pendingDomain:true,versions:['C','E','F','G','I','J','K']}
+    {id:'copy8',name:'複製倉庫八J',domain:'stratao.top',versions:['C','E','F','G','I','J','K']}
   ];
   const root = document.getElementById('repo-pixel-manager');
   let rows = new Map(), loading = null, loaded = false;
