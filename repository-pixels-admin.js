@@ -8,7 +8,7 @@
     {id:'copy3',name:'複製倉庫三',domain:'vectes.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy4',name:'複製倉庫四J',domain:'vexisds.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy5',name:'複製倉庫五M',domain:'nexose.top',versions:['C','E','F','G','I','J','K']},
-    {id:'copy6',name:'複製倉庫六X',domain:'hertzians.top',versions:['C','E','F','G','I','J','K']},
+    {id:'copy6',name:'複製倉庫六X',domain:'sonsora.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy7',name:'複製倉庫七',domain:'chromaqs.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy8',name:'複製倉庫八J',domain:'stratao.top',versions:['C','E','F','G','I','J','K']}
   ];
