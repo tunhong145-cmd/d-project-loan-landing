@@ -475,9 +475,10 @@
 
     <section id="app-panel" class="hidden">
       <section id="home-view">
+        <section id="recent-intake-board" aria-label="近30分鐘進件大盤"></section>
         <div class="panel filters home-filters">
           <div><h2>營運總覽</h2><p class="notice">各版本進件與處理狀態；只載入統計數字，不下載客戶資料。</p></div>
-          <div class="filter-row"><label class="status-field" for="home-range">統計期間<select id="home-range" onchange="toggleHomeCustomRange()"><option value="today">當日</option><option value="7d">近 7 日</option><option value="30d">近 30 日</option><option value="all">全部</option><option value="custom">自訂日期</option></select></label><div id="home-custom-range" class="filter-row hidden"><label class="date-field">開始日期<input id="home-date-from" type="date"></label><label class="date-field">結束日期<input id="home-date-to" type="date"></label></div><button class="secondary" id="home-refresh" type="button" onclick="loadHomeOverview()">更新統計</button></div>
+          <div class="filter-row"><label class="status-field" for="home-range">統計期間<select id="home-range" onchange="toggleHomeCustomRange()"><option value="today">當日</option><option value="yesterday">昨日</option><option value="7d">近 7 日</option><option value="30d">近 30 日</option><option value="all">全部</option><option value="custom">自訂日期</option></select></label><div id="home-custom-range" class="filter-row hidden"><label class="date-field">開始日期<input id="home-date-from" type="date"></label><label class="date-field">結束日期<input id="home-date-to" type="date"></label></div><button class="secondary" id="home-refresh" type="button" onclick="loadHomeOverview()">更新統計</button></div>
           <p id="home-message" class="notice" role="status"></p>
         </div>
         <div class="stats home-stats">
@@ -1536,6 +1537,7 @@
         };
       }
       const today = taipeiDateString(new Date());
+      if(mode==='yesterday')return {p_date_from:`${new Date(Date.parse(today+'T00:00:00Z')-86400000).toISOString().slice(0,10)}T00:00:00+08:00`,p_date_to:`${today}T00:00:00+08:00`};
       const span = mode === '7d' ? 6 : mode === '30d' ? 29 : 0;
       const start = new Date(Date.parse(today + 'T00:00:00Z') - span * 86400000).toISOString().slice(0,10);
       const end = new Date(Date.parse(today + 'T00:00:00Z') + 86400000).toISOString().slice(0,10);
@@ -2273,7 +2275,8 @@
 
     checkSession();
   </script>
-  <script src="k-admin.js?v=20261021-second-duplicates-multi"></script>
+  <script src="k-admin.js?v=20261023-filtered-stats"></script>
+  <script src="recent-intake-board.js?v=20261023-30min"></script>
   <script src="repository-pixels-admin.js?v=20261023-copy2-basalta"></script>
 </body>
 </html>

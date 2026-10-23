@@ -102,27 +102,34 @@
     if(f.search) q=q.ilike('search_text','%'+f.search.replace(/[\\%_]/g,'\\$&')+'%');
     return q.order('created_at',{ascending:false}).order('id',{ascending:false});
   }
-  async function load() {
+  let statsCache=null;
+  async function load(reuseStats=false) {
     const token=++request; message('正在載入二篩訂單…');
     const f=filters();
+    const statsKey=JSON.stringify({...f,versions:[...f.versions].sort()});
+    let cached=reuseStats&&statsCache?.key===statsKey;
+    if(!cached)for(const id of ['k-stat-total','k-stat-new','k-stat-contacted','k-stat-line','k-stat-approved','k-stat-invalid'])$(id).textContent='—';
     const result=await query(f,true).range((page-1)*size,page*size-1);
     if(token!==request) return;
     if(result.error) throw result.error;
     count=result.count||0;
+    if(cached&&Number(statsCache.data.total)!==count)cached=false;
     if(page>Math.max(1,Math.ceil(count/size))) {page=Math.max(1,Math.ceil(count/size));return load();}
     rows=result.data||[];
     rows.forEach(r=>{if(selected.has(r.id)) selected.set(r.id,r);});
     render(); message(`共 ${count} 筆二篩訂單，每頁 ${size} 筆。`);
     try {
-      const {data,error}=await client.rpc('get_second_stage_stats_multi',{
+      const {data,error}=cached?{data:statsCache.data}:await client.rpc('get_second_stage_filtered_stats',{
         p_date_from:f.from?f.from+'T00:00:00+08:00':null,
         p_date_to:f.to?f.to+'T23:59:59.999+08:00':null,
-        p_versions:f.versions.length?f.versions:null
+        p_versions:f.versions.length?f.versions:null,
+        p_status:f.status||null,p_source:f.source||null,p_search:f.search||null
       });
       if(token!==request)return;
       if(error)throw error;
+      statsCache={key:statsKey,data};
       for(const [key,id] of [['total','k-stat-total'],['new','k-stat-new'],['contacted','k-stat-contacted'],['line_added','k-stat-line'],['approved','k-stat-approved'],['invalid','k-stat-invalid']])$(id).textContent=Number(data[key]||0).toLocaleString('zh-TW');
-    } catch(error) { if(token!==request)return;for(const id of ['k-stat-total','k-stat-new','k-stat-contacted','k-stat-line','k-stat-approved','k-stat-invalid'])$(id).textContent='—'; }
+    } catch(error) { if(token!==request)return;statsCache=null;for(const id of ['k-stat-total','k-stat-new','k-stat-contacted','k-stat-line','k-stat-approved','k-stat-invalid'])$(id).textContent='—';message('訂單已載入，但篩選統計更新失敗，請刷新重試。',true); }
   }
   function render() {
     $('k-count').textContent=`共 ${count} 筆・已選 ${selected.size} 筆`;
@@ -190,6 +197,7 @@
     if(!$('k-detail').open){$('k-detail').showModal();$('k-detail').querySelector('.drawer-body').scrollTop=0;}
   }
   async function patch(id,value) {
+    statsCache=null;
     const {data,error}=await client.from('x_loan_leads').update({...value,updated_at:new Date().toISOString()}).eq('id',id).select('*').single();
     if(error) throw error;
     const updated={...rows.find(r=>r.id===id),...data};
@@ -236,10 +244,10 @@
       }
       if(action==='search'){page=1;selected.clear();await load();}
       if(action==='refresh')await load();
-      if(action==='prev'||action==='next'){page+=action==='prev'?-1:1;await load();}
+      if(action==='prev'||action==='next'){page+=action==='prev'?-1:1;await load(true);}
       if(action==='first'||action==='last'||action==='jump'){
         const max=Math.max(1,Math.ceil(count/size));const target=action==='first'?1:action==='last'?max:Number($('k-jump').value);
-        if(!Number.isInteger(target)||target<1||target>max)throw new Error(`頁碼請填寫 1–${max}。`);page=target;await load();
+        if(!Number.isInteger(target)||target<1||target>max)throw new Error(`頁碼請填寫 1–${max}。`);page=target;await load(true);
       }
       if(action==='test-line'){const url=$('k-line').value.trim();if(!validLine(url))throw new Error('請先填寫 K版 LINE 連結。');window.open(url,'_blank','noopener,noreferrer');}
       if(action==='save-number'){const n=Number($('k-next').value);if(!Number.isInteger(n)||n<1||n>999998)throw new Error('下一編號請填寫 1–999998。');const {error}=await client.from('x_loan_settings').update({client_copy_next_number:n,updated_at:new Date().toISOString()}).eq('version_code','K').select('version_code').single();if(error)throw error;message(`二篩下一編號已設為 ${n}。`);}
