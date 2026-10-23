@@ -475,7 +475,6 @@
 
     <section id="app-panel" class="hidden">
       <section id="home-view">
-        <section id="recent-intake-board" aria-label="近30分鐘進件大盤"></section>
         <div class="panel filters home-filters">
           <div><h2>營運總覽</h2><p class="notice">各版本進件與處理狀態；只載入統計數字，不下載客戶資料。</p></div>
           <div class="filter-row"><label class="status-field" for="home-range">統計期間<select id="home-range" onchange="toggleHomeCustomRange()"><option value="today">當日</option><option value="yesterday">昨日</option><option value="7d">近 7 日</option><option value="30d">近 30 日</option><option value="all">全部</option><option value="custom">自訂日期</option></select></label><div id="home-custom-range" class="filter-row hidden"><label class="date-field">開始日期<input id="home-date-from" type="date"></label><label class="date-field">結束日期<input id="home-date-to" type="date"></label></div><button class="secondary" id="home-refresh" type="button" onclick="loadHomeOverview()">更新統計</button></div>
@@ -493,6 +492,7 @@
           <div class="list-head"><div><h2>版本進件概況</h2><p class="notice">E／J 版歷史訂單列於直流，新單列於二篩。點擊表頭可排序。</p></div></div>
           <div class="home-table-wrap"><table class="home-table"><thead><tr><th>版本／案件</th><th data-home-sort="main" aria-sort="none"><button class="home-sort" type="button" onclick="sortHomeVersions('main')">直流 <span data-sort-arrow>↕</span></button></th><th data-home-sort="second" aria-sort="none"><button class="home-sort" type="button" onclick="sortHomeVersions('second')">二篩 <span data-sort-arrow>↕</span></button></th><th data-home-sort="total" aria-sort="descending"><button class="home-sort" type="button" onclick="sortHomeVersions('total')">合計 <span data-sort-arrow>▼</span></button></th></tr></thead><tbody id="home-version-rows"><tr><td colspan="4">統計載入中…</td></tr></tbody></table></div>
         </div>
+        <section id="recent-intake-board" aria-label="近30分鐘進件大盤"></section>
       </section>
 
       <div class="stats leads-view-section">
