@@ -50,11 +50,11 @@
         <div class="quick-dates">${[['0','當日'],['1','昨日'],['3','近3日'],['7','近7日'],['30','近30日'],['all','全部']].map(([days,label])=>`<button type="button" data-action="date" data-days="${days}" class="${days==='all'?'active':''}">${label}</button>`).join('')}</div>
         <div class="date-field"><input id="k-from" type="date" aria-label="二篩開始日期"></div><span class="date-separator">至</span><div class="date-field"><input id="k-to" type="date" aria-label="二篩結束日期"></div>
         <div class="status-field"><select id="k-status" aria-label="二篩狀態"><option value="">全部狀態</option>${Object.entries(statusLabels).map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select></div>
-        <div class="variant-filter-wrap" role="group" aria-label="二篩版本：可多選"><div class="variant-filter-label">版本：可多選</div><div class="variant-filter-chips" id="k-versions"><button type="button" data-action="version" data-version="" class="filter-chip active" aria-pressed="true">全部</button><button type="button" data-action="version" data-version="E版本" class="filter-chip" aria-pressed="false">E版</button><button type="button" data-action="version" data-version="J版本" class="filter-chip" aria-pressed="false">J版</button><button type="button" data-action="version" data-version="K版本" class="filter-chip" aria-pressed="false">K版</button></div></div>
+        <div class="variant-filter-wrap" role="group" aria-label="二篩版本：可多選"><div class="variant-filter-label">版本：可多選</div><div class="variant-filter-chips" id="k-versions"><button type="button" data-action="version" data-version="" class="filter-chip active" aria-pressed="true">全部</button>${["C","E","F","G","I","J","K"].map(v=>`<button type="button" data-action="version" data-version="${v}版本" class="filter-chip" aria-pressed="false">${v}版</button>`).join('')}</div></div>
         <div class="status-field"><select id="k-source" aria-label="二篩來源"><option value="">來源：全部</option><option value="FB">FB</option><option value="TikTok">TikTok</option><option value="unknown">未識別</option></select></div>
         <button data-action="refresh">刷新本頁</button><div class="filter-spacer"></div>
         <div class="search-wrap k-search"><input id="k-search" aria-label="搜尋二篩訂單" placeholder="搜尋姓名 / 手機 / 年齡 / 金額 / 來源廣告"><button data-action="search">搜尋</button></div>
-      </div><div class="copy-number-panel"><strong>二篩甲方編號</strong><span>下一編號</span><input id="k-next" aria-label="二篩下一編號" type="number" min="1" max="999998" value="1"><button class="secondary" data-action="save-number">儲存下一編號</button><span class="notice">E／J／K 二篩訂單共用編號；與直流編號分開。一鍵複製時綁定，已編號訂單沿用原號。</span></div><p class="notice export-note">未勾選時，會匯出目前篩選結果。每頁 100 筆，刷新僅更新本頁。</p><p id="k-msg" role="status" class="notice"></p></div>
+      </div><div class="copy-number-panel"><strong>二篩甲方編號</strong><span>下一編號</span><input id="k-next" aria-label="二篩下一編號" type="number" min="1" max="999998" value="1"><button class="secondary" data-action="save-number">儲存下一編號</button><span class="notice">二篩列表內各版本共用編號；與直流編號分開。一鍵複製時綁定，已編號訂單沿用原號。</span></div><p class="notice export-note">未勾選時，會匯出目前篩選結果。每頁 100 筆，刷新僅更新本頁。</p><p id="k-msg" role="status" class="notice"></p></div>
       <div class="panel list-panel"><div class="list-head"><h2>二篩訂單</h2><div class="list-head-right"><label class="select-all-wrap"><input id="k-select-all" type="checkbox">全選本頁</label><span id="k-count"></span><button class="secondary" data-action="export">匯出 CSV</button></div></div>
         <div id="k-list" class="lead-list"></div><div id="k-pagination" class="pagination"><button class="secondary" data-action="first">首頁</button><button class="secondary" data-action="prev">上一頁</button><span id="k-page" class="pagination-info"></span><button class="secondary" data-action="next">下一頁</button><button class="secondary" data-action="last">末頁</button><label class="pagination-jump">跳至 <input id="k-jump" type="number" min="1" inputmode="numeric"> 頁</label><button class="secondary" data-action="jump">前往</button></div>
       </div>
@@ -142,7 +142,7 @@
     $('k-select-all').indeterminate=rows.some(r=>selected.has(r.id))&&!$('k-select-all').checked;
     $('k-list').innerHTML=rows.length?rows.map((r,i)=>`<article class="lead-row">
       <input class="lead-check" type="checkbox" data-select="${r.id}" aria-label="選取 ${esc(r.name)}" ${selected.has(r.id)?'checked':''}>
-      <div class="lead-summary"><div class="lead-title-line"><span class="lead-index">${count-(page-1)*size-i}</span><span class="lead-name">${esc(r.name)}</span><span class="tag tag-loan">X貸款</span><span class="tag tag-variant-${sourceVersion(r)==='E版本'?'e':sourceVersion(r)==='J版本'?'j':'k'}">${esc(sourceVersion(r).replace('版本','版'))}</span>${r.client_copy_number==null?'':`<span class="tag tag-copy-number">甲方 ${number(r.client_copy_number)}</span>`}${r.is_duplicate?'<span class="tag tag-duplicate" title="二篩歷史訂單中有相同姓名或手機號碼">重粉</span>':''}<span class="tag tag-${Object.hasOwn(statusLabels,r.status)?r.status:'new'}">${esc(statusLabels[r.status]||r.status)}</span>${r.line_clicked?'<span class="tag tag-line">已點 LINE</span>':''}${trafficSourceTag(r)}</div>
+      <div class="lead-summary"><div class="lead-title-line"><span class="lead-index">${count-(page-1)*size-i}</span><span class="lead-name">${esc(r.name)}</span><span class="tag tag-loan">X貸款</span><span class="tag tag-queue-second">所屬：二篩</span><span class="tag tag-variant-${esc(sourceVersion(r).replace('版本','').toLowerCase())}">${esc(sourceVersion(r).replace('版本','版'))}</span>${r.client_copy_number==null?'':`<span class="tag tag-copy-number">甲方 ${number(r.client_copy_number)}</span>`}${r.is_duplicate?'<span class="tag tag-duplicate" title="二篩歷史訂單中有相同姓名或手機號碼">重粉</span>':''}<span class="tag tag-${Object.hasOwn(statusLabels,r.status)?r.status:'new'}">${esc(statusLabels[r.status]||r.status)}</span>${r.line_clicked?'<span class="tag tag-line">已點 LINE</span>':''}${trafficSourceTag(r)}</div>
         <div class="lead-meta"><span>年齡 <strong>${esc(r.age)}</strong></span><span>需求金額 <strong>${esc(r.q3_amount_needed)}</strong></span><span>是否為警示戶 <strong>${esc(r.q2_bank_status)}</strong></span><span>手機 <strong>${esc(r.phone)}</strong></span></div><div class="lead-time">${esc(formatDate(r.created_at))}</div></div>
       <div class="lead-actions">${[['contacted','已聯繫'],['line_added','已添加'],['approved','已成交'],['invalid','無效']].map(([v,l])=>`<button class="status-btn ${r.status===v?'active':''}" data-action="status" data-value="${v}" data-id="${r.id}">${l}</button>`).join('')}<button data-action="copy" data-id="${r.id}">一鍵複製${r.client_copy_number==null?'・編號':''}</button><button class="secondary" data-action="detail" data-id="${r.id}">詳情</button></div>
     </article>`).join(''):'<p class="notice empty">目前沒有符合條件的二篩訂單。</p>';
@@ -187,7 +187,7 @@
     const attribution=adAttribution(r);
     $('k-detail').dataset.id=id;$('k-detail-title').textContent=`${r.name||'客戶'}｜詳細資料`;$('k-detail-msg').textContent='';
     const oldAnswers=legacyFields.filter(([key])=>r[key]!=null&&r[key]!=='');
-    $('k-detail-body').innerHTML=`<div class="detail-grid">${item('提交時間',formatDate(r.created_at))}${item('目前狀態',statusLabels[r.status]||r.status)}${item('案件類型','X貸款')}${item('來源版本',`D項目${sourceVersion(r)}`)}${item('甲方編號',number(r.client_copy_number))}${item('LINE 點擊',r.line_clicked?'已點擊加入 LINE':'尚未點擊')}${fields.map(([key,label])=>item(label,r[key])).join('')}${item('IP 位址',r.ip_address)}${item('裝置',r.device_type)}${item('瀏覽器',r.browser_name)}</div>
+    $('k-detail-body').innerHTML=`<div class="detail-grid">${item('提交時間',formatDate(r.created_at))}${item('目前狀態',statusLabels[r.status]||r.status)}${item('案件類型','X貸款')}${item('所屬列表','二篩')}${item('來源版本',`D項目${sourceVersion(r)}`)}${item('甲方編號',number(r.client_copy_number))}${item('LINE 點擊',r.line_clicked?'已點擊加入 LINE':'尚未點擊')}${fields.map(([key,label])=>item(label,r[key])).join('')}${item('IP 位址',r.ip_address)}${item('裝置',r.device_type)}${item('瀏覽器',r.browser_name)}</div>
       ${oldAnswers.length?`<div class="detail-section"><h3>舊版問卷資料（歷史訂單）</h3><div class="detail-grid">${oldAnswers.map(([key,label])=>item(label,r[key])).join('')}</div></div>`:''}
       <div class="detail-section"><h3>廣告來源信息</h3><div class="detail-grid">${[['來源平台',attribution.platform||r.traffic_source],['來源域名',attribution.domain],['廣告系列ID',attribution.campaignId],['廣告組ID',attribution.adsetId],['來源廣告',attribution.adName],['廣告ID',attribution.adId],['展示位置',attribution.placement]].map(([l,v])=>item(l,v||'未提供')).join('')}</div></div>
       <div class="detail-section"><h3>提交裝置信息</h3><div class="detail-grid">${item('裝置／瀏覽器',r.user_agent||'未提供')}</div></div>
@@ -232,7 +232,7 @@
         if(!version)versions.clear();
         else if(versions.has(version))versions.delete(version);
         else versions.add(version);
-        if(versions.size===3)versions.clear();
+        if(versions.size===7)versions.clear();
         renderVersions();page=1;selected.clear();await load();
       }
       if(action==='date'){
@@ -284,7 +284,7 @@
   $('k-detail').addEventListener('click',e=>{if(e.target===$('k-detail')){const b=e.target.getBoundingClientRect();if(e.clientX<b.left||e.clientX>b.right||e.clientY<b.top||e.clientY>b.bottom)e.target.close();}});
   window.KAdmin={
     prepareSettings,saveSettings,renderPixels,
-    setVersion(version){versions.clear();if(['E版本','J版本','K版本'].includes(version))versions.add(version);renderVersions();page=1;selected.clear();},
+    setVersion(version){versions.clear();if(['C版本','E版本','F版本','G版本','I版本','J版本','K版本'].includes(version))versions.add(version);renderVersions();page=1;selected.clear();},
     openVersion(version){this.setVersion(version);load().catch(e=>message('二篩訂單載入失敗：'+e.message,true));},
     addPixel(){if(kPixels.length>=5){alert('每個版本最多可設定 5 個 FB Pixel。');return;}kPixels.push({id:'',enabled:true,platform:'facebook'});renderPixels();},
     updatePixel(i,value){kPixels[i].id=String(value).trim();},

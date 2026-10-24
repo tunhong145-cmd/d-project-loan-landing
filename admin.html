@@ -298,6 +298,9 @@
     .tag-tiktok { background: #eef0f3; color: #424d5e; border-color: #d4dae2; }
     .tag-loan { background: #e7f0ff; color: #2458a6; border-color: #c7d9f7; }
     .tag-subsidy { background: #fff1d8; color: #8a5510; border-color: #efd39d; }
+    .tag-queue-main { background:#eef5ff;color:#2855a2;border-color:#cad9f0; }
+    .tag-queue-second { background:#fff3df;color:#86561a;border-color:#edcf9b; }
+    .tag-variant-k { background:#f3edff;color:#6541a5;border-color:#d8c9f3; }
     .tag-variant-c { background: #edf7f3; color: #167455; border-color: #c5e6da; }
     .tag-variant-e { background: #f3edff; color: #6541a5; border-color: #d8c9f3; }
     .tag-variant-f { background: #fff7e8; color: #9a5b13; border-color: #efd39d; }
@@ -411,8 +414,8 @@
     }
     @media (max-width: 650px) {
       header { flex-wrap: wrap; }
-      #user-bar { width: 100%; order: 3; }
-      .header-nav { flex: 1; }
+      #user-bar { width: 100%; order: 3; flex-wrap: wrap; }
+      .header-nav { flex: 1 1 100%; flex-wrap: wrap; }
       .header-nav button { flex: 1; justify-content: center; }
       .stats { grid-template-columns: repeat(2,1fr); }
       .home-stats { grid-template-columns:repeat(2,1fr); }
@@ -452,6 +455,7 @@
         <button id="nav-home" class="active" onclick="showAdminView('home')">首頁總覽</button>
         <button id="nav-leads" onclick="showAdminView('leads')">直流</button>
         <button id="nav-k" onclick="showAdminView('k')">二篩訂單</button>
+        <button id="nav-routing" onclick="showAdminView('routing')">訂單分流</button>
         <button id="nav-settings" onclick="showAdminView('settings')">系統設定</button>
       </div>
       <span id="user-email"></span>
@@ -489,7 +493,7 @@
           <div class="stat" style="--accent:#dc3030"><b id="home-invalid">0</b><span>無效／未成交</span></div>
         </div>
         <div class="panel home-version-panel">
-          <div class="list-head"><div><h2>版本進件概況</h2><p class="notice">E／J 版歷史訂單列於直流，新單列於二篩。點擊表頭可排序。</p></div></div>
+          <div class="list-head"><div><h2>版本進件概況</h2><p class="notice">依訂單實際所屬列表統計，歷史訂單不隨分流設定移動。點擊表頭可排序。</p></div></div>
           <div class="home-table-wrap"><table class="home-table"><thead><tr><th>版本／案件</th><th data-home-sort="main" aria-sort="none"><button class="home-sort" type="button" onclick="sortHomeVersions('main')">直流 <span data-sort-arrow>↕</span></button></th><th data-home-sort="second" aria-sort="none"><button class="home-sort" type="button" onclick="sortHomeVersions('second')">二篩 <span data-sort-arrow>↕</span></button></th><th data-home-sort="total" aria-sort="descending"><button class="home-sort" type="button" onclick="sortHomeVersions('total')">合計 <span data-sort-arrow>▼</span></button></th></tr></thead><tbody id="home-version-rows"><tr><td colspan="4">統計載入中…</td></tr></tbody></table></div>
         </div>
         <section id="recent-intake-board" aria-label="近30分鐘進件大盤"></section>
@@ -549,6 +553,7 @@
               <button class="filter-chip" type="button" data-variant="G" onclick="toggleVariantFilter('G')">G版</button>
               <button class="filter-chip" type="button" data-variant="I" onclick="toggleVariantFilter('I')">I版</button>
               <button class="filter-chip" type="button" data-variant="J" onclick="toggleVariantFilter('J')">J版</button>
+              <button class="filter-chip" type="button" data-variant="K" onclick="toggleVariantFilter('K')">K版</button>
             </div>
           </div>
           <div class="status-field">
@@ -848,14 +853,17 @@
       const isHome = view === 'home';
       const isSettings = view === 'settings';
       const isK = view === 'k';
+      const isRouting = view === 'routing';
       closeDetails();
       document.getElementById('home-view').classList.toggle('hidden', !isHome);
-      document.querySelectorAll('.leads-view-section').forEach(el => el.classList.toggle('hidden', isHome || isSettings || isK));
+      document.querySelectorAll('.leads-view-section').forEach(el => el.classList.toggle('hidden', isHome || isSettings || isK || isRouting));
       document.getElementById('settings-view').classList.toggle('hidden', !isSettings);
       document.getElementById('nav-home').classList.toggle('active', isHome);
       document.getElementById('nav-leads').classList.toggle('active', view === 'leads');
       document.getElementById('nav-settings').classList.toggle('active', isSettings);
       document.getElementById('nav-k').classList.toggle('active', isK);
+      document.getElementById('nav-routing').classList.toggle('active', isRouting);
+      if (window.OrderRouting) window.OrderRouting.show(isRouting);
       if (window.KAdmin) window.KAdmin.show(isK, versionFilter);
       if (isHome) loadHomeOverview();
       if (view === 'leads') loadLeads();
@@ -1395,7 +1403,7 @@
 
     function landingVariant(lead) {
       const value = String(lead.resolved_landing_variant || lead.landing_variant || '').trim().toUpperCase();
-      if (['C', 'E', 'F', 'G', 'I', 'J'].includes(value)) return value;
+      if (['C', 'E', 'F', 'G', 'I', 'J', 'K'].includes(value)) return value;
       const url = String(lead.source_url || '').toLowerCase();
       if (/\/j(?:\/|$)/.test(url)) return 'J';
       if (/\/i(?:\/|$)/.test(url)) return 'I';
@@ -1617,7 +1625,7 @@
         homeVersionRows = order.map((key,rank) => ({ ...byVersion[key], key, rank, label:labels[key] || key }));
         resetHomeSort();
         message.className = 'notice';
-        message.textContent = '統計已更新。E／J 舊單留在直流，新單歸二篩；不會重複計數。';
+        message.textContent = '統計已更新，依訂單實際所屬列表計數，不會重複計數。';
       } catch (error) {
         if (requestId !== homeRequestId) return;
         homeVersionRows = [];
@@ -1850,6 +1858,7 @@
               <span class="lead-name">${escapeHTML(lead.name || '未填姓名')}</span>
               <span class="tag tag-${businessType(lead)}">${businessLabel(lead)}</span>
               ${landingVariantTag(lead)}
+              <span class="tag tag-queue-main">所屬：直流</span>
               ${copyNumberTag(lead)}
               ${lead.base_duplicate
                 ? '<span class="tag tag-base-duplicate">底粉重複</span>'
@@ -1896,6 +1905,7 @@
           ${detailItem('提交時間', formatDate(lead.created_at))}
           ${detailItem('目前狀態', statusLabels[lead.status] || lead.status)}
           ${detailItem('案件類型', businessLabel(lead))}
+          ${detailItem('所屬列表', '直流')}
           ${detailItem('來源版本', landingVariantLabel(lead))}
           ${detailItem('甲方編號', copyNumberValue(lead) ? formatCopyNumber(copyNumberValue(lead)) : '尚未分配')}
           ${detailItem('客戶類型', leadCustomerType(lead))}
@@ -2277,7 +2287,8 @@
 
     checkSession();
   </script>
-  <script src="k-admin.js?v=20261023-filtered-stats"></script>
+  <script src="k-admin.js?v=20261024-routing"></script>
+  <script src="order-routing-admin.js?v=20261024-1"></script>
   <script src="recent-intake-board.js?v=20261023-30min"></script>
   <script src="repository-pixels-admin.js?v=20261023-copy2-basalta"></script>
 </body>
