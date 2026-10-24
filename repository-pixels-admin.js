@@ -14,6 +14,45 @@
   ];
   const root = document.getElementById('repo-pixel-manager');
   let rows = new Map(), loading = null, loaded = false;
+  let labelsReady = false;
+  const labelNotice = document.createElement('p');
+  labelNotice.className = 'notice';
+  async function loadLabels() {
+    labelsReady = false;
+    try {
+      const {data,error} = await client.rpc('get_repository_display_settings');
+      if(error) throw error;
+      if(!Array.isArray(data)||sites.some(s=>!data.some(d=>d.site_id===s.id))) throw new Error('倉庫顯示資料不完整');
+      for(const s of sites){const d=data.find(d=>d.site_id===s.id);s.name=d.name;s.domain=d.domain;s.revision=d.revision;}
+      labelsReady = true;
+      labelNotice.textContent = '';
+    } catch(e) { labelNotice.textContent = '名稱／域名載入失敗，暫顯示原標籤；FB 設定仍可使用。請重新載入。'; }
+  }
+  const editor = document.createElement('dialog');
+  editor.style.cssText='border:1px solid #d9e2ef;border-radius:18px;padding:24px;width:min(440px,calc(100% - 32px));box-sizing:border-box;color:#17406b';
+  editor.innerHTML='<form><h3>編輯倉庫名稱／域名</h3><label>顯示名稱<input name="labelName" required maxlength="40" style="display:block;width:100%;box-sizing:border-box;margin:8px 0 16px"></label><label>對應域名<input name="labelDomain" required maxlength="253" placeholder="example.com" style="display:block;width:100%;box-sizing:border-box;margin:8px 0 16px"></label><p class="notice">僅更新後台顯示，不會修改 GitHub Pages 或 DNS。請先完成網站域名設定。像素、LINE、訂單與分流均不變。</p><p data-label-status role="status"></p><div style="display:flex;gap:12px;justify-content:flex-end"><button type="button" class="secondary" data-label-cancel>取消</button><button type="submit">儲存名稱／域名</button></div></form>';
+  document.body.append(editor);
+  let editingSite = null, labelBusy = false;
+  editor.querySelector('[data-label-cancel]').onclick=()=>editor.close();
+  editor.addEventListener('cancel',e=>{if(labelBusy)e.preventDefault();});
+  editor.querySelector('form').addEventListener('submit',async e=>{
+    e.preventDefault(); if(labelBusy||!editingSite)return;
+    const form=e.currentTarget, status=editor.querySelector('[data-label-status]');
+    const name=form.elements.labelName.value.trim();
+    let domain=form.elements.labelDomain.value.trim().toLowerCase();
+    domain=domain.replace(/^https?:\/\//,'').replace(/\/$/,'');
+    if(!name||name.length>40||domain.length>253||!domain.split('.').every(x=>x.length<=63)||!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(domain)){
+      status.textContent='請填寫名稱與有效域名，不要包含路徑、參數或連接埠。';return;
+    }
+    labelBusy=true;status.textContent='儲存中…';form.querySelectorAll('button,input').forEach(x=>x.disabled=true);
+    try {
+      const {data,error}=await client.rpc('save_repository_display_settings',{p_site_id:editingSite.id,p_name:name,p_domain:domain,p_revision:editingSite.revision});
+      if(error)throw error;
+      editingSite.name=data.name;editingSite.domain=data.domain;editingSite.revision=data.revision;
+      render();labelNotice.textContent='名稱／域名已儲存。其他電腦重新整理後即可看到。';editor.close();
+    } catch(error){status.textContent='儲存失敗：'+error.message+'。關閉後可重新載入設定再試。';}
+    finally{labelBusy=false;form.querySelectorAll('button,input').forEach(x=>x.disabled=false);}
+  });
   const esc = text => String(text ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const key = (site,variant) => site + ':' + variant;
   const style = document.createElement('style');
@@ -30,11 +69,18 @@
   }
   function render() {
     const open = new Set([...root.querySelectorAll('details[open]')].map(e=>e.dataset.site));
-    root.innerHTML='<p class="notice repo-pixel-manager-note">先選倉庫與域名，再編輯版本。每個版本最多 5 個 FB Pixel；空白表示停用，不會回退到其他倉庫。下方每張卡片獨立儲存，不修改 LINE 或訂單。域名僅供辨識，網站使用固定倉庫編號讀取設定。</p><div class="repo-pixel-warning" data-duplicates></div>'+sites.map(site=>`<details class="repo-pixel-box" data-site="${site.id}" ${open.has(site.id)||(!open.size&&site.id==='main')?'open':''}><summary><strong>${site.name}</strong><span class="repo-pixel-domain">${site.domain}</span>${site.pendingDomain?'<span class="notice">自訂域名待綁定</span>':''}<span class="notice">${site.versions.length} 個版本 · 點擊展開</span></summary><div class="repo-pixel-content"><div class="pixel-version-grid">${site.versions.map(v=>{
+    root.innerHTML='<p class="notice repo-pixel-manager-note">先選倉庫與域名，再編輯版本。每個版本最多 5 個 FB Pixel；空白表示停用，不會回退到其他倉庫。下方每張卡片獨立儲存，不修改 LINE 或訂單。域名僅供辨識，網站使用固定倉庫編號讀取設定。</p><div class="repo-pixel-warning" data-duplicates></div>'+sites.map(site=>`<details class="repo-pixel-box" data-site="${site.id}" ${open.has(site.id)||(!open.size&&site.id==='main')?'open':''}><summary><strong>${esc(site.name)}</strong><span class="repo-pixel-domain">${esc(site.domain)}</span>${site.pendingDomain?'<span class="notice">自訂域名待綁定</span>':''}<span class="notice">${site.versions.length} 個版本 · 點擊展開</span></summary><div class="repo-pixel-content"><div class="pixel-version-grid">${site.versions.map(v=>{
       const r=rows.get(key(site.id,v));if(!r)return '<p class="notice error">缺少 '+v+' 版設定，請重新載入。</p>';
       return `<section class="pixel-version-card" data-key="${key(site.id,v)}"><div class="pixel-version-head"><div><div class="pixel-version-title">${v}版 FB Pixel</div><div class="pixel-version-count">${site.domain}${v==='C'?'/':'/'+v.toLowerCase()+'/'} · ${r.draft.length}/5</div></div><button type="button" class="secondary" data-action="add" ${r.busy||r.draft.length>=5?'disabled':''}>新增</button></div><div class="pixel-list">${r.draft.map((p,i)=>`<div class="pixel-row"><input type="text" inputmode="numeric" value="${esc(p.id)}" data-index="${i}" data-field="id" aria-label="${site.domain} ${v}版 Pixel ${i+1}" ${r.busy?'disabled':''}><label class="pixel-toggle"><input type="checkbox" data-index="${i}" data-field="enabled" ${p.enabled?'checked':''} ${r.busy?'disabled':''}>啟用</label><button type="button" class="danger" data-action="remove" data-index="${i}" ${r.busy?'disabled':''}>刪除</button></div>`).join('')||'<p class="notice">目前未配置 FB Pixel，此版本不回傳 FB 事件。</p>'}</div><div class="repo-pixel-version-footer"><span class="notice">只影響本倉庫 ${v}版</span><button type="button" data-action="save" ${r.busy?'disabled':''}>${r.busy?'儲存中…':'儲存此版本'}</button></div><p class="repo-pixel-status ${r.error?'error':'notice'}" role="status">${esc(r.message||'')}</p></section>`;
     }).join('')}</div></div></details>`).join('')+'<button type="button" class="secondary" data-action="reload">重新載入全部倉庫的 FB 設定</button>';
     warning();
+    root.prepend(labelNotice);
+    for(const box of root.querySelectorAll('details[data-site]')){
+      const site=sites.find(s=>s.id===box.dataset.site);
+      const button=document.createElement('button');button.type='button';button.className='secondary';button.textContent='編輯名稱／域名';button.disabled=!labelsReady;
+      button.onclick=e=>{e.preventDefault();e.stopPropagation();editingSite=site;editor.querySelector('[name=labelName]').value=site.name;editor.querySelector('[name=labelDomain]').value=site.domain;editor.querySelector('[data-label-status]').textContent='';editor.showModal();};
+      box.querySelector('summary').append(button);
+    }
   }
   async function load() {
     if(loading)return loading;
@@ -44,7 +90,7 @@
       const next=new Map();
       for(const r of data||[])next.set(key(r.site_id,r.variant),{...r,draft:r.pixel_ids.map(p=>({id:p.id,enabled:p.enabled!==false}))});
       if(sites.some(s=>s.versions.some(v=>!next.has(key(s.id,v)))))throw new Error('倉庫設定不完整，未開放儲存。');
-      rows=next;loaded=true;render();
+      await loadLabels();rows=next;loaded=true;render();
     })().catch(e=>{root.innerHTML='<p class="notice error">FB 設定載入失敗：'+esc(e.message)+'</p><button type="button" data-action="reload">重試</button>';throw e;}).finally(()=>{loading=null;});
     return loading;
   }
