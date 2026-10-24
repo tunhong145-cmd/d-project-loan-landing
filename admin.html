@@ -569,7 +569,7 @@
           <button id="refresh-btn" onclick="loadLeads()">刷新訂單</button>
           <div class="filter-spacer"></div>
           <div class="search-wrap">
-            <input id="search" placeholder="搜尋姓名 / 年齡 / 金額 / 來源廣告" oninput="scheduleSearch()" onkeydown="if(event.key==='Enter'){event.preventDefault();applyFilters()}" />
+            <input id="search" placeholder="搜尋姓名 / 手機 / 年齡 / 金額 / 來源廣告" oninput="scheduleSearch()" onkeydown="if(event.key==='Enter'){event.preventDefault();applyFilters()}" />
             <button type="button" onclick="applyFilters()">搜尋</button>
           </div>
         </div>
@@ -1863,6 +1863,7 @@
             </div>
             <div class="lead-meta">
               <span>年齡 <strong>${escapeHTML(lead.age || '未填')}</strong></span>
+              ${lead.phone ? `<span>手機 <strong>${escapeHTML(lead.phone)}</strong></span>` : ''}
               <span>${amountLabel(lead)} <strong>${escapeHTML(lead.q3_amount_needed || '未填')}</strong></span>
               <span>警示戶 <strong>${escapeHTML(bankWarningValue(lead.q2_bank_status))}</strong></span>
             </div>
@@ -2021,6 +2022,7 @@
         `來源版本：${landingVariantLabel(lead)}`,
         `姓名：${lead.name || ''}`,
         `年齡：${lead.age || ''}`,
+        ...(lead.phone ? [`手機號碼：${lead.phone}`] : []),
         `${amountLabel(lead)}：${lead.q3_amount_needed || ''}`,
         `是否警示戶：${warningText}`
       ].join('\r\n');
