@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const sites = [
-    {id:'main',name:'主倉庫X',domain:'aethereas.top',versions:['C','E','F','G','I','J','K']},
+    {id:'main',name:'主倉庫X',domain:'azimutha.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy1',name:'複製倉庫一',domain:'aetherices.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy2',name:'複製倉庫二J',domain:'basalta.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy3',name:'複製倉庫三',domain:'vectes.top',versions:['C','E','F','G','I','J','K']},
