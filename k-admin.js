@@ -82,7 +82,7 @@
   function number(n) { return n == null ? '未編號' : String(n).padStart(2,'0'); }
   function sourceVersion(r) { return r.landing_version || 'K版本'; }
   function copyTextFor(r) {
-    return ['案件類型：X貸款',`來源版本：D項目${sourceVersion(r)}`,...fields.map(([key,label])=>`${label}：${r[key] ?? ''}`),`甲方編號：${number(r.client_copy_number)}`].join('\n');
+    return ['案件類型：X貸款','所屬：二篩',`來源版本：D項目${sourceVersion(r)}`,...fields.map(([key,label])=>`${label}：${r[key] ?? ''}`),`甲方編號：${number(r.client_copy_number)}`].join('\n');
   }
   function renderVersions() {
     root.querySelectorAll('[data-action="version"]').forEach(button=>{

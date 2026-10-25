@@ -2029,6 +2029,7 @@
       const warningText = `${bankWarningValue(lead.q2_bank_status)}${number ? formatCopyNumber(number) : ''}`;
       return [
         `案件類型：${businessLabel(lead)}`,
+        '所屬：直流',
         `來源版本：${landingVariantLabel(lead)}`,
         `姓名：${lead.name || ''}`,
         `年齡：${lead.age || ''}`,
@@ -2287,7 +2288,7 @@
 
     checkSession();
   </script>
-  <script src="k-admin.js?v=20261024-routing"></script>
+  <script src="k-admin.js?v=20261025-copy-queue"></script>
   <script src="order-routing-admin.js?v=20261024-1"></script>
   <script src="recent-intake-board.js?v=20261023-30min"></script>
   <script src="repository-pixels-admin.js?v=20261024-editable-labels"></script>
