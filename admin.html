@@ -548,7 +548,7 @@
             <div class="variant-filter-chips" id="variant-filter-chips">
               <button class="filter-chip active" type="button" data-variant="ALL" onclick="clearVariantFilters()">全部</button>
               <button class="filter-chip" type="button" data-variant="C" onclick="toggleVariantFilter('C')">C版</button>
-              <button class="filter-chip" type="button" data-variant="E" onclick="toggleVariantFilter('E')">E版</button>
+              <button class="filter-chip" type="button" data-variant="E" onclick="toggleVariantFilter('E')">M版</button>
               <button class="filter-chip" type="button" data-variant="F" onclick="toggleVariantFilter('F')">F版</button>
               <button class="filter-chip" type="button" data-variant="G" onclick="toggleVariantFilter('G')">G版</button>
               <button class="filter-chip" type="button" data-variant="I" onclick="toggleVariantFilter('I')">I版</button>
@@ -625,7 +625,7 @@
           <input id="setting-fg-line-url" type="url" placeholder="https://lin.ee/xxxxxxx" oninput="siteSettings.fg_line_url=this.value;updateFGLinePreview()" />
           <p id="setting-fg-line-preview" class="notice"></p>
           <div style="height:14px"></div>
-          <label for="setting-e-line-url">貸款 E／I版共用 LINE 連結</label>
+          <label for="setting-e-line-url">貸款 M／I版共用 LINE 連結</label>
           <input id="setting-e-line-url" type="url" placeholder="https://lin.ee/xxxxxxx" oninput="siteSettings.e_line_url=this.value;updateELinePreview()" />
           <p id="setting-e-line-preview" class="notice"></p>
           <div style="height:14px"></div>
@@ -635,7 +635,7 @@
           <div class="settings-actions">
             <button class="secondary" onclick="testLineUrl()">測試 C／J版 LINE</button>
             <button class="secondary" onclick="testFGLineUrl()">測試 F／G版 LINE</button>
-            <button class="secondary" onclick="testELineUrl()">測試 E／I版 LINE</button>
+            <button class="secondary" onclick="testELineUrl()">測試 M／I版 LINE</button>
             <button class="secondary" onclick="testSubsidyLineUrl()">測試補助金 LINE</button>
           </div>
         </div>
@@ -688,7 +688,7 @@
     };
     const PIXEL_VERSION_LABELS = {
       C: 'C版',
-      E: 'E版',
+      E: 'M版',
       F: 'F版',
       G: 'G版',
       I: 'I版',
@@ -1074,7 +1074,7 @@
       const value = input.value.trim();
       const lineId = extractLineId(value);
       if (isLineShortUrl(value)) {
-        preview.textContent = 'F／G版會共用這個 LINE 輪換短連結，不影響 C／J版、E／I版與補助金頁。';
+        preview.textContent = 'F／G版會共用這個 LINE 輪換短連結，不影響 C／J版、M／I版與補助金頁。';
       } else if (lineId && isValidLineUrl(value)) {
         preview.textContent = `F／G版 LINE ID：${lineId}`;
       } else {
@@ -1099,11 +1099,11 @@
       const value = input.value.trim();
       const lineId = extractLineId(value);
       if (isLineShortUrl(value)) {
-        preview.textContent = 'E／I版會共用這個 LINE 輪換短連結，不影響 C／J版、F／G版與補助金頁。';
+        preview.textContent = 'M／I版會共用這個 LINE 輪換短連結，不影響 C／J版、F／G版與補助金頁。';
       } else if (lineId && isValidLineUrl(value)) {
-        preview.textContent = `E／I版 LINE ID：${lineId}`;
+        preview.textContent = `M／I版 LINE ID：${lineId}`;
       } else {
-        preview.textContent = '請輸入 E／I版共用的 lin.ee 或 line.me 連結。';
+        preview.textContent = '請輸入 M／I版共用的 lin.ee 或 line.me 連結。';
       }
       return lineId;
     }
@@ -1111,7 +1111,7 @@
     function testELineUrl() {
       const url = document.getElementById('setting-e-line-url').value.trim();
       if (!isValidLineUrl(url)) {
-        alert('請輸入正確的 E／I版 LINE 連結。');
+        alert('請輸入正確的 M／I版 LINE 連結。');
         return;
       }
       window.open(url, '_blank', 'noopener');
@@ -1267,7 +1267,7 @@
         return;
       }
       if (!isValidLineUrl(eLineUrl)) {
-        status.textContent = 'E版 LINE 連結格式不正確，請使用 lin.ee 或 line.me。';
+        status.textContent = 'M版 LINE 連結格式不正確，請使用 lin.ee 或 line.me。';
         status.className = 'notice error setting-status';
         return;
       }
@@ -1409,18 +1409,18 @@
       if (/\/i(?:\/|$)/.test(url)) return 'I';
       if (/\/g(?:\/|$)/.test(url)) return 'G';
       if (/\/f(?:\/|$)/.test(url)) return 'F';
-      if (/\/e(?:\/|$)/.test(url)) return 'E';
+      if (/\/(?:e|m)(?:\/|$)/.test(url)) return 'E';
       return url ? 'C' : '';
     }
 
     function landingVariantLabel(lead) {
       const variant = landingVariant(lead);
-      return variant ? `D項目${variant}版本` : '舊版未標記';
+      return variant ? `D項目${variant === 'E' ? 'M' : variant}版本` : '舊版未標記';
     }
 
     function landingVariantTag(lead) {
       const variant = landingVariant(lead);
-      return variant ? `<span class="tag tag-variant-${variant.toLowerCase()}">${variant}版</span>` : '';
+      return variant ? `<span class="tag tag-variant-${variant.toLowerCase()}">${variant === 'E' ? 'M' : variant}版</span>` : '';
     }
 
     function copyNumberTag(lead) {
@@ -1612,7 +1612,7 @@
         document.getElementById('home-approved').textContent = value('approved');
         document.getElementById('home-invalid').textContent = value('invalid');
         const order = ['C','E','F','G','I','J','K','補助'];
-        const labels = { C:'C 版本', E:'E 版本', F:'F 版本', G:'G 版本', I:'I 版本', J:'J 版本', K:'K 版本', '補助':'補助金' };
+        const labels = { C:'C 版本', E:'M 版本', F:'F 版本', G:'G 版本', I:'I 版本', J:'J 版本', K:'K 版本', '補助':'補助金' };
         const byVersion = Object.fromEntries(order.map(key => [key, { main:0, second:0, total:0, new_count:0, contacted:0, line_added:0, approved:0, invalid:0 }]));
         (data?.versions || []).forEach(item => {
           const key = item.version_key;
@@ -2271,7 +2271,7 @@
         return;
       }
       const csv = [headers.join(',')].concat(exportRows.map(row => {
-        const values = cols.map(col => row[col] || '');
+        const values = cols.map(col => col === 'landing_variant' ? (landingVariant(row) === 'E' ? 'M' : landingVariant(row)) : row[col] || '');
         values.push(adAttribution(row).adName || '');
         return values.map(value => '"' + String(value).replace(/"/g, '""') + '"').join(',');
       })).join('\r\n');
@@ -2288,9 +2288,9 @@
 
     checkSession();
   </script>
-  <script src="k-admin.js?v=20261025-copy-queue"></script>
-  <script src="order-routing-admin.js?v=20261024-1"></script>
-  <script src="recent-intake-board.js?v=20261023-30min"></script>
-  <script src="repository-pixels-admin.js?v=20261024-editable-labels"></script>
+  <script src="k-admin.js?v=20261026-m"></script>
+  <script src="order-routing-admin.js?v=20261026-m"></script>
+  <script src="recent-intake-board.js?v=20261026-m"></script>
+  <script src="repository-pixels-admin.js?v=20261026-m"></script>
 </body>
 </html>
