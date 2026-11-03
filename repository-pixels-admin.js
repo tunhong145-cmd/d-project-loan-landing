@@ -11,7 +11,8 @@
     {id:'copy6',name:'複製倉庫六X',domain:'sonsora.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy7',name:'複製倉庫七',domain:'chromaqs.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy8',name:'複製倉庫八J',domain:'stratao.top',versions:['C','E','F','G','I','J','K']},
-    {id:'copy9',name:'複製倉庫九',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions:['C','E','F','G','I','J','K']}
+    {id:'copy9',name:'複製倉庫九',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions:['C','E','F','G','I','J','K']},
+    {id:'copy10',name:'複製倉庫十',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions:['C','E','F','G','I','J','K']}
   ];
   const displayVersion = v => v === 'E' ? 'M' : v;
   const root = document.getElementById('repo-pixel-manager');
@@ -25,7 +26,7 @@
       const {data,error} = await client.rpc('get_repository_display_settings');
       if(error) throw error;
       if(!Array.isArray(data)||sites.some(s=>!data.some(d=>d.site_id===s.id))) throw new Error('倉庫顯示資料不完整');
-      for(const s of sites){const d=data.find(d=>d.site_id===s.id);s.name=d.name;s.domain=d.domain;s.revision=d.revision;if(s.id==='copy9')s.pendingDomain=d.domain==='tunhong145-cmd.github.io';}
+      for(const s of sites){const d=data.find(d=>d.site_id===s.id);s.name=d.name;s.domain=d.domain;s.revision=d.revision;if(['copy9','copy10'].includes(s.id))s.pendingDomain=d.domain==='tunhong145-cmd.github.io';}
       labelsReady = true;
       labelNotice.textContent = '';
     } catch(e) { labelNotice.textContent = '名稱／域名載入失敗，暫顯示原標籤；FB 設定仍可使用。請重新載入。'; }
@@ -50,7 +51,7 @@
     try {
       const {data,error}=await client.rpc('save_repository_display_settings',{p_site_id:editingSite.id,p_name:name,p_domain:domain,p_revision:editingSite.revision});
       if(error)throw error;
-      editingSite.name=data.name;editingSite.domain=data.domain;editingSite.revision=data.revision;if(editingSite.id==='copy9')editingSite.pendingDomain=data.domain==='tunhong145-cmd.github.io';
+      editingSite.name=data.name;editingSite.domain=data.domain;editingSite.revision=data.revision;if(['copy9','copy10'].includes(editingSite.id))editingSite.pendingDomain=data.domain==='tunhong145-cmd.github.io';
       render();labelNotice.textContent='名稱／域名已儲存。其他電腦重新整理後即可看到。';editor.close();
     } catch(error){status.textContent='儲存失敗：'+error.message+'。關閉後可重新載入設定再試。';}
     finally{labelBusy=false;form.querySelectorAll('button,input').forEach(x=>x.disabled=false);}
@@ -73,7 +74,7 @@
     const open = new Set([...root.querySelectorAll('details[open]')].map(e=>e.dataset.site));
     root.innerHTML='<p class="notice repo-pixel-manager-note">先選倉庫與域名，再編輯版本。每個版本最多 5 個 FB Pixel；空白表示停用，不會回退到其他倉庫。下方每張卡片獨立儲存，不修改 LINE 或訂單。域名僅供辨識，網站使用固定倉庫編號讀取設定。</p><div class="repo-pixel-warning" data-duplicates></div>'+sites.map(site=>`<details class="repo-pixel-box" data-site="${site.id}" ${open.has(site.id)||(!open.size&&site.id==='main')?'open':''}><summary><strong>${esc(site.name)}</strong><span class="repo-pixel-domain">${esc(site.domain)}</span>${site.pendingDomain?'<span class="notice">自訂域名待綁定</span>':''}<span class="notice">${site.versions.length} 個版本 · 點擊展開</span></summary><div class="repo-pixel-content"><div class="pixel-version-grid">${site.versions.map(v=>{
       const r=rows.get(key(site.id,v));if(!r)return '<p class="notice error">缺少 '+v+' 版設定，請重新載入。</p>';
-      const pageBase=site.domain+(site.id==='copy9'&&site.pendingDomain?'/d-project-landing-copy9':'');
+      const pageBase=site.domain+(['copy9','copy10'].includes(site.id)&&site.pendingDomain?'/d-project-landing-'+site.id:'');
       return `<section class="pixel-version-card" data-key="${key(site.id,v)}"><div class="pixel-version-head"><div><div class="pixel-version-title">${displayVersion(v)}版 FB Pixel</div><div class="pixel-version-count">${esc(pageBase)}${v==='C'?'/':'/'+displayVersion(v).toLowerCase()+'/'} · ${r.draft.length}/5</div></div><button type="button" class="secondary" data-action="add" ${r.busy||r.draft.length>=5?'disabled':''}>新增</button></div><div class="pixel-list">${r.draft.map((p,i)=>`<div class="pixel-row"><input type="text" inputmode="numeric" value="${esc(p.id)}" data-index="${i}" data-field="id" aria-label="${site.domain} ${displayVersion(v)}版 Pixel ${i+1}" ${r.busy?'disabled':''}><label class="pixel-toggle"><input type="checkbox" data-index="${i}" data-field="enabled" ${p.enabled?'checked':''} ${r.busy?'disabled':''}>啟用</label><button type="button" class="danger" data-action="remove" data-index="${i}" ${r.busy?'disabled':''}>刪除</button></div>`).join('')||'<p class="notice">目前未配置 FB Pixel，此版本不回傳 FB 事件。</p>'}</div><div class="repo-pixel-version-footer"><span class="notice">只影響本倉庫 ${displayVersion(v)}版</span><button type="button" data-action="save" ${r.busy?'disabled':''}>${r.busy?'儲存中…':'儲存此版本'}</button></div><p class="repo-pixel-status ${r.error?'error':'notice'}" role="status">${esc(r.message||'')}</p></section>`;
     }).join('')}</div></div></details>`).join('')+'<button type="button" class="secondary" data-action="reload">重新載入全部倉庫的 FB 設定</button>';
     warning();
