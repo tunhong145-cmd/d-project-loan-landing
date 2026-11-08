@@ -306,6 +306,7 @@
     .tag-variant-f { background: #fff7e8; color: #9a5b13; border-color: #efd39d; }
     .tag-variant-g { background: #FFF0F4; color: #A61645; border-color: #F3A6BC; }
     .tag-variant-i { background: #e9fbf7; color: #087a6f; border-color: #b7ebe1; }
+    .tag-variant-copy9-i { background: #1e3a5f; color: #f8fafc; border-color: #142944; }
     .tag-variant-j { background: #dbeafe; color: #1d4ed8; border-color: #93c5fd; }
     .tag-copy-number { background: #eef2f7; color: #41516a; border-color: #d4dde9; }
     .lead-meta { display: flex; align-items: center; gap: 10px 18px; overflow: hidden; color: var(--text-soft); font-size: 12px; white-space: nowrap; }
@@ -672,6 +673,7 @@
     <div id="detail-body" class="drawer-body"></div>
   </aside>
 
+  <script src="order-version-badge.js?v=20261108-copy9-i"></script>
   <script>
     const SUPABASE_URL = 'https://sfiflidnsrdotoidvcmh.supabase.co';
     const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_F9QbR2X9iJp62lf3aJnh8w_NXlYl3aD';
@@ -1420,6 +1422,9 @@
 
     function landingVariantTag(lead) {
       const variant = landingVariant(lead);
+      if (window.OrderVersionBadge?.copy9I(variant, lead.source_url)) {
+        return '<span class="tag tag-variant-copy9-i">I版・倉庫九</span>';
+      }
       return variant ? `<span class="tag tag-variant-${variant.toLowerCase()}">${variant === 'E' ? 'M' : variant}版</span>` : '';
     }
 
@@ -2288,7 +2293,7 @@
 
     checkSession();
   </script>
-  <script src="k-admin.js?v=20261026-m"></script>
+  <script src="k-admin.js?v=20261108-copy9-i"></script>
   <script src="order-routing-admin.js?v=20261026-m"></script>
   <script src="recent-intake-board.js?v=20261026-m"></script>
   <script src="repository-pixels-admin.js?v=20261105-copy11"></script>
