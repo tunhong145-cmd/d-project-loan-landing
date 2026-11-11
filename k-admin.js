@@ -32,6 +32,7 @@
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fields = [['name','姓名'],['age','年齡'],['phone','手機號碼'],['q3_amount_needed','需求金額'],
     ['q2_bank_status','是否為警示戶']];
+  const orderDisplayFields = fields.map(([key,label]) => [key, key === 'q2_bank_status' ? '是否為警示戶/告誡戶' : label]);
   const legacyFields = [['court_deduction_status','法院強制扣款'],['has_passport','是否有護照'],
     ['q4_foreign_currency_account','個人外幣帳戶']];
   const root = document.createElement('section');
@@ -89,7 +90,7 @@
     return `<span class="tag tag-variant-${esc(sourceVersion(r).replace('版本','').toLowerCase())}">${esc(displaySourceVersion(r).replace('版本','版'))}</span>`;
   }
   function copyTextFor(r) {
-    return ['案件類型：X貸款','所屬：二篩',`來源版本：D項目${displaySourceVersion(r)}`,...fields.map(([key,label])=>`${label}：${r[key] ?? ''}`),`甲方編號：${number(r.client_copy_number)}`].join('\n');
+    return ['案件類型：X貸款','所屬：二篩',`來源版本：D項目${displaySourceVersion(r)}`,...orderDisplayFields.map(([key,label])=>`${label}：${r[key] ?? ''}`),`甲方編號：${number(r.client_copy_number)}`].join('\n');
   }
   function renderVersions() {
     root.querySelectorAll('[data-action="version"]').forEach(button=>{
@@ -194,7 +195,7 @@
     const attribution=adAttribution(r);
     $('k-detail').dataset.id=id;$('k-detail-title').textContent=`${r.name||'客戶'}｜詳細資料`;$('k-detail-msg').textContent='';
     const oldAnswers=legacyFields.filter(([key])=>r[key]!=null&&r[key]!=='');
-    $('k-detail-body').innerHTML=`<div class="detail-grid">${item('提交時間',formatDate(r.created_at))}${item('目前狀態',statusLabels[r.status]||r.status)}${item('案件類型','X貸款')}${item('所屬列表','二篩')}${item('來源版本',`D項目${displaySourceVersion(r)}`)}${item('甲方編號',number(r.client_copy_number))}${item('LINE 點擊',r.line_clicked?'已點擊加入 LINE':'尚未點擊')}${fields.map(([key,label])=>item(label,r[key])).join('')}${item('IP 位址',r.ip_address)}${item('裝置',r.device_type)}${item('瀏覽器',r.browser_name)}</div>
+    $('k-detail-body').innerHTML=`<div class="detail-grid">${item('提交時間',formatDate(r.created_at))}${item('目前狀態',statusLabels[r.status]||r.status)}${item('案件類型','X貸款')}${item('所屬列表','二篩')}${item('來源版本',`D項目${displaySourceVersion(r)}`)}${item('甲方編號',number(r.client_copy_number))}${item('LINE 點擊',r.line_clicked?'已點擊加入 LINE':'尚未點擊')}${orderDisplayFields.map(([key,label])=>item(label,r[key])).join('')}${item('IP 位址',r.ip_address)}${item('裝置',r.device_type)}${item('瀏覽器',r.browser_name)}</div>
       ${oldAnswers.length?`<div class="detail-section"><h3>舊版問卷資料（歷史訂單）</h3><div class="detail-grid">${oldAnswers.map(([key,label])=>item(label,r[key])).join('')}</div></div>`:''}
       <div class="detail-section"><h3>廣告來源信息</h3><div class="detail-grid">${[['來源平台',attribution.platform||r.traffic_source],['來源域名',attribution.domain],['廣告系列ID',attribution.campaignId],['廣告組ID',attribution.adsetId],['來源廣告',attribution.adName],['廣告ID',attribution.adId],['展示位置',attribution.placement]].map(([l,v])=>item(l,v||'未提供')).join('')}</div></div>
       <div class="detail-section"><h3>提交裝置信息</h3><div class="detail-grid">${item('裝置／瀏覽器',r.user_agent||'未提供')}</div></div>
