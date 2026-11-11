@@ -2,7 +2,7 @@
   'use strict';
 
   // These are the confirmed custom domains used by copy9, not editable display labels.
-  const copy9Domains = new Set(['atollgh.top', 'vectonrg.top', 'catenwe.top']);
+  const copy9Domains = new Set(['atollgh.top', 'vectonrg.top', 'catenwe.top', 'codafg.top']);
 
   function copy9I(variant, sourceUrl) {
     if (!/^I(?:版本|版)?$/i.test(String(variant || '').trim())) return false;
