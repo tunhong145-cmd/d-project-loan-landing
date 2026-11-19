@@ -6,11 +6,8 @@
     {id:'copy1',name:'複製倉庫一',domain:'aetherices.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy2',name:'複製倉庫二J',domain:'basalta.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy3',name:'複製倉庫三',domain:'vectes.top',versions:['C','E','F','G','I','J','K']},
-    {id:'copy4',name:'複製倉庫四J',domain:'vexisds.top',versions:['C','E','F','G','I','J','K']},
-    {id:'copy5',name:'複製倉庫五M',domain:'sinterl.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy6',name:'複製倉庫六X',domain:'sonsora.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy7',name:'複製倉庫七',domain:'chromaqs.top',versions:['C','E','F','G','I','J','K']},
-    {id:'copy8',name:'複製倉庫八J',domain:'stratao.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy9',name:'複製倉庫九',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions:['C','E','F','G','I','J','K']},
     {id:'copy10',name:'複製倉庫十',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions:['C','E','F','G','I','J','K']},
     {id:'copy11',name:'複製倉庫十一',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions:['C','E','F','G','I','J','K']},
@@ -18,6 +15,7 @@
     {id:'copy13',name:'複製倉庫十三',domain:'halcyonqv.top',pendingDomain:false,versions:['C','E','F','G','I','J','K']},
     {id:'copy14',name:'複製倉庫十四',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions:['C','E','F','G','I','J','K']}
   ];
+  const siteIds = new Set(sites.map(site => site.id));
   const displayVersion = v => v === 'E' ? 'M' : v;
   const root = document.getElementById('repo-pixel-manager');
   let rows = new Map(), loading = null, loaded = false;
@@ -96,7 +94,7 @@
       const {data,error}=await client.from('repository_fb_pixels').select('site_id,variant,pixel_ids,updated_at').order('site_id').order('variant');
       if(error)throw error;
       const next=new Map();
-      for(const r of data||[])next.set(key(r.site_id,r.variant),{...r,draft:r.pixel_ids.map(p=>({id:p.id,enabled:p.enabled!==false}))});
+      for(const r of data||[])if(siteIds.has(r.site_id))next.set(key(r.site_id,r.variant),{...r,draft:r.pixel_ids.map(p=>({id:p.id,enabled:p.enabled!==false}))});
       if(sites.some(s=>s.versions.some(v=>!next.has(key(s.id,v)))))throw new Error('倉庫設定不完整，未開放儲存。');
       await loadLabels();rows=next;loaded=true;render();
     })().catch(e=>{root.innerHTML='<p class="notice error">FB 設定載入失敗：'+esc(e.message)+'</p><button type="button" data-action="reload">重試</button>';throw e;}).finally(()=>{loading=null;});
