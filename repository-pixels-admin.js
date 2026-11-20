@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const sites = [
-    {id:'main',name:'主倉庫X',domain:'azimutha.top',versions:['C','E','F','G','I','J','K']},
+    {id:'main',name:'主倉庫X',domain:'azimutha.top',versions:['C','E','F','G','I','J','K','L']},
     {id:'copy1',name:'複製倉庫一',domain:'aetherices.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy2',name:'複製倉庫二J',domain:'basalta.top',versions:['C','E','F','G','I','J','K']},
     {id:'copy3',name:'複製倉庫三',domain:'vectes.top',versions:['C','E','F','G','I','J','K']},
@@ -18,7 +18,7 @@
     {id:'copy16',name:'複製倉庫十六',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions:['C','E','F','G','I','J','K']},
     {id:'copy17',name:'複製倉庫十七',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions:['C','E','F','G','I','J','K']}
   ];
-  const siteIds = new Set(sites.map(site => site.id));
+  const siteVariants = new Map(sites.map(site => [site.id,new Set(site.versions)]));
   const displayVersion = v => v === 'E' ? 'M' : v;
   const root = document.getElementById('repo-pixel-manager');
   let rows = new Map(), loading = null, loaded = false;
@@ -97,8 +97,8 @@
       const {data,error}=await client.from('repository_fb_pixels').select('site_id,variant,pixel_ids,updated_at').order('site_id').order('variant');
       if(error)throw error;
       const next=new Map();
-      for(const r of data||[])if(siteIds.has(r.site_id))next.set(key(r.site_id,r.variant),{...r,draft:r.pixel_ids.map(p=>({id:p.id,enabled:p.enabled!==false}))});
-      if(sites.some(s=>s.versions.some(v=>!next.has(key(s.id,v)))))throw new Error('倉庫設定不完整，未開放儲存。');
+      for(const r of data||[])if(siteVariants.get(r.site_id)?.has(r.variant))next.set(key(r.site_id,r.variant),{...r,draft:r.pixel_ids.map(p=>({id:p.id,enabled:p.enabled!==false}))});
+      if(sites.some(s=>s.versions.some(v=>v!=='L'&&!next.has(key(s.id,v)))))throw new Error('倉庫設定不完整，未開放儲存。');
       await loadLabels();rows=next;loaded=true;render();
     })().catch(e=>{root.innerHTML='<p class="notice error">FB 設定載入失敗：'+esc(e.message)+'</p><button type="button" data-action="reload">重試</button>';throw e;}).finally(()=>{loading=null;});
     return loading;

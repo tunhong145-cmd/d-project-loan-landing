@@ -32,6 +32,7 @@
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fields = [['name','姓名'],['age','年齡'],['phone','手機號碼'],['q3_amount_needed','需求金額'],
     ['q2_bank_status','是否為警示戶']];
+  const filterVariants = ['C','E','F','G','I','J','K','L'];
   const orderDisplayFields = fields.map(([key,label]) => [key, key === 'q2_bank_status' ? '是否為警示戶/告誡戶' : label]);
   const legacyFields = [['court_deduction_status','法院強制扣款'],['has_passport','是否有護照'],
     ['q4_foreign_currency_account','個人外幣帳戶']];
@@ -51,7 +52,7 @@
         <div class="quick-dates">${[['0','當日'],['1','昨日'],['3','近3日'],['7','近7日'],['30','近30日'],['all','全部']].map(([days,label])=>`<button type="button" data-action="date" data-days="${days}" class="${days==='all'?'active':''}">${label}</button>`).join('')}</div>
         <div class="date-field"><input id="k-from" type="date" aria-label="二篩開始日期"></div><span class="date-separator">至</span><div class="date-field"><input id="k-to" type="date" aria-label="二篩結束日期"></div>
         <div class="status-field"><select id="k-status" aria-label="二篩狀態"><option value="">全部狀態</option>${Object.entries(statusLabels).map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select></div>
-        <div class="variant-filter-wrap" role="group" aria-label="二篩版本：可多選"><div class="variant-filter-label">版本：可多選</div><div class="variant-filter-chips" id="k-versions"><button type="button" data-action="version" data-version="" class="filter-chip active" aria-pressed="true">全部</button>${["C","E","F","G","I","J","K"].map(v=>`<button type="button" data-action="version" data-version="${v}版本" class="filter-chip" aria-pressed="false">${v === 'E' ? 'M' : v}版</button>`).join('')}</div></div>
+        <div class="variant-filter-wrap" role="group" aria-label="二篩版本：可多選"><div class="variant-filter-label">版本：可多選</div><div class="variant-filter-chips" id="k-versions"><button type="button" data-action="version" data-version="" class="filter-chip active" aria-pressed="true">全部</button>${filterVariants.map(v=>`<button type="button" data-action="version" data-version="${v}版本" class="filter-chip" aria-pressed="false">${v === 'E' ? 'M' : v}版</button>`).join('')}</div></div>
         <div class="status-field"><select id="k-source" aria-label="二篩來源"><option value="">來源：全部</option><option value="FB">FB</option><option value="TikTok">TikTok</option><option value="unknown">未識別</option></select></div>
         <button data-action="refresh">刷新本頁</button><div class="filter-spacer"></div>
         <div class="search-wrap k-search"><input id="k-search" aria-label="搜尋二篩訂單" placeholder="搜尋姓名 / 手機 / 年齡 / 金額 / 來源廣告"><button data-action="search">搜尋</button></div>
@@ -240,7 +241,7 @@
         if(!version)versions.clear();
         else if(versions.has(version))versions.delete(version);
         else versions.add(version);
-        if(versions.size===7)versions.clear();
+        if(versions.size===filterVariants.length)versions.clear();
         renderVersions();page=1;selected.clear();await load();
       }
       if(action==='date'){
@@ -292,7 +293,7 @@
   $('k-detail').addEventListener('click',e=>{if(e.target===$('k-detail')){const b=e.target.getBoundingClientRect();if(e.clientX<b.left||e.clientX>b.right||e.clientY<b.top||e.clientY>b.bottom)e.target.close();}});
   window.KAdmin={
     prepareSettings,saveSettings,renderPixels,
-    setVersion(version){versions.clear();if(['C版本','E版本','F版本','G版本','I版本','J版本','K版本'].includes(version))versions.add(version);renderVersions();page=1;selected.clear();},
+    setVersion(version){versions.clear();if(filterVariants.some(v=>v+'版本'===version))versions.add(version);renderVersions();page=1;selected.clear();},
     openVersion(version){this.setVersion(version);load().catch(e=>message('二篩訂單載入失敗：'+e.message,true));},
     addPixel(){if(kPixels.length>=5){alert('每個版本最多可設定 5 個 FB Pixel。');return;}kPixels.push({id:'',enabled:true,platform:'facebook'});renderPixels();},
     updatePixel(i,value){kPixels[i].id=String(value).trim();},

@@ -33,7 +33,7 @@
  const stamp=value=>new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date(value));
  const clock=value=>new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date(value));
  const label=v=>v==='補助'?'補助金':(v==='E'?'M':v)+'版';
- const tag=v=>`<span class="tag tag-variant-${/^[CEFGIJK]$/.test(v)?v.toLowerCase():'c'}">${esc(label(v))}</span>`;
+ const tag=v=>`<span class="tag tag-variant-${/^[CEFGIJKL]$/.test(v)?v.toLowerCase():'c'}">${esc(label(v))}</span>`;
  let busy=false,latest=[];
  $('rb-refresh').addEventListener('click',async()=>{
   if(busy)return;busy=true;$('rb-refresh').disabled=true;$('rb-refresh').textContent='更新中…';$('rb-status').textContent='正在查詢最近30分鐘…';

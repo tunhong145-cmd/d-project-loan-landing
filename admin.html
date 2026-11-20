@@ -308,6 +308,7 @@
     .tag-variant-i { background: #e9fbf7; color: #087a6f; border-color: #b7ebe1; }
     .tag-variant-copy9-i { background: #1e3a5f; color: #f8fafc; border-color: #142944; }
     .tag-variant-j { background: #dbeafe; color: #1d4ed8; border-color: #93c5fd; }
+    .tag-variant-l { background: #334155; color: #fff; border-color: #263548; }
     .tag-copy-number { background: #eef2f7; color: #41516a; border-color: #d4dde9; }
     .lead-meta { display: flex; align-items: center; gap: 10px 18px; overflow: hidden; color: var(--text-soft); font-size: 12px; white-space: nowrap; }
     .lead-meta span { overflow: hidden; text-overflow: ellipsis; }
@@ -555,6 +556,7 @@
               <button class="filter-chip" type="button" data-variant="I" onclick="toggleVariantFilter('I')">I版</button>
               <button class="filter-chip" type="button" data-variant="J" onclick="toggleVariantFilter('J')">J版</button>
               <button class="filter-chip" type="button" data-variant="K" onclick="toggleVariantFilter('K')">K版</button>
+              <button class="filter-chip" type="button" data-variant="L" onclick="toggleVariantFilter('L')">L版</button>
             </div>
           </div>
           <div class="status-field">
@@ -629,6 +631,15 @@
           <label for="setting-e-line-url">貸款 M／I版共用 LINE 連結</label>
           <input id="setting-e-line-url" type="url" placeholder="https://lin.ee/xxxxxxx" oninput="siteSettings.e_line_url=this.value;updateELinePreview()" />
           <p id="setting-e-line-preview" class="notice"></p>
+          <div style="height:14px"></div>
+          <label for="setting-l-line-url">主倉庫 L版專用 LINE 連結</label>
+          <input id="setting-l-line-url" type="url" placeholder="https://lin.ee/xxxxxxx 或 https://line.me/R/ti/p/@xxxxxxxx" oninput="updateLLinePreview()" disabled />
+          <p id="setting-l-line-preview" class="notice">正在載入 L版設定…</p>
+          <div class="settings-actions" style="margin-bottom:14px">
+            <button id="test-l-line-url" class="secondary" type="button" onclick="testLLineUrl()" disabled>測試 L版 LINE</button>
+            <button id="save-l-line-url" type="button" onclick="saveLLineUrl()" disabled>儲存 L版 LINE</button>
+          </div>
+          <p id="l-line-settings-status" role="status" class="notice"></p>
           <div style="height:14px"></div>
           <label for="setting-subsidy-line-url">補助金 LINE 連結</label>
           <input id="setting-subsidy-line-url" type="url" placeholder="https://lin.ee/xxxxxxx 或 https://line.me/R/ti/p/@xxxxxxxx" oninput="siteSettings.subsidy_line_url=this.value;updateSubsidyLinePreview()" />
@@ -711,6 +722,9 @@
     let searchTimer = null;
     let leadsRequestToken = 0;
     let savedExistingSettings = null;
+    let lLineSettingsReady = false;
+    let savedLLineUrl = null;
+    let lLineSaving = false;
     let siteSettings = {
       line_url: 'https://lin.ee/591VM3X',
       fg_line_url: 'https://lin.ee/591VM3X',
@@ -876,11 +890,15 @@
     }
 
     async function loadSiteSettings() {
+      const existingColumns = 'line_url,fg_line_url,e_line_url,subsidy_line_url,line_id,pixel_ids,client_copy_next_number,updated_at';
       let { data, error } = await client
         .from('site_settings')
-        .select('line_url,fg_line_url,e_line_url,subsidy_line_url,line_id,pixel_ids,client_copy_next_number,updated_at')
+        .select(existingColumns + ',l_line_url')
         .eq('id', 1)
         .single();
+      if (error && /l_line_url/i.test(error.message || '')) {
+        ({data,error} = await client.from('site_settings').select(existingColumns).eq('id',1).single());
+      }
       if (error && /client_copy_next_number|schema cache|column/i.test(error.message || '')) {
         const fallback = await client
           .from('site_settings')
@@ -905,6 +923,10 @@
           updated_at: data.updated_at
         };
       }
+      lLineSettingsReady = !error && !!data && Object.hasOwn(data, 'l_line_url');
+      savedLLineUrl = lLineSettingsReady ? data.l_line_url : null;
+      document.getElementById('setting-l-line-url').value = savedLLineUrl || '';
+      updateLLinePreview();
       renderSiteSettings();
       renderCopyNumberControls();
       if (!error && data) savedExistingSettings = existingSettingsSnapshot();
@@ -1117,6 +1139,64 @@
         return;
       }
       window.open(url, '_blank', 'noopener');
+    }
+
+    function isValidLLineUrl(value) {
+      if (!isValidLineUrl(value)) return false;
+      const url = new URL(value);
+      return url.pathname.length > 1 && !url.username && !url.password && !url.port;
+    }
+
+    function updateLLinePreview() {
+      const input = document.getElementById('setting-l-line-url');
+      const preview = document.getElementById('setting-l-line-preview');
+      const value = input.value.trim();
+      input.disabled = !lLineSettingsReady || lLineSaving;
+      document.getElementById('test-l-line-url').disabled = input.disabled || !isValidLLineUrl(value);
+      document.getElementById('save-l-line-url').disabled = input.disabled || (value || null) === savedLLineUrl;
+      preview.textContent = !lLineSettingsReady ? 'L版 LINE 設定尚未載入，請重新整理；其他版本設定不受影響。'
+        : !value ? '未填寫時，L版不會共用其他版本的 LINE。'
+        : isValidLLineUrl(value) ? '此連結只供主倉庫 L版使用，不影響其他版本。'
+        : '請輸入有效的 https://lin.ee/ 或 https://line.me/ 連結。';
+    }
+
+    function testLLineUrl() {
+      const value = document.getElementById('setting-l-line-url').value.trim();
+      if (lLineSettingsReady && isValidLLineUrl(value)) window.open(value, '_blank', 'noopener');
+    }
+
+    async function saveLLineUrl() {
+      if (!lLineSettingsReady || lLineSaving) return;
+      const input = document.getElementById('setting-l-line-url');
+      const status = document.getElementById('l-line-settings-status');
+      const value = input.value.trim() || null;
+      if (value === savedLLineUrl) return;
+      if (value && !isValidLLineUrl(value)) {
+        status.className = 'notice error';
+        status.textContent = '請輸入有效的 LINE 連結，或留空移除 L版連結。';
+        return;
+      }
+      if (!confirm(value ? '只儲存主倉庫 L版的 LINE 連結，確定？' : '確定移除主倉庫 L版的 LINE 連結？其他版本不受影響。')) return;
+      lLineSaving = true;
+      status.className = 'notice';
+      status.textContent = '儲存中…';
+      updateLLinePreview();
+      try {
+        const update = client.from('site_settings').update({l_line_url:value}).eq('id',1);
+        const guarded = savedLLineUrl === null ? update.is('l_line_url',null) : update.eq('l_line_url',savedLLineUrl);
+        const {data,error} = await guarded.select('l_line_url').maybeSingle();
+        if (error) throw error;
+        if (!data || data.l_line_url !== value) throw new Error('設定已變更或沒有寫入權限，請重新整理後再試');
+        savedLLineUrl = data.l_line_url;
+        input.value = savedLLineUrl || '';
+        status.textContent = value ? '已儲存主倉庫 L版的 LINE 連結。' : '已移除主倉庫 L版的 LINE 連結。';
+      } catch (error) {
+        status.className = 'notice error';
+        status.textContent = '儲存失敗：' + error.message + '。';
+      } finally {
+        lLineSaving = false;
+        updateLLinePreview();
+      }
     }
 
     function updateSubsidyLinePreview() {
@@ -1405,13 +1485,14 @@
 
     function landingVariant(lead) {
       const value = String(lead.resolved_landing_variant || lead.landing_variant || '').trim().toUpperCase();
-      if (['C', 'E', 'F', 'G', 'I', 'J', 'K'].includes(value)) return value;
+      if (['C', 'E', 'F', 'G', 'I', 'J', 'K', 'L'].includes(value)) return value;
       const url = String(lead.source_url || '').toLowerCase();
       if (/\/j(?:\/|$)/.test(url)) return 'J';
       if (/\/i(?:\/|$)/.test(url)) return 'I';
       if (/\/g(?:\/|$)/.test(url)) return 'G';
       if (/\/f(?:\/|$)/.test(url)) return 'F';
       if (/\/(?:e|m)(?:\/|$)/.test(url)) return 'E';
+      if (/\/l(?:\/|$)/.test(url.split(/[?#]/,1)[0])) return 'L';
       return url ? 'C' : '';
     }
 
@@ -1616,8 +1697,8 @@
         document.getElementById('home-line').textContent = value('line_added');
         document.getElementById('home-approved').textContent = value('approved');
         document.getElementById('home-invalid').textContent = value('invalid');
-        const order = ['C','E','F','G','I','J','K','補助'];
-        const labels = { C:'C 版本', E:'M 版本', F:'F 版本', G:'G 版本', I:'I 版本', J:'J 版本', K:'K 版本', '補助':'補助金' };
+        const order = ['C','E','F','G','I','J','K','L','補助'];
+        const labels = { C:'C 版本', E:'M 版本', F:'F 版本', G:'G 版本', I:'I 版本', J:'J 版本', K:'K 版本', L:'L 版本', '補助':'補助金' };
         const byVersion = Object.fromEntries(order.map(key => [key, { main:0, second:0, total:0, new_count:0, contacted:0, line_added:0, approved:0, invalid:0 }]));
         (data?.versions || []).forEach(item => {
           const key = item.version_key;
@@ -2293,9 +2374,9 @@
 
     checkSession();
   </script>
-  <script src="k-admin.js?v=20261111-warning-label"></script>
-  <script src="order-routing-admin.js?v=20261026-m"></script>
-  <script src="recent-intake-board.js?v=20261026-m"></script>
-  <script src="repository-pixels-admin.js?v=20261119-copy15-17"></script>
+  <script src="k-admin.js?v=20261120-l-pilot"></script>
+  <script src="order-routing-admin.js?v=20261120-l-pilot"></script>
+  <script src="recent-intake-board.js?v=20261120-l-pilot"></script>
+  <script src="repository-pixels-admin.js?v=20261120-l-pilot"></script>
 </body>
 </html>
