@@ -550,7 +550,6 @@
             <div class="variant-filter-chips" id="variant-filter-chips">
               <button class="filter-chip active" type="button" data-variant="ALL" onclick="clearVariantFilters()">全部</button>
               <button class="filter-chip" type="button" data-variant="C" onclick="toggleVariantFilter('C')">C版</button>
-              <button class="filter-chip" type="button" data-variant="E" onclick="toggleVariantFilter('E')">M版</button>
               <button class="filter-chip" type="button" data-variant="F" onclick="toggleVariantFilter('F')">F版</button>
               <button class="filter-chip" type="button" data-variant="G" onclick="toggleVariantFilter('G')">G版</button>
               <button class="filter-chip" type="button" data-variant="I" onclick="toggleVariantFilter('I')">I版</button>
@@ -699,6 +698,7 @@
       J: 'J版'
     };
     const PIXEL_VERSION_ORDER = Object.keys(PIXEL_VERSION_LABELS);
+    const ACTIVE_ORDER_VERSIONS = new Set(['C','F','G','I','J','K','L']);
     const PAGE_SIZE = 100;
     let leads = [];
     let selectedLeadIds = new Set();
@@ -1457,7 +1457,7 @@
 
     function toggleVariantFilter(variant) {
       const value = String(variant || '').toUpperCase();
-      if (!value) return;
+      if (!ACTIVE_ORDER_VERSIONS.has(value)) return;
       if (selectedVariantFilters.has(value)) selectedVariantFilters.delete(value);
       else selectedVariantFilters.add(value);
       updateVariantFilterUI();
@@ -1619,12 +1619,14 @@
         document.getElementById('home-line').textContent = value('line_added');
         document.getElementById('home-approved').textContent = value('approved');
         document.getElementById('home-invalid').textContent = value('invalid');
-        const order = ['C','E','F','G','I','J','K','L','補助'];
-        const labels = { C:'C 版本', E:'M 版本', F:'F 版本', G:'G 版本', I:'I 版本', J:'J 版本', K:'K 版本', L:'L 版本', '補助':'補助金' };
+        const order = [...ACTIVE_ORDER_VERSIONS, '補助'];
+        const labels = { C:'C 版本', F:'F 版本', G:'G 版本', I:'I 版本', J:'J 版本', K:'K 版本', L:'L 版本', '補助':'補助金' };
         const byVersion = Object.fromEntries(order.map(key => [key, { main:0, second:0, total:0, new_count:0, contacted:0, line_added:0, approved:0, invalid:0 }]));
+        let archivedCount = 0;
         (data?.versions || []).forEach(item => {
           const key = item.version_key;
-          if (!byVersion[key]) byVersion[key] = { main:0, second:0, total:0, new_count:0, contacted:0, line_added:0, approved:0, invalid:0 };
+          if (key === 'E' || key === 'M') archivedCount += Number(item.total || 0);
+          if (!Object.hasOwn(byVersion, key)) return;
           const row = byVersion[key];
           const bucket = item.queue_key === '二篩' ? 'second' : 'main';
           row[bucket] += Number(item.total || 0); row.total += Number(item.total || 0);
@@ -1633,7 +1635,8 @@
         homeVersionRows = order.map((key,rank) => ({ ...byVersion[key], key, rank, label:labels[key] || key }));
         resetHomeSort();
         message.className = 'notice';
-        message.textContent = '統計已更新，依訂單實際所屬列表計數，不會重複計數。';
+        message.textContent = '統計已更新，依訂單實際所屬列表計數，不會重複計數。' +
+          (archivedCount > 0 ? '總覽卡片仍包含已停用版本的歷史訂單，版本表不另列。' : '');
       } catch (error) {
         if (requestId !== homeRequestId) return;
         homeVersionRows = [];
@@ -1646,7 +1649,7 @@
 
     function openHomeMainVersion(variant) {
       selectedVariantFilters.clear();
-      if (variant && variant !== '補助') selectedVariantFilters.add(variant);
+      if (ACTIVE_ORDER_VERSIONS.has(variant)) selectedVariantFilters.add(variant);
       updateVariantFilterUI();
       document.getElementById('business-filter').value = variant === '補助' ? 'subsidy' : '';
       currentPage = 1;
@@ -2296,9 +2299,9 @@
 
     checkSession();
   </script>
-  <script src="k-admin.js?v=20261120-l-rollout"></script>
+  <script src="k-admin.js?v=20261120-hide-archived-m"></script>
   <script src="order-routing-admin.js?v=20261120-archive-m"></script>
-  <script src="recent-intake-board.js?v=20261120-l-pilot"></script>
+  <script src="recent-intake-board.js?v=20261120-hide-archived-m"></script>
   <script src="repository-pixels-admin.js?v=20261120-archive-m"></script>
 </body>
 </html>

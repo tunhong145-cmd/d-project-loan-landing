@@ -26,7 +26,7 @@
  @media(max-width:540px){#recent-intake-board .rb-head{padding:18px;align-items:flex-start}#recent-intake-board .rb-head h2{font-size:18px}#recent-intake-board .rb-head button{padding:10px;font-size:13px}#recent-intake-board .rb-metrics{padding:18px;gap:12px}#recent-intake-board .rb-metric b{font-size:28px}#recent-intake-board .rb-body{padding:18px}#recent-intake-board .rb-metric span{font-size:12px}}
  `;
  document.head.append(style);
- root.innerHTML=`<div class="rb-head"><div><h2>近30分鐘進件大盤</h2><p id="rb-window">點擊刷新，查看最近30分鐘進件快照</p></div><button type="button" id="rb-refresh">刷新大盤</button></div><div class="rb-metrics">${[['total','總進件'],['main','直流進件'],['second','二篩進件']].map(([key,label])=>`<div class="rb-metric"><span>${label}</span><b id="rb-${key}">—</b></div>`).join('')}</div><div class="rb-body"><div><h3>版本進件排行</h3><div class="rb-table-wrap"><table><thead><tr><th>排名</th><th>版本／案件</th><th>直流</th><th>二篩</th><th>合計</th><th>最近進件</th></tr></thead><tbody id="rb-ranks"><tr><td colspan="6"><div class="rb-empty">尚未更新 · 點擊「刷新大盤」取得排行</div></td></tr></tbody></table></div></div><div class="rb-latest"><h3>最近進件 <small>· 最新10筆</small></h3><div id="rb-events" class="rb-empty">尚未更新</div></div></div><p class="rb-foot" id="rb-status" role="status">僅手動更新，不會自動刷新；不受上方／下方統計日期影響。</p>`;
+ root.innerHTML=`<div class="rb-head"><div><h2>近30分鐘進件大盤</h2><p id="rb-window">點擊刷新，查看最近30分鐘進件快照</p></div><button type="button" id="rb-refresh">刷新大盤</button></div><div class="rb-metrics">${[['total','總進件'],['main','直流進件'],['second','二篩進件']].map(([key,label])=>`<div class="rb-metric"><span>${label}</span><b id="rb-${key}">—</b></div>`).join('')}</div><div class="rb-body"><div><h3>版本進件排行</h3><div class="rb-table-wrap"><table><thead><tr><th>排名</th><th>版本／案件</th><th>直流</th><th>二篩</th><th>合計</th><th>最近進件</th></tr></thead><tbody id="rb-ranks"><tr><td colspan="6"><div class="rb-empty">尚未更新 · 點擊「刷新大盤」取得排行</div></td></tr></tbody></table></div></div><div class="rb-latest"><h3>最近進件 <small>· 最多 10 筆</small></h3><div id="rb-events" class="rb-empty">尚未更新</div></div></div><p class="rb-foot" id="rb-status" role="status">僅手動更新，不會自動刷新；不受上方／下方統計日期影響。</p>`;
  const dialog=document.createElement('dialog');dialog.id='rb-detail';dialog.innerHTML='<h3>進件資料</h3><div id="rb-detail-content"></div><form method="dialog"><button class="secondary">關閉</button></form>';document.body.append(dialog);
  const $=id=>document.getElementById(id);
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -34,6 +34,7 @@
  const clock=value=>new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date(value));
  const label=v=>v==='補助'?'補助金':(v==='E'?'M':v)+'版';
  const tag=v=>`<span class="tag tag-variant-${/^[CEFGIJKL]$/.test(v)?v.toLowerCase():'c'}">${esc(label(v))}</span>`;
+ const archived=v=>/^[EM](?:版(?:本)?)?$/i.test(String(v??'').trim());
  let busy=false,latest=[];
  $('rb-refresh').addEventListener('click',async()=>{
   if(busy)return;busy=true;$('rb-refresh').disabled=true;$('rb-refresh').textContent='更新中…';$('rb-status').textContent='正在查詢最近30分鐘…';
@@ -41,11 +42,13 @@
    const {data,error}=await client.rpc('get_recent_intake_dashboard');if(error)throw error;if(!data)throw Error('無法取得統計');
    for(const key of ['total','main','second'])$('rb-'+key).textContent=Number(data[key]||0).toLocaleString('zh-TW');
    $('rb-window').textContent=`統計區間 ${stamp(data.from)} — ${stamp(data.to)}`;
-   const ranks=[...(data.versions||[])].filter(r=>Number(r.total)>0).sort((a,b)=>b.total-a.total||Date.parse(b.latest)-Date.parse(a.latest)||String(a.version).localeCompare(String(b.version)));
+   const rankedRows=data.versions||[], recentRows=data.recent||[];
+   const includesArchived=rankedRows.some(r=>archived(r.version)&&Number(r.total)>0)||recentRows.some(r=>archived(r.version));
+   const ranks=rankedRows.filter(r=>!archived(r.version)&&Number(r.total)>0).sort((a,b)=>b.total-a.total||Date.parse(b.latest)-Date.parse(a.latest)||String(a.version).localeCompare(String(b.version)));
    const max=Math.max(1,...ranks.map(r=>Number(r.total)));
-   $('rb-ranks').innerHTML=ranks.map((r,i)=>`<tr><td><span class="rb-rank ${i<3?'rb-top':''}">${i+1}</span></td><td>${tag(r.version)}<div class="rb-bar"><i style="width:${Math.min(100,Math.max(0,Number(r.total)/max*100))}%"></i></div></td><td>${Number(r.main)}</td><td>${Number(r.second)}</td><td class="rb-total">${Number(r.total)}</td><td>${esc(clock(r.latest))}</td></tr>`).join('')||'<tr><td colspan="6"><div class="rb-empty">最近30分鐘尚無進件</div></td></tr>';
-   latest=[...(data.recent||[])].sort((a,b)=>Date.parse(b.created_at)-Date.parse(a.created_at)).slice(0,10);$('rb-events').className='';$('rb-events').innerHTML=latest.map((r,i)=>`<div class="rb-event"><time>${esc(clock(r.created_at))}</time>${tag(r.version)}<span>${r.queue==='second'?'二篩':'直流'}</span><button type="button" data-recent="${i}" aria-label="查看 ${esc(clock(r.created_at))} ${esc(label(r.version))} 進件">查看</button></div>`).join('')||'<div class="rb-empty">此時段沒有新進件</div>';
-   $('rb-status').textContent=`已更新：${stamp(data.to)}（台灣時間）· 手動快照，不會自動刷新。`;
+   $('rb-ranks').innerHTML=ranks.map((r,i)=>`<tr><td><span class="rb-rank ${i<3?'rb-top':''}">${i+1}</span></td><td>${tag(r.version)}<div class="rb-bar"><i style="width:${Math.min(100,Math.max(0,Number(r.total)/max*100))}%"></i></div></td><td>${Number(r.main)}</td><td>${Number(r.second)}</td><td class="rb-total">${Number(r.total)}</td><td>${esc(clock(r.latest))}</td></tr>`).join('')||'<tr><td colspan="6"><div class="rb-empty">最近30分鐘沒有可列出的進件</div></td></tr>';
+   latest=recentRows.filter(r=>!archived(r.version)).sort((a,b)=>Date.parse(b.created_at)-Date.parse(a.created_at)).slice(0,10);$('rb-events').className='';$('rb-events').innerHTML=latest.map((r,i)=>`<div class="rb-event"><time>${esc(clock(r.created_at))}</time>${tag(r.version)}<span>${r.queue==='second'?'二篩':'直流'}</span><button type="button" data-recent="${i}" aria-label="查看 ${esc(clock(r.created_at))} ${esc(label(r.version))} 進件">查看</button></div>`).join('')||'<div class="rb-empty">此時段沒有可列出的進件</div>';
+   $('rb-status').textContent=`已更新：${stamp(data.to)}（台灣時間）· 手動快照，不會自動刷新。${includesArchived?'已停用版本計入總數，但不列入排行及最近進件。':''}`;
   }catch(e){$('rb-status').textContent='更新失敗，請稍後重試。畫面若有數字，仍為上一次成功的快照。';}
   finally{busy=false;$('rb-refresh').disabled=false;$('rb-refresh').textContent='刷新大盤';}
  });
