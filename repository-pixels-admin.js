@@ -1,22 +1,23 @@
 /* FB settings only. Never mutates orders, shared LINE settings or numbering. */
 (() => {
   'use strict';
+  const versions = Object.freeze(['C','E','F','G','I','J','K','L']);
   const sites = [
-    {id:'main',name:'主倉庫X',domain:'azimutha.top',versions:['C','E','F','G','I','J','K','L']},
-    {id:'copy1',name:'複製倉庫一',domain:'aetherices.top',versions:['C','E','F','G','I','J','K']},
-    {id:'copy2',name:'複製倉庫二J',domain:'basalta.top',versions:['C','E','F','G','I','J','K']},
-    {id:'copy3',name:'複製倉庫三',domain:'vectes.top',versions:['C','E','F','G','I','J','K']},
-    {id:'copy6',name:'複製倉庫六X',domain:'sonsora.top',versions:['C','E','F','G','I','J','K']},
-    {id:'copy7',name:'複製倉庫七',domain:'chromaqs.top',versions:['C','E','F','G','I','J','K']},
-    {id:'copy9',name:'複製倉庫九',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions:['C','E','F','G','I','J','K']},
-    {id:'copy10',name:'複製倉庫十',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions:['C','E','F','G','I','J','K']},
-    {id:'copy11',name:'複製倉庫十一',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions:['C','E','F','G','I','J','K']},
-    {id:'copy12',name:'複製倉庫十二',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions:['C','E','F','G','I','J','K']},
-    {id:'copy13',name:'複製倉庫十三',domain:'halcyonqv.top',pendingDomain:false,versions:['C','E','F','G','I','J','K']},
-    {id:'copy14',name:'複製倉庫十四',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions:['C','E','F','G','I','J','K']},
-    {id:'copy15',name:'複製倉庫十五',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions:['C','E','F','G','I','J','K']},
-    {id:'copy16',name:'複製倉庫十六',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions:['C','E','F','G','I','J','K']},
-    {id:'copy17',name:'複製倉庫十七',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions:['C','E','F','G','I','J','K']}
+    {id:'main',name:'主倉庫X',domain:'azimutha.top',versions},
+    {id:'copy1',name:'複製倉庫一',domain:'aetherices.top',versions},
+    {id:'copy2',name:'複製倉庫二J',domain:'basalta.top',versions},
+    {id:'copy3',name:'複製倉庫三',domain:'vectes.top',versions},
+    {id:'copy6',name:'複製倉庫六X',domain:'sonsora.top',versions},
+    {id:'copy7',name:'複製倉庫七',domain:'chromaqs.top',versions},
+    {id:'copy9',name:'複製倉庫九',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions},
+    {id:'copy10',name:'複製倉庫十',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions},
+    {id:'copy11',name:'複製倉庫十一',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions},
+    {id:'copy12',name:'複製倉庫十二',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions},
+    {id:'copy13',name:'複製倉庫十三',domain:'halcyonqv.top',pendingDomain:false,versions},
+    {id:'copy14',name:'複製倉庫十四',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions},
+    {id:'copy15',name:'複製倉庫十五',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions},
+    {id:'copy16',name:'複製倉庫十六',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions},
+    {id:'copy17',name:'複製倉庫十七',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions}
   ];
   const siteVariants = new Map(sites.map(site => [site.id,new Set(site.versions)]));
   const displayVersion = v => v === 'E' ? 'M' : v;

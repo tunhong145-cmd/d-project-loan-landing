@@ -167,7 +167,7 @@
   function validLine(value) {
     try {const u=new URL(value);return u.protocol==='https:'&&['lin.ee','line.me'].includes(u.hostname)&&u.pathname.length>1&&!u.username&&!u.password&&!u.port;} catch{return false;}
   }
-  function updateKLinePreview(){if(configLoaded)settingsMessage($('k-line').value.trim()?'K版和主倉庫 L版客戶將使用同一個 LINE 連結。':'尚未設定共用連結，K／L版無法前往 LINE。');}
+  function updateKLinePreview(){if(configLoaded)settingsMessage($('k-line').value.trim()?'所有已啟用倉庫的 K／L版客戶都會使用這個 LINE 連結。':'尚未設定共用連結，K／L版無法前往 LINE。');}
   $('k-line').addEventListener('input',updateKLinePreview);
   function prepareSettings() {
     if(!configLoaded)throw new Error('K／L版 LINE 設定尚未載入完成，請稍後再儲存。');
