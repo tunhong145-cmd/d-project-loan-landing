@@ -1,7 +1,7 @@
 /* FB settings only. Never mutates orders, shared LINE settings or numbering. */
 (() => {
   'use strict';
-  const versions = Object.freeze(['C','E','F','G','I','J','K','L']);
+  const versions = Object.freeze(['C','F','G','I','J','K','L']);
   const sites = [
     {id:'main',name:'主倉庫X',domain:'azimutha.top',versions},
     {id:'copy1',name:'複製倉庫一',domain:'aetherices.top',versions},

@@ -628,7 +628,7 @@
           <input id="setting-fg-line-url" type="url" placeholder="https://lin.ee/xxxxxxx" oninput="siteSettings.fg_line_url=this.value;updateFGLinePreview()" />
           <p id="setting-fg-line-preview" class="notice"></p>
           <div style="height:14px"></div>
-          <label for="setting-e-line-url">貸款 M／I版共用 LINE 連結</label>
+          <label for="setting-e-line-url">貸款 I版 LINE 連結</label>
           <input id="setting-e-line-url" type="url" placeholder="https://lin.ee/xxxxxxx" oninput="siteSettings.e_line_url=this.value;updateELinePreview()" />
           <p id="setting-e-line-preview" class="notice"></p>
           <div style="height:14px"></div>
@@ -638,7 +638,7 @@
           <div class="settings-actions">
             <button class="secondary" onclick="testLineUrl()">測試 C／J版 LINE</button>
             <button class="secondary" onclick="testFGLineUrl()">測試 F／G版 LINE</button>
-            <button class="secondary" onclick="testELineUrl()">測試 M／I版 LINE</button>
+            <button class="secondary" onclick="testELineUrl()">測試 I版 LINE</button>
             <button class="secondary" onclick="testSubsidyLineUrl()">測試補助金 LINE</button>
           </div>
         </div>
@@ -1078,7 +1078,7 @@
       const value = input.value.trim();
       const lineId = extractLineId(value);
       if (isLineShortUrl(value)) {
-        preview.textContent = 'F／G版會共用這個 LINE 輪換短連結，不影響 C／J版、M／I版與補助金頁。';
+        preview.textContent = 'F／G版會共用這個 LINE 輪換短連結，不影響 C／J版、I版與補助金頁。';
       } else if (lineId && isValidLineUrl(value)) {
         preview.textContent = `F／G版 LINE ID：${lineId}`;
       } else {
@@ -1103,11 +1103,11 @@
       const value = input.value.trim();
       const lineId = extractLineId(value);
       if (isLineShortUrl(value)) {
-        preview.textContent = 'M／I版會共用這個 LINE 輪換短連結，不影響 C／J版、F／G版與補助金頁。';
+        preview.textContent = 'I版會使用這個 LINE 輪換短連結，不影響 C／J版、F／G版與補助金頁。';
       } else if (lineId && isValidLineUrl(value)) {
-        preview.textContent = `M／I版 LINE ID：${lineId}`;
+        preview.textContent = `I版 LINE ID：${lineId}`;
       } else {
-        preview.textContent = '請輸入 M／I版共用的 lin.ee 或 line.me 連結。';
+        preview.textContent = '請輸入 I版使用的 lin.ee 或 line.me 連結。';
       }
       return lineId;
     }
@@ -1115,7 +1115,7 @@
     function testELineUrl() {
       const url = document.getElementById('setting-e-line-url').value.trim();
       if (!isValidLineUrl(url)) {
-        alert('請輸入正確的 M／I版 LINE 連結。');
+        alert('請輸入正確的 I版 LINE 連結。');
         return;
       }
       window.open(url, '_blank', 'noopener');
@@ -1271,7 +1271,7 @@
         return;
       }
       if (!isValidLineUrl(eLineUrl)) {
-        status.textContent = 'M版 LINE 連結格式不正確，請使用 lin.ee 或 line.me。';
+        status.textContent = 'I版 LINE 連結格式不正確，請使用 lin.ee 或 line.me。';
         status.className = 'notice error setting-status';
         return;
       }
@@ -2297,8 +2297,8 @@
     checkSession();
   </script>
   <script src="k-admin.js?v=20261120-l-rollout"></script>
-  <script src="order-routing-admin.js?v=20261120-l-rollout"></script>
+  <script src="order-routing-admin.js?v=20261120-archive-m"></script>
   <script src="recent-intake-board.js?v=20261120-l-pilot"></script>
-  <script src="repository-pixels-admin.js?v=20261120-l-rollout"></script>
+  <script src="repository-pixels-admin.js?v=20261120-archive-m"></script>
 </body>
 </html>
