@@ -65,10 +65,10 @@
   document.getElementById('app-panel').append(root);
   const settingsRoot = document.createElement('div');
   settingsRoot.id='k-line-settings';
-  settingsRoot.innerHTML='<div style="height:14px"></div><label for="k-line">貸款 K版 LINE 連結</label><input id="k-line" type="url" placeholder="https://lin.ee/xxxxxxx 或 https://line.me/R/ti/p/@xxxxxxxx"><p id="k-settings-msg" class="notice"></p>';
+  settingsRoot.innerHTML='<div style="height:14px"></div><label for="k-line">貸款 K／L版共用 LINE 連結</label><input id="k-line" type="url" placeholder="https://lin.ee/xxxxxxx 或 https://line.me/R/ti/p/@xxxxxxxx"><p id="k-settings-msg" class="notice"></p>';
   const linePanel=document.getElementById('setting-subsidy-line-url').closest('.settings-panel');
   linePanel.insertBefore(settingsRoot,linePanel.querySelector('.settings-actions'));
-  const testButton=document.createElement('button');testButton.className='secondary';testButton.textContent='測試 K版 LINE';testButton.dataset.action='test-line';
+  const testButton=document.createElement('button');testButton.className='secondary';testButton.textContent='測試 K／L版 LINE';testButton.dataset.action='test-line';
   linePanel.querySelector('.settings-actions').append(testButton);
   testButton.addEventListener('click',handleAction);
   const $ = id => root.querySelector('#'+id) || document.getElementById(id);
@@ -76,8 +76,8 @@
   function settingsMessage(text, error=false) { $('k-settings-msg').textContent=text; $('k-settings-msg').className='notice'+(error?' error':''); }
   function ensureSettings() {
     if (!settingsReady) {
-      settingsMessage('正在載入 K版設定…');
-      settingsReady=loadSettings().catch(e=>{settingsReady=null;settingsMessage('K版設定載入失敗：'+e.message,true);throw e;});
+      settingsMessage('正在載入 K／L版 LINE 設定…');
+      settingsReady=loadSettings().catch(e=>{settingsReady=null;settingsMessage('K／L版 LINE 設定載入失敗：'+e.message,true);throw e;});
     }
     return settingsReady;
   }
@@ -167,10 +167,10 @@
   function validLine(value) {
     try {const u=new URL(value);return u.protocol==='https:'&&['lin.ee','line.me'].includes(u.hostname)&&u.pathname.length>1&&!u.username&&!u.password&&!u.port;} catch{return false;}
   }
-  function updateKLinePreview(){if(configLoaded)settingsMessage($('k-line').value.trim()?'客戶將前往此 K版專屬 LINE 連結。':'尚未設定 K版 LINE；K版暫停送件。');}
+  function updateKLinePreview(){if(configLoaded)settingsMessage($('k-line').value.trim()?'K版和主倉庫 L版客戶將使用同一個 LINE 連結。':'尚未設定共用連結，K／L版無法前往 LINE。');}
   $('k-line').addEventListener('input',updateKLinePreview);
   function prepareSettings() {
-    if(!configLoaded)throw new Error('K版設定尚未載入完成，請稍後再儲存。');
+    if(!configLoaded)throw new Error('K／L版 LINE 設定尚未載入完成，請稍後再儲存。');
     const line=$('k-line').value.trim(), pixels=kPixels.map(p=>({id:p.id.trim(),enabled:p.enabled!==false,platform:'facebook'})).filter(p=>p.id);
     if(line&&!validLine(line)) throw new Error('請填寫有效的 https://lin.ee/ 或 https://line.me/ 連結。');
     if(pixels.length>5||pixels.some(p=>!/^\d{8,20}$/.test(p.id)))throw new Error('K版最多 5 個像素，ID 必須為 8 至 20 位數字。');
@@ -258,7 +258,7 @@
         const max=Math.max(1,Math.ceil(count/size));const target=action==='first'?1:action==='last'?max:Number($('k-jump').value);
         if(!Number.isInteger(target)||target<1||target>max)throw new Error(`頁碼請填寫 1–${max}。`);page=target;await load(true);
       }
-      if(action==='test-line'){const url=$('k-line').value.trim();if(!validLine(url))throw new Error('請先填寫 K版 LINE 連結。');window.open(url,'_blank','noopener,noreferrer');}
+      if(action==='test-line'){const url=$('k-line').value.trim();if(!validLine(url))throw new Error('請先填寫 K／L版共用 LINE 連結。');window.open(url,'_blank','noopener,noreferrer');}
       if(action==='save-number'){const n=Number($('k-next').value);if(!Number.isInteger(n)||n<1||n>999998)throw new Error('下一編號請填寫 1–999998。');const {error}=await client.from('x_loan_settings').update({client_copy_next_number:n,updated_at:new Date().toISOString()}).eq('version_code','K').select('version_code').single();if(error)throw error;message(`二篩下一編號已設為 ${n}。`);}
       if(action==='detail')detail(id);
       if(action==='close-detail')$('k-detail').close();
@@ -273,7 +273,7 @@
       if(action==='notes'){await patch(id,{notes:$('k-notes').value});message('K版備註已儲存。');}
       if(action==='edit-number'||action==='clear-number'){const n=action==='clear-number'?null:Number($('k-edit-number').value);if(n!==null&&(!Number.isInteger(n)||n<1||n>999999))throw new Error('編號請填寫 1–999999。');await patch(id,{client_copy_number:n});detail(id);message(n===null?'二篩訂單編號已清除，下次複製會重新分配。':'二篩訂單編號已更新。');}
       if(action==='export')await exportRows();
-    }catch(e){(action==='test-line'?settingsMessage:message)('K版操作失敗：'+(e.message||e),true);}
+    }catch(e){(action==='test-line'?settingsMessage:message)((action==='test-line'?'K／L版 LINE 測試失敗：':'K版操作失敗：')+(e.message||e),true);}
     finally{busy=false;button.disabled=false;if(['prev','next','first','last','jump'].includes(action))render();}
   }
   root.addEventListener('click',handleAction);

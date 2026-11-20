@@ -632,15 +632,6 @@
           <input id="setting-e-line-url" type="url" placeholder="https://lin.ee/xxxxxxx" oninput="siteSettings.e_line_url=this.value;updateELinePreview()" />
           <p id="setting-e-line-preview" class="notice"></p>
           <div style="height:14px"></div>
-          <label for="setting-l-line-url">主倉庫 L版專用 LINE 連結</label>
-          <input id="setting-l-line-url" type="url" placeholder="https://lin.ee/xxxxxxx 或 https://line.me/R/ti/p/@xxxxxxxx" oninput="updateLLinePreview()" disabled />
-          <p id="setting-l-line-preview" class="notice">正在載入 L版設定…</p>
-          <div class="settings-actions" style="margin-bottom:14px">
-            <button id="test-l-line-url" class="secondary" type="button" onclick="testLLineUrl()" disabled>測試 L版 LINE</button>
-            <button id="save-l-line-url" type="button" onclick="saveLLineUrl()" disabled>儲存 L版 LINE</button>
-          </div>
-          <p id="l-line-settings-status" role="status" class="notice"></p>
-          <div style="height:14px"></div>
           <label for="setting-subsidy-line-url">補助金 LINE 連結</label>
           <input id="setting-subsidy-line-url" type="url" placeholder="https://lin.ee/xxxxxxx 或 https://line.me/R/ti/p/@xxxxxxxx" oninput="siteSettings.subsidy_line_url=this.value;updateSubsidyLinePreview()" />
           <p id="setting-subsidy-line-preview" class="notice"></p>
@@ -722,9 +713,6 @@
     let searchTimer = null;
     let leadsRequestToken = 0;
     let savedExistingSettings = null;
-    let lLineSettingsReady = false;
-    let savedLLineUrl = null;
-    let lLineSaving = false;
     let siteSettings = {
       line_url: 'https://lin.ee/591VM3X',
       fg_line_url: 'https://lin.ee/591VM3X',
@@ -890,15 +878,11 @@
     }
 
     async function loadSiteSettings() {
-      const existingColumns = 'line_url,fg_line_url,e_line_url,subsidy_line_url,line_id,pixel_ids,client_copy_next_number,updated_at';
       let { data, error } = await client
         .from('site_settings')
-        .select(existingColumns + ',l_line_url')
+        .select('line_url,fg_line_url,e_line_url,subsidy_line_url,line_id,pixel_ids,client_copy_next_number,updated_at')
         .eq('id', 1)
         .single();
-      if (error && /l_line_url/i.test(error.message || '')) {
-        ({data,error} = await client.from('site_settings').select(existingColumns).eq('id',1).single());
-      }
       if (error && /client_copy_next_number|schema cache|column/i.test(error.message || '')) {
         const fallback = await client
           .from('site_settings')
@@ -923,10 +907,6 @@
           updated_at: data.updated_at
         };
       }
-      lLineSettingsReady = !error && !!data && Object.hasOwn(data, 'l_line_url');
-      savedLLineUrl = lLineSettingsReady ? data.l_line_url : null;
-      document.getElementById('setting-l-line-url').value = savedLLineUrl || '';
-      updateLLinePreview();
       renderSiteSettings();
       renderCopyNumberControls();
       if (!error && data) savedExistingSettings = existingSettingsSnapshot();
@@ -1141,64 +1121,6 @@
       window.open(url, '_blank', 'noopener');
     }
 
-    function isValidLLineUrl(value) {
-      if (!isValidLineUrl(value)) return false;
-      const url = new URL(value);
-      return url.pathname.length > 1 && !url.username && !url.password && !url.port;
-    }
-
-    function updateLLinePreview() {
-      const input = document.getElementById('setting-l-line-url');
-      const preview = document.getElementById('setting-l-line-preview');
-      const value = input.value.trim();
-      input.disabled = !lLineSettingsReady || lLineSaving;
-      document.getElementById('test-l-line-url').disabled = input.disabled || !isValidLLineUrl(value);
-      document.getElementById('save-l-line-url').disabled = input.disabled || (value || null) === savedLLineUrl;
-      preview.textContent = !lLineSettingsReady ? 'L版 LINE 設定尚未載入，請重新整理；其他版本設定不受影響。'
-        : !value ? '未填寫時，L版不會共用其他版本的 LINE。'
-        : isValidLLineUrl(value) ? '此連結只供主倉庫 L版使用，不影響其他版本。'
-        : '請輸入有效的 https://lin.ee/ 或 https://line.me/ 連結。';
-    }
-
-    function testLLineUrl() {
-      const value = document.getElementById('setting-l-line-url').value.trim();
-      if (lLineSettingsReady && isValidLLineUrl(value)) window.open(value, '_blank', 'noopener');
-    }
-
-    async function saveLLineUrl() {
-      if (!lLineSettingsReady || lLineSaving) return;
-      const input = document.getElementById('setting-l-line-url');
-      const status = document.getElementById('l-line-settings-status');
-      const value = input.value.trim() || null;
-      if (value === savedLLineUrl) return;
-      if (value && !isValidLLineUrl(value)) {
-        status.className = 'notice error';
-        status.textContent = '請輸入有效的 LINE 連結，或留空移除 L版連結。';
-        return;
-      }
-      if (!confirm(value ? '只儲存主倉庫 L版的 LINE 連結，確定？' : '確定移除主倉庫 L版的 LINE 連結？其他版本不受影響。')) return;
-      lLineSaving = true;
-      status.className = 'notice';
-      status.textContent = '儲存中…';
-      updateLLinePreview();
-      try {
-        const update = client.from('site_settings').update({l_line_url:value}).eq('id',1);
-        const guarded = savedLLineUrl === null ? update.is('l_line_url',null) : update.eq('l_line_url',savedLLineUrl);
-        const {data,error} = await guarded.select('l_line_url').maybeSingle();
-        if (error) throw error;
-        if (!data || data.l_line_url !== value) throw new Error('設定已變更或沒有寫入權限，請重新整理後再試');
-        savedLLineUrl = data.l_line_url;
-        input.value = savedLLineUrl || '';
-        status.textContent = value ? '已儲存主倉庫 L版的 LINE 連結。' : '已移除主倉庫 L版的 LINE 連結。';
-      } catch (error) {
-        status.className = 'notice error';
-        status.textContent = '儲存失敗：' + error.message + '。';
-      } finally {
-        lLineSaving = false;
-        updateLLinePreview();
-      }
-    }
-
     function updateSubsidyLinePreview() {
       const input = document.getElementById('setting-subsidy-line-url');
       const preview = document.getElementById('setting-subsidy-line-preview');
@@ -1386,7 +1308,7 @@
       let kPayload;
       try {
         if (!savedExistingSettings) throw new Error('原有版本設定尚未載入，請重新整理後再儲存。');
-        if (!window.KAdmin) throw new Error('K版設定元件載入失敗，請重新整理。');
+        if (!window.KAdmin) throw new Error('K／L版 LINE 設定元件載入失敗，請重新整理。');
         kPayload = window.KAdmin.prepareSettings();
       } catch (error) {
         status.textContent = error.message;
@@ -1427,12 +1349,12 @@
       status.className = 'notice setting-status';
       renderSiteSettings();
       button.disabled = true;
-      status.textContent = '正在儲存 K版設定...';
+      status.textContent = '正在儲存 K／L版 LINE 設定...';
       try {
         await window.KAdmin.saveSettings(kPayload);
         status.textContent = '已儲存。客戶重新整理落地頁後會套用最新設定。';
       } catch (error) {
-        status.textContent = (Object.keys(changedFields).length ? '其他版本已儲存，但 ' : '') + 'K版儲存失敗：' + error.message + '。請重新儲存。';
+        status.textContent = (Object.keys(changedFields).length ? '其他版本已儲存，但 ' : '') + 'K／L版 LINE 設定儲存失敗：' + error.message + '。請重新儲存。';
         status.className = 'notice error setting-status';
       } finally {
         button.disabled = false;
@@ -2374,7 +2296,7 @@
 
     checkSession();
   </script>
-  <script src="k-admin.js?v=20261120-l-pilot"></script>
+  <script src="k-admin.js?v=20261120-kl-line"></script>
   <script src="order-routing-admin.js?v=20261120-l-pilot"></script>
   <script src="recent-intake-board.js?v=20261120-l-pilot"></script>
   <script src="repository-pixels-admin.js?v=20261120-l-pilot"></script>
