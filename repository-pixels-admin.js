@@ -4,9 +4,6 @@
   const versions = Object.freeze(['C','F','G','I','J','K','L']);
   const sites = [
     {id:'main',name:'主倉庫X',domain:'azimutha.top',versions},
-    {id:'copy1',name:'複製倉庫一',domain:'aetherices.top',versions},
-    {id:'copy2',name:'複製倉庫二J',domain:'basalta.top',versions},
-    {id:'copy3',name:'複製倉庫三',domain:'vectes.top',versions},
     {id:'copy6',name:'複製倉庫六X',domain:'sonsora.top',versions},
     {id:'copy7',name:'複製倉庫七',domain:'chromaqs.top',versions},
     {id:'copy9',name:'複製倉庫九',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions},
