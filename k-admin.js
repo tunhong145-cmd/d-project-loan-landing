@@ -32,7 +32,7 @@
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fields = [['name','姓名'],['age','年齡'],['phone','手機號碼'],['q3_amount_needed','需求金額'],
     ['q2_bank_status','是否為警示戶']];
-  const filterVariants = ['C','F','G','I','J','K','L'];
+  const filterVariants = ['C','F','G','I','K','L'];
   const orderDisplayFields = fields.map(([key,label]) => [key, key === 'q2_bank_status' ? '是否為警示戶/告誡戶' : label]);
   const legacyFields = [['court_deduction_status','法院強制扣款'],['has_passport','是否有護照'],
     ['q4_foreign_currency_account','個人外幣帳戶']];

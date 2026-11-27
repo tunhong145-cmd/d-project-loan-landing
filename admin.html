@@ -553,7 +553,6 @@
               <button class="filter-chip" type="button" data-variant="F" onclick="toggleVariantFilter('F')">F版</button>
               <button class="filter-chip" type="button" data-variant="G" onclick="toggleVariantFilter('G')">G版</button>
               <button class="filter-chip" type="button" data-variant="I" onclick="toggleVariantFilter('I')">I版</button>
-              <button class="filter-chip" type="button" data-variant="J" onclick="toggleVariantFilter('J')">J版</button>
               <button class="filter-chip" type="button" data-variant="K" onclick="toggleVariantFilter('K')">K版</button>
               <button class="filter-chip" type="button" data-variant="L" onclick="toggleVariantFilter('L')">L版</button>
             </div>
@@ -698,7 +697,7 @@
       J: 'J版'
     };
     const PIXEL_VERSION_ORDER = Object.keys(PIXEL_VERSION_LABELS);
-    const ACTIVE_ORDER_VERSIONS = new Set(['C','F','G','I','J','K','L']);
+    const ACTIVE_ORDER_VERSIONS = new Set(['C','F','G','I','K','L']);
     const PAGE_SIZE = 100;
     let leads = [];
     let selectedLeadIds = new Set();
@@ -1620,12 +1619,12 @@
         document.getElementById('home-approved').textContent = value('approved');
         document.getElementById('home-invalid').textContent = value('invalid');
         const order = [...ACTIVE_ORDER_VERSIONS, '補助'];
-        const labels = { C:'C 版本', F:'F 版本', G:'G 版本', I:'I 版本', J:'J 版本', K:'K 版本', L:'L 版本', '補助':'補助金' };
+        const labels = { C:'C 版本', F:'F 版本', G:'G 版本', I:'I 版本', K:'K 版本', L:'L 版本', '補助':'補助金' };
         const byVersion = Object.fromEntries(order.map(key => [key, { main:0, second:0, total:0, new_count:0, contacted:0, line_added:0, approved:0, invalid:0 }]));
         let archivedCount = 0;
         (data?.versions || []).forEach(item => {
           const key = item.version_key;
-          if (key === 'E' || key === 'M') archivedCount += Number(item.total || 0);
+          if (key === 'E' || key === 'J' || key === 'M') archivedCount += Number(item.total || 0);
           if (!Object.hasOwn(byVersion, key)) return;
           const row = byVersion[key];
           const bucket = item.queue_key === '二篩' ? 'second' : 'main';
@@ -2299,9 +2298,9 @@
 
     checkSession();
   </script>
-  <script src="k-admin.js?v=20261120-hide-archived-m"></script>
+  <script src="k-admin.js?v=20261127-hide-j-order-ui"></script>
   <script src="order-routing-admin.js?v=20261127-no-j-settings"></script>
-  <script src="recent-intake-board.js?v=20261120-hide-archived-m"></script>
+  <script src="recent-intake-board.js?v=20261127-hide-j-order-ui"></script>
   <script src="repository-pixels-admin.js?v=20261127-no-j-settings"></script>
 </body>
 </html>
