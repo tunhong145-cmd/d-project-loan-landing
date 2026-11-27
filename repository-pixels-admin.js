@@ -4,11 +4,6 @@
   const versions = Object.freeze(['C','F','G','I','J','K','L']);
   const sites = [
     {id:'main',name:'主倉庫X',domain:'azimutha.top',versions},
-    {id:'copy6',name:'複製倉庫六X',domain:'sonsora.top',versions},
-    {id:'copy7',name:'複製倉庫七',domain:'chromaqs.top',versions},
-    {id:'copy9',name:'複製倉庫九',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions},
-    {id:'copy10',name:'複製倉庫十',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions},
-    {id:'copy11',name:'複製倉庫十一',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions},
     {id:'copy12',name:'複製倉庫十二',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions},
     {id:'copy13',name:'複製倉庫十三',domain:'halcyonqv.top',pendingDomain:false,versions},
     {id:'copy14',name:'複製倉庫十四',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions},
