@@ -619,7 +619,7 @@
 
         <div class="panel settings-panel">
           <h3>LINE 連結設定</h3>
-          <label for="setting-line-url">貸款 C／J版共用 LINE 連結</label>
+          <label for="setting-line-url">貸款 C版 LINE 連結</label>
           <input id="setting-line-url" type="url" placeholder="https://lin.ee/xxxxxxx 或 https://line.me/R/ti/p/@xxxxxxxx" oninput="siteSettings.line_url=this.value;updateLinePreview()" />
           <p id="setting-line-id-preview" class="notice"></p>
           <div style="height:14px"></div>
@@ -635,7 +635,7 @@
           <input id="setting-subsidy-line-url" type="url" placeholder="https://lin.ee/xxxxxxx 或 https://line.me/R/ti/p/@xxxxxxxx" oninput="siteSettings.subsidy_line_url=this.value;updateSubsidyLinePreview()" />
           <p id="setting-subsidy-line-preview" class="notice"></p>
           <div class="settings-actions">
-            <button class="secondary" onclick="testLineUrl()">測試 C／J版 LINE</button>
+            <button class="secondary" onclick="testLineUrl()">測試 C版 LINE</button>
             <button class="secondary" onclick="testFGLineUrl()">測試 F／G版 LINE</button>
             <button class="secondary" onclick="testELineUrl()">測試 I版 LINE</button>
             <button class="secondary" onclick="testSubsidyLineUrl()">測試補助金 LINE</button>
@@ -1078,7 +1078,7 @@
       const value = input.value.trim();
       const lineId = extractLineId(value);
       if (isLineShortUrl(value)) {
-        preview.textContent = 'F／G版會共用這個 LINE 輪換短連結，不影響 C／J版、I版與補助金頁。';
+        preview.textContent = 'F／G版會共用這個 LINE 輪換短連結，不影響 C版、I版與補助金頁。';
       } else if (lineId && isValidLineUrl(value)) {
         preview.textContent = `F／G版 LINE ID：${lineId}`;
       } else {
@@ -1103,7 +1103,7 @@
       const value = input.value.trim();
       const lineId = extractLineId(value);
       if (isLineShortUrl(value)) {
-        preview.textContent = 'I版會使用這個 LINE 輪換短連結，不影響 C／J版、F／G版與補助金頁。';
+        preview.textContent = 'I版會使用這個 LINE 輪換短連結，不影響 C版、F／G版與補助金頁。';
       } else if (lineId && isValidLineUrl(value)) {
         preview.textContent = `I版 LINE ID：${lineId}`;
       } else {
@@ -2300,8 +2300,8 @@
     checkSession();
   </script>
   <script src="k-admin.js?v=20261120-hide-archived-m"></script>
-  <script src="order-routing-admin.js?v=20261120-archive-m"></script>
+  <script src="order-routing-admin.js?v=20261127-no-j-settings"></script>
   <script src="recent-intake-board.js?v=20261120-hide-archived-m"></script>
-  <script src="repository-pixels-admin.js?v=20261127-copy22-24"></script>
+  <script src="repository-pixels-admin.js?v=20261127-no-j-settings"></script>
 </body>
 </html>

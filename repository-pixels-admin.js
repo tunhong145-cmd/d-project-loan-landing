@@ -1,7 +1,8 @@
 /* FB settings only. Never mutates orders, shared LINE settings or numbering. */
 (() => {
   'use strict';
-  const versions = Object.freeze(['C','F','G','I','J','K','L']);
+  // Retired J settings remain stored; only live landing versions are displayed here.
+  const versions = Object.freeze(['C','F','G','I','K','L']);
   const sites = [
     {id:'main',name:'主倉庫X',domain:'azimutha.top',versions},
     {id:'copy12',name:'複製倉庫十二',domain:'tunhong145-cmd.github.io',pendingDomain:true,versions},

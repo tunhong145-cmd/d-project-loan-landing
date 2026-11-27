@@ -3,8 +3,8 @@
  'use strict';
  const existingVersions=['C','E','F','G','I','J','K'];
  const versions=[...existingVersions,'L'];
- // Keep the saved legacy E route in RPC payloads, but omit its editor.
- const editableVersions=versions.filter(v=>v!=='E');
+ // Preserve the saved E and J routes in RPC payloads, but hide their editors.
+ const editableVersions=versions.filter(v=>v!=='E'&&v!=='J');
  const validQueue=value=>value==='main'||value==='second';
  const label=q=>q==='main'?'直流':'二篩';
  const style=document.createElement('style');style.textContent='#order-routing-view .home-table{min-width:0;table-layout:fixed}#order-routing-view th:first-child{width:20%}#order-routing-view th:nth-child(2){width:30%}#order-routing-view select{width:100%;min-width:0}@media(max-width:650px){#order-routing-view .panel{padding:18px!important}#order-routing-view th,#order-routing-view td{padding:10px 5px}#order-routing-view th{font-size:11px}}';document.head.append(style);
@@ -32,7 +32,7 @@
  $('routing-save').addEventListener('click',async()=>{
   if(busy||!saved)return;
   const available=versions.filter(v=>validQueue(saved.routes[v]));
-  const routes=Object.fromEntries(available.map(v=>[v,v==='E'?saved.routes[v]:$('routing-'+v).value]));
+  const routes=Object.fromEntries(available.map(v=>[v,editableVersions.includes(v)?$('routing-'+v).value:saved.routes[v]]));
   const changed=available.filter(v=>routes[v]!==saved.routes[v]);
   if(!changed.length){message('沒有變更，現有去向維持不變。');return;}
   if(!confirm('確認變更新訂單分流？\n\n'+changed.map(v=>`${v}版：${label(saved.routes[v])} → ${label(routes[v])}`).join('\n')+'\n\n適用主倉庫與啟用中的複製倉庫，只影響之後提交的新訂單。歷史訂單及編號不變。'))return;
